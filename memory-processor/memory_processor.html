@@ -218,6 +218,16 @@ textarea:focus{border-color:var(--b1)}
 .cat-miss-info{flex:1}
 .cat-miss-word{font-size:14px;font-weight:500;direction:rtl;color:#4A1B0C}
 .cat-miss-meta{font-size:11px;color:#9B4D2C;margin-top:3px}
+.cat-skip{display:flex;align-items:flex-start;gap:12px;padding:10px 14px;border-radius:var(--r);border:1px solid #85B7EB;background:#E6F1FB;margin-bottom:6px;border-left:3px solid #378ADD}
+.cat-skip.cat-skip-gap{border-color:#F0997B;background:#FAECE7;border-left-color:#D85A30}
+.cat-skip-icon{width:56px;height:56px;flex-shrink:0;border:1px dashed #85B7EB;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#378ADD;background:#fff;line-height:1}
+.cat-skip-gap .cat-skip-icon{border-color:#F0997B;color:#D85A30}
+.cat-skip-info{flex:1}
+.cat-skip-word{font-size:14px;font-weight:500;direction:rtl;color:#042C53;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cat-skip-gap .cat-skip-word{color:#4A1B0C}
+.cat-skip-meta{font-size:11px;color:#378ADD;margin-top:5px;line-height:1.6}
+.cat-skip-gap .cat-skip-meta{color:#9B4D2C}
+.cat-skip-sub{font-size:10px;color:var(--t3);margin-top:6px}
 .seq-display{background:#fff;border:1px solid rgba(26,25,24,.22);border-radius:var(--r);padding:20px;display:flex;justify-content:center;overflow-x:auto;margin:14px 0}
 .seq-display svg{display:block}
 .mode-toggle{display:flex;gap:4px;margin-bottom:20px}
@@ -1536,9 +1546,26 @@ function rebuildSequence(){
   if(inner)seqEl.innerHTML=`<svg viewBox="0 0 ${cW} ${cH}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
 }
 
+function buildSkippedLookupReason(u){
+  const mode=u.phase2?.modeDecision?.mode||'gap';
+  if(mode==='contextual'){
+    let reason='Not looked up — VRP mode is Contextual. This word does not get its own pictogram; its meaning is expressed through how other units appear together in the sequence.';
+    const expl=u.phase2?.modeDecision?.contextual?.emergenceExplanation;
+    if(expl)reason+=` ${expl}`;
+    return reason;
+  }
+  if(mode==='gap'){
+    const gr=u.phase2?.modeDecision?.gap||{};
+    return gr.gapRationale||'Not looked up — VRP mode is Gap. The visual plan found no independent or contextual representation for this unit.';
+  }
+  return `Not looked up — VRP mode is ${mode}. Library lookup runs only for Independent and Both units.`;
+}
+
 function renderCatalogSection(vrpResult){
   const container=document.getElementById('catalog-section');if(!container)return;
-  const units=(vrpResult?.vrp||[]).filter(u=>['independent','both'].includes(u.phase2?.modeDecision?.mode));
+  const allVrp=vrpResult?.vrp||[];
+  const units=allVrp.filter(u=>['independent','both'].includes(u.phase2?.modeDecision?.mode));
+  const skipped=allVrp.filter(u=>!['independent','both'].includes(u.phase2?.modeDecision?.mode));
   let hits=0,gaps=0;
   const rows=units.map(u=>{
     const word=u.unit||'';
@@ -1558,13 +1585,24 @@ function renderCatalogSection(vrpResult){
     }
   });
 
+  const skippedRows=skipped.map(u=>{
+    const mode=u.phase2?.modeDecision?.mode||'gap';
+    const mc=MODE_CFG[mode]||MODE_CFG.gap;
+    const isGap=mode==='gap';
+    const ctx=u.phase2?.modeDecision?.contextual;
+    const anchorChips=ctx?.expressedThrough?.length?`<div class="cat-skip-sub">Expressed through ${depChips(ctx.expressedThrough,allVrp.map(x=>({id:x.unitId,word:x.unit})))}</div>`:'';
+    return`<div class="cat-skip${isGap?' cat-skip-gap':''}"><div class="cat-skip-icon" title="No catalog lookup">—</div><div class="cat-skip-info"><div class="cat-skip-word">${esc(u.unit||'')} ${modeBadge(mode)}</div><div class="cat-skip-meta">${esc(buildSkippedLookupReason(u))}</div>${anchorChips}</div></div>`;
+  });
+
   const seqSvg=buildSequenceSVG(vrpResult);
   const hasSeq=seqSvg&&hits>0;
+  const lookupSummary=`${units.length} of ${allVrp.length} unit${allVrp.length!==1?'s':''} looked up · ${hits} hit${hits!==1?'s':''}, ${gaps} gap${gaps!==1?'s':''}${skipped.length?`, ${skipped.length} excluded`:''}`;
 
   container.innerHTML=`
     <div class="divider"></div>
-    <div class="sec-label">Library Lookup <span>${hits} hit${hits!==1?'s':''}, ${gaps} gap${gaps!==1?'s':''}</span></div>
+    <div class="sec-label">Library Lookup <span>${lookupSummary}</span></div>
     ${rows.join('')}
+    ${skipped.length?`<div style="margin-top:16px"><div class="sec-label" style="margin-bottom:10px">Excluded from lookup <span>${skipped.length} unit${skipped.length!==1?'s':''}</span></div>${skippedRows.join('')}</div>`:''}
     ${hasSeq?`<div style="margin-top:20px"><div class="sec-label">Pictographic Sequence</div><div class="seq-display">${seqSvg}</div>${gaps>0?`<div style="font-size:11px;color:#D85A30;margin-top:6px">${gaps} word${gaps!==1?'s':''} could not be realized — VISUAL GAP events recorded. The sequence is incomplete.</div>`:''}</div>`:''}
   `;
 }
