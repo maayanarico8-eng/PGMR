@@ -1,0 +1,51 @@
+Our philosophy:
+We are building a system, not a collection of illustrations.
+Our objective is to create a complete visual grammar that will eventually serve as the specification for a computational generation engine.
+
+Our workflow:
+We always work in the following order:
+1. Observation 
+2. Analysis 
+3. Pattern detection 
+4. Identification of uncertainty 
+5. Discussion 
+6. Decision 
+7. Formalization 
+8. Implementation 
+We never skip steps.
+
+Decision making:
+When information can be inferred from evidence:
+•Infer it 
+When information cannot be inferred:
+•Do not guess 
+•Do not invent 
+•Ask questions 
+
+Consistency:
+Every new decision must be checked against all previous decisions.
+If a contradiction exists:
+•Identify it
+•Explain it
+•Ask whether the rule or the illustration should change
+
+Rulebook philosophy:
+The rulebook is intended for a future computational system.
+Every rule should therefore be:
+•Explicit 
+•Objective 
+•Reproducible 
+•Computationally understandable 
+If a machine could not execute the rule, then the rule is incomplete.
+
+Our current mission:
+We are not trying to improve individual outputs. We are formalizing, synchronizing, and validating the semantic and visual grammar of the system.
+Our objective is to ensure that the Semantic Methodology, Workflow Grammar, Illustration Philosophy, and Illustration Grammar operate as a coherent and internally consistent system before implementation and validation.
+Success criterion:
+The current phase will be complete only when:
+• The governing methodology documents are internally consistent.
+• The processor is synchronized with the current methodology.
+• The validation suite has been executed successfully.
+• Remaining ambiguities, contradictions, and unresolved rules have been identified and addressed.
+Only then will implementation and large-scale testing begin.
+

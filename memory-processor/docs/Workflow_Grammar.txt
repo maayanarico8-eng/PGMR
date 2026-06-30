@@ -1,0 +1,877 @@
+Purpose:
+This document defines the decision-making workflow that transforms written memories into pictographic representations and ultimately into complete archival objects.
+
+The workflow is organized as a sequence of four rules. Each rule has a specific responsibility and produces a structured output that serves as the input for the next rule.
+The objective is not to reconstruct the memory literally, but to preserve the identity of the memory throughout the entire pipeline.
+All stages are governed by:
+•Semantic Methodology
+•Illustration Philosophy
+•Illustration Grammar
+The Workflow Grammar describes how the current processor operationalizes the principles defined in these governing documents. Successful application of a rule at one stage does not guarantee successful application at later stages. Identity preservation must be evaluated independently at each transformation.
+
+Rule 1 — Semantic Analysis
+Purpose:
+Transform the written memory into a structured semantic representation that captures what happened, who was involved, and which elements are necessary to preserve fidelity to the written memory through the identification and representation of its identity-defining semantic elements.
+Output: Representative Words
+
+Workflow:
+
+Stage 1.1 — Memory Frame Construction
+Construct the contextual frame of the memory. The Memory Frame contains information shared across the memory.
+Memory Frame:
+•Setting
+•Time
+•Place
+•Temporal Context
+•Singular
+•Recurring
+•Habitual
+The Memory Frame produced by Stage 1.1 is consumed by Stage 1.2 as a declared input. Memory Frame fields are integrated into the Event Model during Stage 1.2 construction as Event Properties.
+
+Stage 1.2 — Event Model Construction
+
+Purpose:
+Stage 1.2 is the primary semantic extraction stage of Rule 1. Its responsibility is to analyze the written memory and construct the Event Model — a structured semantic representation of what happened in the remembered event.
+
+Stage 1.2 is responsible for all semantic content that enters the pipeline. Subsequent stages derive from, transform, or evaluate what Stage 1.2 produces. No stage after Stage 1.2 independently re-reads or re-extracts information from the written memory.
+
+Inputs:
+•Written Memory
+•Memory Frame (produced by Stage 1.1)
+
+P1 Clarification Authorization:
+Stage 1.2 is authorized to reconstruct semantic information from both explicit lexical content and grammatical structure, in accordance with P1 Clarification. Grammatically encoded participants, relationships, roles, and event structures are identified and recorded during Event Model construction. Using grammatically encoded information does not constitute semantic enrichment because the information originates from the written memory itself.
+
+Output:
+Event Model
+
+The Event Model is an internal analytical representation. It is not part of the final output of Rule 1. Its purpose is to serve as the structured semantic foundation from which Stage 1.3 derives Semantic Fields and Stage 1.4 derives Semantic Structure and Must Preserve.
+
+Event Model Architecture:
+The Event Model contains two layers.
+
+Layer 1 — Structural Components
+Layer 1 is divided into two internal categories.
+
+Layer 1A — Semantic Structural Components
+These are structural components of the remembered event that also function as independently evaluable semantic meanings. Layer 1A elements automatically become Semantic Field candidates in Stage 1.3.
+
+Participants
+Entities — persons, groups, or other agentive referents — whose presence in the remembered event contributes to its structure, participant configuration, or identity. The narrator is recorded as a Participant entry whenever they appear in the written memory, whether as an event participant or as the author of the memory. Whether the narrator qualifies as a Semantic Field candidate is determined by D3, which is applied as a candidate eligibility rule during Stage 1.3.
+
+Actions
+Dynamic events, activities, or occurrences that took place within the memory. Actions describe what happened. They are expressed through dynamic rather than stative language in the written memory. A memory may contain one or more Actions, each recorded separately within the Event Model. When multiple Actions are present, they are recorded in the order of their occurrence within the reconstructed chronological event structure.
+
+Objects
+Entities — things, concepts, skills, languages, or other non-agentive referents — involved in the event but not occupying Participant Roles. Objects are typically the target, instrument, subject matter, or recipient-entity of Actions. When a location functions as the destination or structural target of an Action, it may be recorded as an Object.
+
+Relationships
+Persistent states, conditions, identities, affiliations, dependencies, or configurations between elements that exist independently of any specific Action in the Event Model. Relationships are expressed through stative rather than dynamic language in the written memory.
+Relationships are not generated for relational information that is already fully expressed through an Action and its Participant Roles. When an Action and its Participant Roles fully describe the relational structure between participants, no separate Relationship entry is required.
+When a memory expresses both a dynamic event and an enduring relational state, both an Action entry and a Relationship entry are generated, provided that the written memory expresses the persistent state and does not merely imply it.
+
+Layer 1B — Structural Metadata
+Structural elements required to understand how the event is organized. Layer 1B elements do not become Semantic Field candidates. They feed directly into Semantic Structure, Must Preserve, and Relational Anchoring.
+
+Participant Roles
+Structural descriptions of how Participants function within Actions and event configurations. Participant Roles are not independent semantic meanings and are not intended to become Representative Words. Each Participant Role is recorded as a structural annotation on its associated Participant entry, specifying the structural function that participant fulfills within the event.
+Examples:
+•Grandfather = Participant; Giver = Participant Role
+•Narrator = Participant; Recipient = Participant Role
+
+Layer 2 — Semantic Properties
+Semantic properties attached to structural elements or to the event as a whole. Layer 2 elements do not automatically become Semantic Field candidates. They require Semantic Field eligibility evaluation in Stage 1.3.
+
+Component Properties
+Semantic properties attached to specific Layer 1A Semantic Structural Components. A Component Property undergoes reducibility evaluation in Stage 1.3.
+Example: In "old armchair," "old" is a Component Property of the Object "armchair."
+
+Event Properties
+Semantic properties attached to the event as a whole rather than to any specific structural component. Event Properties are derived from the Memory Frame produced by Stage 1.1 and integrated into the Event Model during Stage 1.2 construction. Memory Frame fields — Setting, Time, Place, and temporal scope values — are integrated as Event Properties.
+Compound temporal expressions — such as "every Saturday" or "every summer" — are decomposed during Stage 1.2 construction using the following procedure.
+
+Step 1 — Identify the temporal referent. The temporal referent is the component of the compound expression that carries independently meaningful temporal content: a named time unit, period, or occasion such as Saturday, summer, morning, or weekday. The temporal referent names the specific time to which the expression refers.
+
+Step 2 — Identify the structural temporal modifier. The structural modifier is the component that signals repetition, regularity, or habitual recurrence rather than a single temporal occurrence. Structural modifiers include expressions such as "every," "each," "always," "regularly," and equivalent constructions. The modifier encodes the temporal pattern of the event — how frequently or regularly it occurred — rather than the time itself.
+
+Step 3 — Record the temporal referent as an Event Property. Record the identified temporal referent as a clean Event Property in the Event Model, without the structural modifier attached. This is the form that Stage 1.3 receives and evaluates for Semantic Field candidacy.
+
+Step 4 — Record the structural modifier as a temporal annotation. Record the structural temporal pattern as an annotation on the Event Property using the applicable temporal scope value: Recurring, when the event occurred at a named temporal referent on repeated occasions; or Habitual, when the event occurred regularly without a specifically named temporal referent anchoring each occurrence. The distinction between Recurring and Habitual does not affect any Rule 1 stage. Both annotation types are excluded from Semantic Field candidacy.
+
+Step 5 — Pass only the temporal referent forward. Stage 1.3 receives the clean Event Property containing the temporal referent. The temporal annotation is not passed to Stage 1.3. It is retained in the Event Model as a record of the memory's occurrence pattern.
+
+Recurring and Habitual temporal annotations do not become Semantic Field candidates. They are preserved in the Event Model as a record of the memory's occurrence pattern. The visual language intentionally does not represent occurrence pattern as a distinct semantic element. This is an abstraction decision: the language preserves the strongest faithful representation of the memory's identity-critical elements without independently representing whether the remembered event was a single occurrence, a recurring event, or a habitual practice.
+
+
+Stage 1.3 — Semantic Fields Derivation
+
+Purpose:
+Stage 1.3 is a transformation stage, not an extraction stage. Its responsibility is to transform the structured Event Model produced by Stage 1.2 into candidate Semantic Fields that can later be evaluated by the Memory Identity Gate.
+
+Stage 1.3 does not independently re-read or re-extract information from the written memory. All semantic content available to Stage 1.3 originates from the Event Model.
+
+Input:
+Event Model (produced by Stage 1.2)
+
+Semantic Field Definition:
+A Semantic Field is a discrete semantic meaning derived from the written memory that functions as an independent semantic unit within the memory.
+
+Semantic Fields are candidates for identity evaluation and may later be classified as Constituents or Details during Stage 1.5.
+
+Not every Event Model element becomes a Semantic Field. Meanings that exist only as descriptions, qualifications, or properties of another meaning are not extracted as independent Semantic Fields.
+
+A descriptive element becomes a Semantic Field only when it introduces a semantic meaning that is not reducible to the element it describes.
+A descriptive element is reducible when its meaning remains entirely contained within the meaning of the element it describes.
+A descriptive element is not reducible when it introduces a separate semantic domain that cannot be fully reduced to the element it describes.
+
+The distinction is not between nouns and qualities, but between meanings that function independently within the memory and meanings that exist only through another meaning.
+
+Transformation Procedure:
+
+Step 1 — Receive Event Model
+Stage 1.3 receives the Event Model produced by Stage 1.2.
+The Event Model contains:
+•Layer 1A Semantic Structural Components: Participants, Actions, Objects, Relationships
+•Layer 1B Structural Metadata: Participant Roles
+•Layer 2 Semantic Properties: Component Properties and Event Properties
+
+Step 2 — Promote Semantic Structural Components
+All Layer 1A Semantic Structural Components automatically become Candidate Semantic Fields.
+This includes Participants, Actions, Objects, and Relationships.
+No reducibility evaluation is performed for Layer 1A elements.
+
+Step 3 — Exclude Structural Metadata
+Participant Roles do not become Candidate Semantic Fields.
+They are routed directly to Semantic Structure, Must Preserve, and Relational Anchoring.
+Participant Roles are structural information rather than independently evaluable semantic meanings.
+
+Step 4 — Evaluate Component Properties
+Each Component Property is evaluated through the Reducibility Criterion.
+A Component Property becomes a Candidate Semantic Field when it introduces a semantic meaning that cannot be fully reduced to the element it modifies.
+A reducible Component Property remains an attribute of its host element and does not enter the Candidate Semantic Field set.
+
+Step 5 — Evaluate Event Properties
+Each Event Property is evaluated through the Reducibility Criterion.
+An Event Property becomes a Candidate Semantic Field when it introduces a semantic meaning that cannot be fully reduced to the event it characterizes.
+A reducible Event Property remains an Event Property annotation and does not enter the Candidate Semantic Field set.
+Recurring and Habitual temporal annotations do not become Candidate Semantic Fields. They are retained in the Event Model as a record of the memory's occurrence pattern.
+
+Reducibility Clarification:
+Certain classes of elements consistently satisfy the Reducibility Criterion because they introduce semantic domains whose meaning exists independently of the remembered event. Examples include:
+•Locations
+•Temporal Referents
+•Languages
+•Institutions
+•Cultural Practices
+These are not exceptions to the Reducibility Criterion. Rather, they are classes of meanings for which the criterion consistently produces a non-reducible result. Such elements therefore become Candidate Semantic Fields and proceed to D1 evaluation.
+D1 remains responsible for determining whether any specific instance survives as a Representative Word.
+
+Step 6 — Apply D3 Narrator Eligibility Rule
+The narrator enters Stage 1.3 as a Participant candidate when present in the Event Model.
+D3 determines whether the narrator remains an eligible Candidate Semantic Field.
+If D3 conditions are satisfied, the narrator remains in the candidate set.
+If D3 conditions are not satisfied, the narrator is removed from the candidate set.
+
+Step 7 — Output Candidate Semantic Fields
+Stage 1.3 outputs the final Candidate Semantic Field set.
+This set becomes the input to Stage 1.4 and Stage 1.5.
+
+Output:
+Semantic Fields
+
+Stage 1.4 — Semantic Structure Derivation
+Purpose:
+Identify the event structure, participant structure, relationships, and identity-critical constraints of the memory.
+
+Stage 1.4 is a synthesis and evaluation stage. It does not re-read or re-extract information from the written memory. All content available to Stage 1.4 originates from the Event Model and Semantic Fields.
+
+Inputs:
+Event Model (Stage 1.2)
+Semantic Fields (Stage 1.3)
+
+Step 1 — Read Inputs
+Read the complete Event Model produced by Stage 1.2. This includes all Layer 1A Semantic Structural Components (Participants, Actions, Objects, Relationships), all Layer 1B Structural Metadata (Participant Roles), and all Layer 2 Semantic Properties (Component Properties and Event Properties).
+Read the Semantic Fields set produced by Stage 1.3.
+
+Step 2 — Construct the Semantic Structure
+Synthesize the Semantic Structure from the Event Model and Semantic Fields. The Semantic Structure is a factual synthesis of the memory's identity-defining structure. It organizes information already captured in the Event Model from the perspective of memory identity. It does not introduce new semantic content.
+
+The Semantic Structure records:
+Participant structure — the participants in the event, their Participant Roles, and their structural positions relative to each other and to the event's Actions.
+Action structure — the events that occur within the memory and their chronological ordering as recorded in the Event Model.
+Relationship structure — the persistent states and configurations that connect participants, as recorded in Layer 1A Relationships.
+Event Properties — the contextual properties such as locations and temporal referents that frame the event as a whole, as recorded in Layer 2.
+Structural configurations — multi-element participant and relational configurations that emerge from the above. These are the candidate structures that Steps 3 through 5 evaluate for Must Preserve generation.
+
+The Semantic Structure is the interpretive foundation from which Must Preserve entries are derived. It is also consumed by Stage 1.6 and R3 as a reference for chronological sequence assignment alongside the Event Model.
+
+Step 3 — Identify Candidate Structural Configurations
+Read the Semantic Structure and identify all multi-element structural configurations requiring Must Preserve evaluation. Candidates are drawn from two exhaustive sources.
+
+Source A — Participant Role combinations:
+For each Action recorded in Layer 1A, read all Participant Role entries in Layer 1B associated with that Action. Where an Action involves two or more Participants in defined structural Roles, the combination of those Participants and their Roles within that Action constitutes a candidate multi-element configuration.
+
+Source B — Relationship entries:
+Each Layer 1A Relationship describes a persistent state or configuration between two or more elements. Each Relationship entry constitutes a candidate multi-element configuration by definition.
+
+These two sources are exhaustive within the Event Model architecture. Every multi-element structural dependency recorded in the Event Model originates in one of these two sources. Any structural dependency that does not appear in either source was not explicitly expressed in the written memory and cannot be used as the basis for a Must Preserve entry without constituting semantic enrichment in conflict with P1.
+
+Configurations involving fewer than two elements are excluded at this step. Single-element identity requirements are governed exclusively by D1, D2, and Stage 1.5 and do not generate Must Preserve entries.
+
+Step 4 — Apply the D1 Identity Test to Each Candidate Configuration
+For each candidate multi-element structural configuration identified in Step 3, apply the D1 identity test at the structural level.
+
+The test question is:
+"Would the absence of this structural configuration from the Representative Words set produce a meaningfully different memory, or the same memory with reduced specificity?"
+
+A configuration is identity-critical when its absence would produce a meaningfully different memory. It proceeds to Step 5.
+A configuration is not identity-critical when its absence would reduce specificity while preserving identity. It does not generate a Must Preserve entry and remains recorded in the Semantic Structure as structural context.
+
+Step 5 — Generate Must Preserve Entries
+For each structural configuration that passes the D1 identity test in Step 4, generate a Must Preserve entry.
+
+Each Must Preserve entry specifies:
+Required elements — the two or more elements whose combined presence in the Representative Words set is required to preserve the configuration.
+Structural configuration — the participant role, relational position, or event function that defines what must be preserved, expressed as a reference to the Participant Role and Relationship structure of the Event Model.
+
+A memory may produce zero, one, or multiple Must Preserve entries. An empty Must Preserve set is a valid outcome. Stage 1.7 proceeds without constraint evaluation when no entries exist.
+
+Step 6 — Output
+Output both products to their respective downstream stages.
+
+Output:
+Semantic Structure
+A factual synthesis of the memory's identity-defining structure, derived from the Event Model and Semantic Fields. The Semantic Structure identifies the participant configurations, relationship structures, and event structures that define the memory's identity. It serves as the interpretive foundation for Must Preserve generation and as a reference for sequence assignment in Stage 1.6 and R3.
+
+Must Preserve
+A set of explicit multi-element structural constraints derived from the Semantic Structure. Each Must Preserve entry describes an identity-critical structure whose preservation depends on the combined presence and configuration of two or more elements. Entries are generated exclusively from Participant Role combinations (Layer 1B) and Relationship entries (Layer 1A). These constraints function as structure-preservation requirements for the final Representative Words set and are evaluated during Stage 1.7.
+
+Stage 1.5 — Element Evaluation and Classification
+
+Purpose:
+Classify each Semantic Field element as a Constituent or Detail while documenting the reasoning process through the Consideration Record.
+
+Input:
+Candidate Semantic Fields (Stage 1.3)
+Event Model (Stage 1.2, available for Relational Anchoring and Distinct Contribution assessment)
+
+The Memory Identity Gate remains the primary classification mechanism.
+
+For each Semantic Field element, the processor first evaluates whether removing the element would cause the memory to become a meaningfully different memory or whether the memory would remain the same memory with reduced specificity.
+
+The Gate produces one of three outcomes:
+•Clear Constituent
+•Clear Detail
+•Ambiguous — Ambiguous indicates that the processor cannot confidently determine whether removal would produce a categorically different memory or the same memory with reduced specificity.
+
+Evaluation Criteria:
+
+Relational Anchoring and Distinct Contribution are evaluated for every element regardless of Gate outcome and recorded in the Consideration Record. When the Gate produces a clear classification, both criteria function as explanatory and audit information. When the Gate produces an ambiguous outcome, both criteria provide structured evidence that informs the subsequent Gate re-evaluation.
+
+Relational Anchoring
+
+Relational Anchoring evaluates whether an element is required to preserve the structural configuration of the event described by the Event Model.
+
+An element is relationally anchored when its removal would cause other elements to lose their structural role, relational position, or event function within the event configuration.
+
+An element is not relationally anchored when its removal leaves the structural configuration of the remaining elements unchanged.
+
+Relational Anchoring is assessed using the Actions, Relationships, and Participant Roles recorded in the Event Model.
+
+Relational Anchoring produces evidence toward a Constituent classification when strong, and toward a Detail classification when weak.
+
+When the Gate produces a clear classification, Relational Anchoring functions as explanatory and audit information. When the Gate produces an ambiguous outcome, Relational Anchoring provides structured structural evidence that informs the subsequent Gate re-evaluation.
+
+Relational Anchoring never independently determines classification.
+
+Distinct Contribution
+
+Distinct Contribution evaluates whether the information contributed by an element remains present in the remaining Semantic Field set after that element is removed.
+
+An element has a distinct contribution when its removal causes information to become absent that is not carried by any remaining Semantic Field.
+
+An element does not have a distinct contribution when the information it contributes remains present in the remaining Semantic Field set after its removal.
+
+Distinct Contribution is assessed by comparing the element under evaluation with the remaining Semantic Fields and determining whether the information contributed by that element persists or disappears.
+
+Distinct Contribution produces evidence toward a Constituent classification when high, and toward a Detail classification when low.
+
+When the Gate produces a clear classification, Distinct Contribution functions as explanatory and audit information. When the Gate produces an ambiguous outcome, Distinct Contribution provides structured semantic evidence that informs the subsequent Gate re-evaluation.
+
+Distinct Contribution never independently determines classification.
+
+Classification Procedure:
+
+When the Gate produces a clear classification, that classification stands. A Detail remains a Detail even when criteria evidence appears strong. If this creates tension with the Gate classification, the tension is recorded in the Consideration Record and remains visible for validation purposes.
+
+The criteria do not function as an independent selection mechanism and cannot override a clear Gate determination.
+
+Ambiguity Resolution Mechanism:
+
+The ambiguity resolution mechanism is not a rule that determines whether Relational Anchoring or Distinct Contribution prevails. It is a more informed re-application of D1. The Gate remains the primary classification mechanism throughout Stage 1.5. Relational Anchoring and Distinct Contribution function exclusively as evidence criteria and never directly produce a classification.
+
+When the Gate produces an ambiguous outcome, the Gate is re-applied using the evidence produced by Relational Anchoring and Distinct Contribution.
+
+The Gate question remains unchanged:
+"Would removing this element produce a meaningfully different memory, or the same memory with reduced specificity?"
+
+The difference is that the processor now evaluates that question using the additional structural and semantic evidence recorded in the Consideration Record.
+
+If the second Gate evaluation produces a clear outcome, that outcome becomes the Final Classification.
+
+If the second Gate evaluation remains ambiguous, the Conservative Default is applied.
+
+Conservative Default:
+
+When identity relevance cannot be confidently excluded after all available evidence has been exhausted, the element remains included as a Constituent.
+
+This default reflects the asymmetry established by P1: when classification cannot be confidently determined, the cost of incorrectly excluding an identity-critical element from the Representative Words set is greater than the cost of retaining an element that is ultimately a Detail. The methodology therefore prefers over-preservation to premature reduction when uncertainty remains unresolved.
+
+Output:
+Consideration Record
+
+For each Semantic Field element, the Consideration Record contains:
+•Gate Outcome
+•Relational Anchoring Result
+•Distinct Contribution Result
+•Final Classification
+•Classification Rationale
+
+Stage 1.6 — Representative Words Selection
+Purpose:
+Construct the final Representative Words set from the Constituent set produced by Stage 1.5 and assign sequence positions to each Representative Word in accordance with R3.
+
+Input:
+Constituent classifications from Consideration Record (Stage 1.5)
+Event Model (Stage 1.2)
+Semantic Structure (Stage 1.4)
+
+Stage 1.6 is an assembly and ordering stage. It does not perform an additional identity-based selection step. The determination of which elements enter the Representative Words set through the standard pathway has already been made by Stage 1.5 through the Memory Identity Gate. Stage 1.6 formalizes that determination into an ordered set. Stage 1.7 may subsequently augment the set through the structural pathway when Must Preserve constraints require it.
+
+Assembly:
+Every element classified as a Constituent by Stage 1.5 is directly promoted to Representative Word status. No Constituent may be excluded from the Representative Words set. No additional evaluation criterion is applied at this stage.
+
+Sequence Ordering:
+Each Representative Word is assigned a sequence position in accordance with R3. Sequence position is derived from the chronological structure of the remembered event as reconstructed in the Event Model and Semantic Structure. The Event Model is authoritative for sequence assignment; the order in which the memory is narrated serves as evidence from which the Event Model is constructed but does not independently determine sequence position. Sequence position is not determined by semantic category.
+
+Semantic Sequence Positions:
+Sequence positions produced by this procedure are semantic positions within the ordered Representative Words set. They describe the chronological structure of the remembered event and serve as the structural input to Rule 2. A Representative Word's semantic sequence position does not determine its representational mode in Rule 2. Whether a Representative Word receives independent visual representation or contextual expression is determined by Rule 2 independently of its sequence position.
+
+Step 1 — Read the Chronological Backbone
+Read the Event Model and identify all Actions in their recorded chronological order. Actions are recorded in Stage 1.2 in the order of their occurrence within the reconstructed event structure. The chronological sequence of Actions constitutes the positional backbone against which all Representative Words are positioned. Each Action defines a chronological moment. All other elements are positioned relative to these moments.
+
+Step 2 — Assign Sequence Positions
+For each Representative Word in the unordered set, assign a sequence position according to its element type.
+
+Actions
+Assigned sequence positions in the order they appear in the Event Model's chronological Action record.
+
+Participants
+Assigned a sequence position corresponding to their first chronological appearance in the Event Model. First chronological appearance is the earliest Action in which the Participant holds a Participant Role. Within the chronological cluster of that Action, Participants occupying initiating or agentive roles are positioned before their associated Action; Participants occupying receiving or target roles are positioned after it.
+
+Objects
+Assigned a sequence position corresponding to the chronological position of the Action they are associated with in the Event Model. Within that chronological cluster, Objects are positioned after their associated Action.
+
+Locations and Temporal Referents
+Assigned a sequence position corresponding to the chronological point at which they enter or contextualize the event structure. A Location or Temporal Referent that contextualizes the event as a whole is positioned before the first Action. A Location or Temporal Referent associated with a specific chronological moment is positioned at that moment.
+
+Qualities
+Derive their sequence position from the element they modify. A Quality occupies the same chronological position as its host element and follows the host element within that position.
+
+Relationships
+Relationships that have survived as Representative Words do not receive an independent sequence position. Their sequence expression is mediated through the positions of the elements they connect.
+
+Step 3 — Construct the Ordered Sequence
+Arrange all Representative Words in ascending sequence position order to produce the ordered Representative Words set.
+
+Step 4 — Apply Directional Convention
+For Hebrew memories, the ordered sequence is constructed and read from right to left in accordance with the Illustration Philosophy. Sequence position 1 corresponds to the rightmost element in the rendered sequence.
+
+Output:
+Representative Words
+
+Stage 1.7 — Must Preserve Consistency Check
+Purpose:
+Verify that the Representative Words set selected by Stage 1.6 satisfies all structural constraints defined in Must Preserve. Must Preserve evaluates structure-level preservation requirements across the complete selected set. This is a logically necessary and independent validation layer because element-level classification in Stage 1.5 does not guarantee preservation of the structural configurations that give selected elements their meaning within the memory.
+
+Inputs:
+Representative Words set (Stage 1.6)
+Must Preserve constraints (Stage 1.4)
+
+Step 1 — Read Must Preserve Constraints
+Read all Must Preserve constraints produced by Stage 1.4. If no Must Preserve constraints exist, the Representative Words set is structurally validated without further evaluation. Proceed to Stage 1.8.
+
+Step 2 — Evaluate Each Constraint
+For each Must Preserve constraint, evaluate whether the Representative Words set satisfies the constraint.
+A constraint is satisfied when all elements required by the constraint are present in the Representative Words set and their structural configuration — as encoded in the Participant Role and Relationship structure of the Event Model — is preserved by the selected set.
+A constraint is not satisfied when one or more required elements are absent from the Representative Words set.
+
+Step 3 — Determine Outcome
+If all constraints are satisfied: output Validated Representative Words. Proceed to Stage 1.8.
+If one or more constraints are not satisfied: for each unsatisfied constraint, identify the required element or elements that are absent from the Representative Words set. Apply the Structural Failure Response.
+
+Step 4 — Structural Failure Response
+For each element required by an unsatisfied Must Preserve constraint and absent from the Representative Words set, apply the following procedure.
+
+Sub-step 4a — Second Gate Evaluation
+Re-apply the Memory Identity Gate to the absent element, informed by the Must Preserve constraint as set-level structural evidence.
+The Gate question remains unchanged: "Would removing this element produce a meaningfully different memory, or the same memory with reduced specificity?"
+The evidence now available includes the set-level structural evidence that was not available during the original Stage 1.5 evaluation: the Must Preserve constraint identifies a structural configuration that Stage 1.4 determined to be identity-critical, and the element's absence from the current set prevents this configuration from being preserved. This constitutes genuinely new evidence — it describes the concrete structural state of the actual selected set rather than the element's structural position in the abstract.
+
+Sub-step 4b — If the Second Gate Evaluation Produces Clear Constituent
+Reclassify the element as a Constituent. Update the Consideration Record to reflect the reclassification and its basis. Promote the element to Representative Word status through the standard D4 pathway. Proceed to Step 5.
+
+Sub-step 4c — If the Second Gate Evaluation Produces Clear Detail
+The Gate's element-level determination and the Must Preserve structure-level requirement remain in conflict. This conflict does not indicate a Gate error. The Gate has correctly evaluated element-level identity relevance. Must Preserve has independently evaluated structure-level preservation requirements for the complete selected set. These are distinct analytical functions operating at different levels of granularity.
+The element is promoted to Representative Word status on the authority of the Must Preserve structural constraint. Record this promotion in the Consideration Record, specifying the Must Preserve constraint as the basis for inclusion and noting that the element's Gate classification remains Detail at the element level.
+
+Step 5 — Re-execute Stage 1.7
+After all Structural Failure Responses have been applied and all absent elements have been added to the Representative Words set, re-execute Stage 1.7 from Step 2 with the updated Representative Words set.
+This re-execution is bounded. Each iteration either satisfies previously unsatisfied constraints or confirms all constraints are satisfied. Elements once added to the set are not removed. The check terminates when all Must Preserve constraints are satisfied.
+
+Output:
+Validated Representative Words
+
+The Validated Representative Words set contains all elements promoted through the standard D4 pathway and any elements additionally promoted through the structural pathway. Both categories are committed to visual representation in accordance with the Visual Representation Principle. The basis for each element's inclusion is recorded in the Consideration Record.
+
+Stage 1.8 — Representation Boundary
+Purpose:
+Establish the boundary between semantic interpretation and visual representation.
+P1 and P3 of the Semantic Methodology govern semantic extraction and memory interpretation. During semantic analysis, the system may not introduce entities, participants, objects, actions, relationships, events, or meanings that are not supported by the memory itself. However, P1 and P3 do not prohibit visual representation choices introduced after semantic extraction has been completed.
+Visual representation may employ pictographic proxies, substitutions, abstractions, or other representational mechanisms, provided that they are explicitly treated as representation decisions rather than factual elements of the remembered event. Such representational choices do not alter the semantic interpretation established during Rule 1. They may introduce visual proxies that assist communication, but they do not modify what the memory is understood to contain.
+The semantic layer determines what happened.
+The representation layer determines how it is shown.
+
+Output:
+Validated Representative Words
+The Validated Representative Words set produced by Stage 1.7 passes to Rule 2 with the Representation Boundary established. All elements in this set are committed to visual representation in accordance with the Visual Representation Principle. Visual representation mechanisms introduced in Rule 2 are explicitly classified as representation decisions rather than factual claims about the memory.
+
+Rule 2 — Visual Representation Planning (VRP)
+Purpose:
+Determine how each surviving semantic meaning should be carried into the visual language.
+The objective of the VRP is not to determine how pictograms are drawn.
+Its objective is to determine how meaning survives into visual representation.
+Output: Pictogram Specifications
+
+Optimization Principle:
+Rule 2 operates as an optimization system, not as a test of whether an adequate representation exists. For each Representative Word, the processor discovers, evaluates, and selects existing representational conventions to identify the strongest faithful representation achievable within the language's governing constraints. The goal is not to find the theoretically ideal representation of a concept. The goal is to find the strongest available representation among all viable candidates discovered through evidence search and evaluated against the language's governing architecture.
+
+A representation may be limited by the language's current vocabulary, by Illustration Grammar Rule 4 non-collision requirements, or by the cultural establishment available within the relevant evidence sources. These limitations are not failures of the processor. They are the natural consequence of operating within a coherent visual language. A representation that falls short of the ideal is still the strongest faithful representation currently available, and it fully satisfies the Visual Representation Principle.
+
+Every Representative Word that passes Condition A receives a visual representation. The selected representation is always the strongest candidate that survives the language's governing constraints. Phase 2.5 evaluates and records the representational fidelity of that selection. No Representative Word is returned to an earlier stage or declared unrepresentable.
+
+Contextual Expression Mechanisms
+
+Rule 2 employs two operative mechanisms for contextual expression. An element assigned the Contextual representation mode does not receive an independent visual form. Its meaning is conveyed through its positional relationship to other independently represented elements in the sequence. The two operative mechanisms through which this positional meaning is produced are defined below.
+
+Sequence Order
+Sequence Order is a contextual expression mechanism in which an element's meaning is conveyed through its position in the ordered sequence relative to other independently represented elements. The element's sequence position — assigned by R3 — communicates its semantic role within the remembered event: participant function, event relationship, causal position, or relational configuration between participants. Rule 2 does not reassign sequence positions. It determines whether the meaning of an element can survive into visual representation through the sequence position that R3 has already established.
+Sequence Order is capable of carrying the following classes of contextual meaning: participant roles, event structure, causal relationships, and relational configurations between participants.
+
+Sequential Adjacency
+Sequential Adjacency is a contextual expression mechanism in which an element's meaning is conveyed through its status as an immediate neighbor of another independently represented element in the sequence. Two elements are sequentially adjacent when they occupy consecutive positions in the ordered sequence with no intervening element between them.
+Sequential Adjacency carries contextual meanings that are structurally dependent on immediate neighboring — specifically, modification and qualification relationships in which an element's meaning is definitionally contingent on the referent of the element it directly neighbors in the sequence. Sequential Adjacency does not apply to elements whose adjacency in the sequence is incidental to chronological ordering. It applies only when the immediate neighbor relationship is the mechanism through which the element's meaning is communicated.
+Sequential adjacency is a positional concept, not a visual-distance concept. All pictograms maintain equal visual spacing throughout the rendered sequence regardless of their semantic relationships. Sequential adjacency refers exclusively to the absence of intervening elements in the sequence order.
+
+Emergent Relational Meaning
+When Sequence Order and Sequential Adjacency are applied to the Representative Words set, the resulting arrangement produces relational meaning: the relationships between referents that the memory represents become readable from the sequence structure. This relational meaning is an emergent result of applying the two operative mechanisms to the set as a whole. It is not produced by an additional independent mechanism.
+
+Taxonomy Scope
+The contextual expression taxonomy recognized by the current methodology contains exactly two operative mechanisms: Sequence Order and Sequential Adjacency. No mechanisms involving 2D spatial composition, variable visual spacing, proximity gradients, or conventional relational templates are recognized. Any contextual meaning that cannot be expressed through Sequence Order or Sequential Adjacency cannot be expressed contextually within the current language and must be resolved through independent representation.
+
+Phase 2.1 — Semantic Nature Characterization
+
+Input:
+Validated Representative Words (Rule 1 output, Stage 1.8)
+
+Classify each Representative Word according to its semantic nature. Possible categories include:
+•Entity
+•Action
+•Relational Meaning
+•Quality / State
+
+Phase 2.2 — Possibility Inventory
+
+Purpose:
+Determine which representational strategies are available for each Representative Word. No final decision is made at this stage. The purpose is to establish the full space of available representational options before any selection is made.
+
+Input:
+Semantic nature classifications (Phase 2.1)
+Event Model (Stage 1.2, for Contextual Expression Availability assessment)
+
+Possible availability:
+•Independent Representation Available
+•Contextual Expression Available
+•Both Available
+
+Independent Representation Availability:
+Independent representation is available for a Representative Word when Condition A and Condition B are both satisfied. Both conditions are established below.
+
+Condition A — Independent Center of Meaning:
+The concept the element represents must be capable of functioning as an independent center of meaning. A concept satisfies this condition when it can constitute the semantic identity of a memory without requiring another concept to serve as its primary semantic anchor — when it can be what a memory is about, rather than functioning exclusively to qualify, modify, or measure another semantic unit that the memory is about.
+
+This condition formalizes what P1 of the Illustration Philosophy presupposes by the word "referent." It is derived from the Memory Identity framework of D1, applied at the concept-class level. D1 identifies a specific element as identity-critical when its removal transforms a memory into a meaningfully different memory. The same criterion, applied at the concept-class level, identifies which concepts are capable of being identity-critical in memories — and therefore eligible for independent pictographic representation — in principle.
+
+Condition A is not determined by Phase 2.1 semantic nature classification alone. Elements classified as Quality/State, Action, or any other semantic nature category may satisfy or fail this condition depending on the specific concept under evaluation. The assessment evaluates the concept itself rather than its grammatical or semantic category.
+
+When Condition A is not satisfied, independent representation is not available for this element. The element proceeds to Contextual Expression Availability evaluation only.
+
+When Condition A is satisfied, the element proceeds to Condition B evaluation.
+
+Condition B — Practical Availability:
+
+Condition B identifies the strongest available pictographic form for a Representative Word that has passed Condition A. It operates as an optimization procedure: the processor discovers existing representational conventions, gathers evidence of their cultural establishment, evaluates all available candidates against the governing constraints, and selects the strongest surviving representation. The processor does not invent new representational conventions. It discovers, evaluates, and selects existing ones. Realization of the selected representation within the project's illustration language is the responsibility of Rule 3.
+
+Condition B always produces a selection. The selected candidate is the strongest available representation within the language's governing constraints. Its representational fidelity is assessed by Phase 2.5. Condition B's output is the selected candidate representation, comprising the visual form, its source provenance, the Catalog ID when the selected candidate originates from the project's pictogram catalog, its strategy classification, and the evidence basis for its recognizability assessment. This output is the required input for Phase 2.3 and all subsequent phases.
+
+The procedure consists of four stages executed in sequence.
+
+Stage B1 — Evidence Search:
+
+The processor searches for established pictographic representations of the concept whose semantic identity was established by Rule 1. The search is concept-directed, not lexically directed: the processor searches for how the concept — not the particular word or grammatical form used to express it in the written memory — is represented in established pictographic conventions.
+
+The project's own pictogram catalog is the first evidence source searched. If the catalog contains an established form for the concept, that form enters the candidate pool. Its prior establishment within the language contributes to its P2 grounding — it carries evidence of recognized use within this specific system. This contribution is evidence, not authority. Catalog entries do not receive automatic selection priority. Every catalog candidate participates in Stage B3 evaluation on the same basis as every other candidate. If the evaluation identifies a stronger representation through external evidence search, that representation is the appropriate selection. The catalog functions as one source of P2 evidence among others, not as the determiner of outcome.
+
+External pictographic systems and culturally established conventions constitute the broader evidence base. The processor examines established pictographic systems to identify forms recognized by viewers in the relevant cultural context as representing the concept under evaluation. External sources are consulted as evidence of cultural establishment and not as authoritative sources from which forms are directly imported. The representational fidelity of a candidate derived from an external source is grounded in the breadth and consistency of that external evidence — how widely and consistently the form appears as the recognized representation of this concept across independent pictographic systems. Any candidate derived from an external source must be realized within the Illustration Grammar through the language's own construction standards. P3 governs: individual pictographic representations must adapt to the language; the language must never adapt to an individual representation.
+
+The cultural context governing the recognizability assessment is the Hebrew and Israeli cultural context in which this language operates. P2's uninformed viewer is a viewer uninformed about this specific memory, situated within that cultural context.
+
+All forms discovered through Stage B1 are assembled into the candidate pool.
+
+Stage B2 — Classification:
+
+For each candidate in the pool, the processor identifies which representational strategy the form instantiates. The Representational Strategy Framework is descriptive, not prescriptive. It classifies discovered candidates according to the mechanism by which each form represents its concept. It does not prescribe how candidates are generated, does not require the processor to search strategy-by-strategy, and does not supplement the candidate pool. Evidence search in Stage B1 produces the candidates. Stage B2 describes what those candidates are doing representationally. This classification determines which validity considerations are most operationally relevant during Stage B3 evaluation.
+
+The Representational Strategy Framework defines six strategies, each describing a distinct mechanism of pictographic representation.
+
+Direct Iconic Representation: the form visually resembles the referent at the category level. Applicable to entity-type concepts with stable visual identities and any concept whose categorical identity has a stable visual form.
+
+Established Convention: the form is a culturally designated marker whose recognition as the identity-carrier of this concept is established by cultural convention rather than by visual resemblance. Two variants operate within this strategy: Natural Marker, in which a natural phenomenon serves as the recognized identity-marker of a temporal or environmental category; and Conventional Symbol, in which a culturally designated symbol serves as the recognized identity-marker of an institutional, cultural, or categorical concept.
+
+Metonymic Association: the form depicts the most culturally fixed and exclusively identifying element associated with the concept — an artifact, instrument, product, or characteristic element whose depiction produces unambiguous immediate recognition of this concept category and no other, within the relevant cultural context, from among elements not already committed to other concepts in the language. A variant, Synecdoche, applies when the characteristic element is a constitutive part of the concept's category rather than an externally associated element.
+
+Compositional Representation: the form combines two elements whose specific conjunction uniquely identifies the concept and whose combination achieves immediate recognizability within the standard pictogram size.
+
+Gestural Representation: the form depicts a human gesture or body configuration whose broadly established conventional meaning is specifically and unambiguously associated with this concept in the relevant cultural context.
+
+Visual Metaphor: the form depicts the source domain of a broadly shared conceptual metaphor that is specifically and primarily associated with this concept, where the source domain element is unlikely to be misread as a literal memory content element.
+
+Stage B3 — Candidate Evaluation:
+
+All candidates in the pool are evaluated against the governing constraints. Constraints operate in two modes.
+
+Disqualifying constraints are binary. A candidate failing any disqualifying constraint is removed from the pool regardless of its performance on fidelity dimensions.
+
+The disqualifying constraints are:
+
+Illustration Grammar compliance: the form must be constructible from the language's geometric primitive vocabulary through the permitted transformation operations, at the standard pictogram size, using stroke-based construction without filled regions, from a frontal viewpoint, satisfying all style specifications.
+
+Illustration Grammar Rule 4 non-collision: the form must not already be established as the pictographic representation of a different concept within the language's existing vocabulary. A form committed to another concept is disqualified regardless of its fitness for the current concept.
+
+Stage 1.8 binary condition: the form must not produce a definitive false content reading. A candidate is disqualified when an uninformed viewer would reliably interpret the form as a claim that an additional semantic element is present in the memory — when the content-reading competes definitively with the symbolic reading and the available symbolic convention is insufficient to suppress it.
+
+Fidelity constraints rank the candidates that survive disqualification. P2 recognizability is the primary fidelity criterion: how reliably and immediately does a viewer situated within the language's cultural context recognize the intended concept from this form? Cultural establishment evidence gathered in Stage B1 informs this assessment. P1 categorical identity precision is the secondary fidelity criterion: how precisely does the form represent the category-level identity of the concept rather than one specific instance, one specific aspect, or one adjacent concept?
+
+Stage B4 — Candidate Selection:
+
+The processor selects the strongest surviving candidate from the pool following Stage B3 evaluation. Strength is determined by joint performance on the fidelity criteria: P2 reliability is primary; P1 precision is secondary.
+
+Condition B always produces a selection. The selected candidate is the strongest available representation within the language's governing constraints. Its representational fidelity is assessed by Phase 2.5.
+
+The output of Condition B is the selected candidate representation, comprising: the visual form, its source provenance, the Catalog ID when the selected candidate originates from the project's pictogram catalog, the strategy classification identifying the representational mechanism, and the evidence basis for the P2 recognizability assessment. This output is the required input for Phase 2.3 and all subsequent phases.
+
+Contextual Expression Availability:
+Contextual expression is available for a Representative Word when the following two conditions are both satisfied.
+
+Condition 1 — Mechanism applicability: the element's semantic meaning falls within a class of meanings that Sequence Order, Sequential Adjacency, or both are capable of carrying, as established by the Contextual Expression Mechanisms definition.
+
+Sequence Order applicability is confirmed when the element's meaning is a relational or positional property — a semantic role that is communicable through the element's position before, after, or between other elements in the sequence. The classes of meaning that Sequence Order is capable of carrying are: participant roles, event structure, causal relationships, and relational configurations between participants. The element's Semantic Nature classification from Phase 2.1 and its Event Model role from Stage 1.2 provide the basis for this assessment.
+
+Sequential Adjacency applicability is confirmed when the element's meaning is structurally host-dependent — when the element's semantic content is definitionally contingent on the specific element it directly neighbors in the sequence, and that dependency is not separable from the immediate adjacency relationship. Component Properties and their host-element relationships in the Event Model provide the basis for this assessment.
+
+An element whose meaning does not fall within the classes carried by either mechanism does not satisfy Condition 1. Contextual expression is not available for such elements regardless of the composition of the Representative Words set.
+
+Condition 1 is an in-principle availability check. It determines whether the mechanism is capable of carrying this class of meaning. Whether the specific sequence arrangement is sufficient to preserve memory identity is evaluated separately by Phase 2.3.
+
+Condition 2 — Anchor element presence: the current Representative Words set contains at least one candidate anchor element for which Independent Representation is listed as available in Phase 2.2. A candidate anchor element is a Representative Word for which independent representation is possible in principle and relative to whose sequence position the contextually expressed element's meaning would become interpretable. An element cannot serve as its own anchor.
+
+This condition is evaluated after Phase 2.2 has been applied to all elements in the Representative Words set. It references Phase 2.2 availability assessments — not Phase 2.4 representation mode assignments, which have not yet been made at this stage.
+
+Contextual expression is not available when Condition 2 fails — when no element in the current Representative Words set has Independent Representation listed as available and can serve as a relational anchor for the element under evaluation.
+
+This evaluation determines whether contextual expression is available in principle given the current Representative Words set and sequence structure. Whether contextual expression is sufficient to preserve memory identity is evaluated separately by Phase 2.3.
+
+Phase 2.3 — Visual Disambiguation Test (Test V)
+Apply the Identity Preservation Criterion at the visual level.
+Question:
+If this unit is not independently represented, can the resulting visual sequence still be distinguished from the most plausible alternative memory?
+If contextual expression alone allows collapse into a different plausible memory, contextual expression is insufficient.
+Test V evaluates whether visual representation preserves the identity of the memory for an uninformed viewer.
+The independent representation evaluated by Test V is the form selected by Condition B. Test V compares the sequence without that specific form against the most plausible alternative memory to determine whether contextual expression alone is sufficient for identity preservation. The identification of the most plausible alternative memory is a contextual judgment performed by the processor using the Rule 1 outputs — the Representative Words set, sequence positions, and Event Model — together with reasoning about what an uninformed viewer would most readily interpret from the remaining sequence. No formal procedure for generating this comparator is specified by the methodology; the determination is an implementation-level judgment rather than a methodological specification.
+
+Phase 2.4 — Representation Decision
+Select the representation mode for each Representative Word based on the availability assessment from Phase 2.2 and the identity preservation evaluation from Phase 2.3.
+Possible outcomes:
+Independent — The meaning receives its own visual representation. The form selected by Condition B is assigned as the representative form for this element.
+Contextual — The meaning is carried through the element's Sequence Order position, its Sequential Adjacency to a neighboring element, or both, relative to other independently represented elements in the sequence. The contextually expressed element does not receive an independent visual form. Its meaning is communicated entirely through the arrangement of existing pictograms.
+Both — Contextual expression is available but insufficient for identity preservation. Independent representation is also required. The form selected by Condition B provides the independent visual representation.
+
+Phase 2.5 — Representation Validation and Fidelity Assessment
+
+Validate the selected representation and assess its representational fidelity, strengths, and limitations. Phase 2.5 does not determine the selected representation — that determination was made by Phase 2.4. Phase 2.5 validates the selected representation against the language's governing principles and produces an honest fidelity assessment. The selected representation is, by definition, the strongest available candidate under the methodology. Phase 2.5 assesses how faithfully that candidate represents the intended concept and records the result.
+
+Evaluations include:
+•Independent recognizability — when the representation mode is Independent or Both, assess how reliably and immediately a viewer situated within the language's cultural context recognizes the intended concept from the selected form.
+•Contextual reliability — when the representation mode is Contextual or Both, assess how reliably the positional relationship within the sequence communicates the intended meaning.
+•Reinforcement — when the representation mode is Both, assess whether the independent and contextual dimensions mutually reinforce each other.
+•Representational Fidelity Assessment — assess the overall fidelity of the selected representation to the concept's categorical identity. Record both what the representation achieves and where its limitations lie. Documented limitations are retained not to create a failure state but to support future vocabulary refinement and the ongoing evolution of the visual language.
+
+Fidelity Consequence is an assessment criterion that calibrates the precision standard for the Representational Fidelity Assessment. When a Representative Word was expressed with deliberate specificity in the written memory, the fidelity threshold is higher: an approximate proxy is insufficient and the representation must correspond closely to what the narrator expressed. When a Representative Word was expressed incidentally, the threshold is lower. When the selected representation falls below the threshold established by Fidelity Consequence, the shortfall is recorded explicitly in the Representational Fidelity Assessment rather than silently accepted as adequate.
+
+Phase 2.5 does not return any Representative Word to an earlier stage. The fidelity assessment — including any documented shortfalls — is available to Phase 2.6 and informs the recognition requirements field of the Pictogram Specification.
+
+Phase 2.6 — Pictogram Specification Generation
+Produce the final Pictogram Specifications.
+Each specification describes:
+•The semantic meaning being represented
+•The selected representation mode
+•Realization Specification: this section records all information required by Rule 3 to realize the selected reference pictogram within the project's illustration language. The Realization Specification constitutes the complete handoff from Rule 2 to Rule 3 for each element requiring visual realization. It contains:
+
+Reference form: the selected reference pictogram or representational convention identified by Condition B as the strongest surviving candidate. When the reference originates from the project's pictogram catalog, this field records two named components:
+
+Catalog ID: the immutable identifier of the catalog entry selected by Condition B. Rule 3 uses the Catalog ID as the sole basis for deterministic catalog lookup. The Catalog ID is not subject to interpretation.
+
+Concept: a human-readable description of the concept represented by the catalog entry, retained for documentation and readability. Rule 3 does not use the Concept field for retrieval.
+
+Source provenance: whether the reference form originates from the project's pictogram catalog or from external pictographic evidence gathered during Stage B1.
+
+Representational strategy: the strategy classification established during Stage B2, identifying the mechanism by which the selected form represents its concept.
+
+Recognizability basis: the evidence basis for the P2 recognizability assessment established during Stage B3, identifying the cultural establishment on which the form's recognizability depends.
+•Contextual dependencies (when applicable): When a Representative Word is assigned the Contextual or Both representation mode, its specification must include a Contextual Dependency Record. The Contextual Dependency Record contains the following four components.
+
+Anchor elements: the one or more Representative Words relative to whose sequence positions the contextually expressed element's meaning is derived. Each anchor element must have Independent Representation listed as available in Phase 2.2. Anchor elements are identified by their sequence position labels as assigned by R3.
+
+Active mechanism: the contextual expression mechanism through which the element's meaning is conveyed — Sequence Order, Sequential Adjacency, or Both.
+
+Structural relationship: the specific positional relationship between the contextually expressed element and its anchor elements that carries the intended meaning. This is expressed as a description of the element's position relative to its anchors within the sequence order (for example: precedes [anchor element] in the sequence; follows immediately after [anchor element] with no intervening element; falls between [anchor element A] and [anchor element B]).
+
+Sequence position reference: a reference field recording the sequence position established for this element by R3. This field does not assign, compute, or modify sequence positions. All sequence positions are established exclusively by R3 and are not subject to Rule 2. The purpose of this field is to create an explicit, auditable link between the contextual expression specification and the sequence structure produced by Rule 1. It records the position at which the element's contextual meaning resides in the sequence — a position that is given, not determined, by Rule 2.
+
+When a Representative Word is assigned the Independent representation mode, the contextual dependencies field is empty.
+•Identity-preservation rationale
+•Recognition requirements
+Memorial Centrality is an assessment criterion that calibrates the recognition requirements field of each Pictogram Specification. When a Representative Word received extensive narrative attention in the written memory, the recognition requirements record calls for the most precise available visual equivalent rather than a generic proxy. It does not influence the representation mode decision, which remains governed by Test V, and does not influence sequence position, which is governed by R3.
+These specifications are passed to Rule 3 as its primary input for realization.
+
+Rule 3 — Pictogram Realization
+Purpose:
+Transform Pictogram Specifications into pictographic representations.
+
+Rule 2 determined which representation is selected for each Representative Word. Rule 3 determines how that selected representation is realized within the project's visual language. Rule 2 operates at the level of representational concept selection. Rule 3 applies the Illustration Grammar and Illustration Philosophy to realize each selected representation as a pictographic form.
+
+The objective is visual realization, not semantic interpretation. No new meaning may be introduced at this stage.
+
+Execution Model:
+
+Rule 3 processes each Representative Word assigned the Independent or Both representation mode individually and in sequence. Stage 3.4 does not execute until every element has completed its own realization cycle and reached Sequence-Ready status. This element-by-element processing model is required by the correction loop architecture: each element's realization cycle may involve multiple correction attempts, and the overall sequence cannot be assembled until all individual realizations are settled.
+
+Element Realization Cycle:
+For each element, Rule 3 executes the following cycle. Stage 3.1 reads the element's Pictogram Specification and makes the Realization Specification available. Stage 3.2 realizes the element according to its source provenance. Stage 3.3 evaluates the realized form and produces a structured validation record. The element either advances to Sequence-Ready status or enters a correction path determined by Stage 3.3's output.
+
+Inner Realization Loop:
+When Stage 3.3 produces a Fail — Realization-level outcome and the In-Principle Correctability Assessment is In-principle correctable, Stage 3.2 retries realization of the same reference using the Realization Constraints provided by Stage 3.3. Stage 3.3 then re-evaluates the new form. This inner loop repeats until Stage 3.3 produces a Pass outcome, the orchestrator's inner retry counter is exhausted, or Stage 3.3 produces an In-principle non-correctable assessment. The inner retry counter is managed by the orchestrator and decremented on each inner loop iteration.
+
+Outer Re-selection Loop:
+When Stage 3.3 produces a Fail — Reference-level outcome and the In-Principle Correctability Assessment is In-principle correctable, Rule 2 re-executes its Stage B3 candidate evaluation for this Representative Word. The failed reference is excluded from the candidate pool. Rule 2 applies the Reference Constraints from Stage 3.3's Correction Constraints Record as additional evaluation criteria, and applies the Realization Constraints as supplementary context. When Rule 2 selects a new reference, a fresh inner realization cycle begins for that reference. The inner retry counter resets at the start of each outer loop iteration. The outer re-selection counter is managed by the orchestrator and decremented on each outer loop iteration. The outer loop terminates when Stage 3.3 produces a Pass outcome, the orchestrator's outer re-selection counter is exhausted, Rule 2 has no remaining candidates outside the element's current exclusion list, or Stage 3.3 produces an In-principle non-correctable assessment.
+
+Strategies Exhausted — MVP Behavior:
+An element reaches the Strategies Exhausted state when all correction paths have been applied or no viable path remains. This state is reached through two independent mechanisms. First, Stage 3.3's In-principle non-correctable assessment routes the element directly to Strategies Exhausted, bypassing retry counters. Second, the orchestrator's determination that available correction paths have been exhausted through counter depletion or candidate pool depletion produces the same outcome.
+
+In the MVP, when an element reaches the Strategies Exhausted state, the processor terminates realization for that element and records a validation failure. No fallback pictogram is generated. The purpose of the MVP is to validate the complete methodology rather than to guarantee that every input produces an output. A validation failure is therefore a meaningful and informative outcome for the MVP.
+
+Fallback — the generation of a substitute output when all correction strategies are exhausted — remains a valid architectural extension for a future production version of the system. The architecture is designed to accommodate it: the Strategies Exhausted state, the Sequence Assembly Gate, and Stage 3.4's slot assignment model are all defined in a way that a future fallback mechanism can be inserted without structural change.
+
+Orchestrator Responsibilities:
+The orchestrator manages all state that persists across Stage 3.3 invocations for a given element. Stage 3.3 does not maintain state between calls. For each element currently in a realization cycle, the orchestrator maintains: the inner retry counter, recording the number of Stage 3.2 realization attempts remaining for the current reference; the outer re-selection counter, recording the number of Rule 2 re-selection attempts remaining for the current element; the prior constraint history, comprising the complete set of correction constraints applied in all previous realization attempts for this element in the current session; and the current exclusion list, comprising the identifiers of all references excluded from Rule 2 candidate evaluation for this element in the current session. On each Stage 3.3 invocation, the orchestrator passes the prior constraint history and current exclusion list as inputs alongside the realized form and Realization Specification. After each Stage 3.3 invocation that produces a Reference-level failure, the orchestrator updates the exclusion list with the failed reference's identifier before initiating Rule 2 re-selection.
+
+The limit values for the inner retry counter and the outer re-selection counter are not part of the visual methodology. Retry limits exist solely to prevent infinite execution loops within the processor. They are safety mechanisms of the processor implementation, not constraints that govern the quality or behavior of the realization process. The quality of realization is governed by Stage 3.3's diagnostic algorithm and correction constraints. The actual retry counts are implementation configuration parameters, determined empirically during processor validation and adjustable based on observed behavior. The methodology specifies the structure and role of these counters; it does not and should not prescribe their values.
+
+Sequence Assembly Gate:
+Stage 3.4 is gated on all elements reaching Sequence-Ready status. In the MVP, an element reaches Sequence-Ready status only by completing Stage 3.3 with a Pass outcome. If any element terminates with a validation failure at the Strategies Exhausted state, Stage 3.4 does not execute and the processor reports the validation failure for that memory. In a future production version, a fallback mechanism would provide an additional path to Sequence-Ready status, allowing Stage 3.4 to proceed even when some elements exhaust correction strategies. When all elements assigned Independent or Both representation mode have reached Sequence-Ready status, Stage 3.4 executes once as a single assembly and rendering pass.
+
+Stage 3.1 — Specification Interpretation
+Read and apply the requirements defined in the Pictogram Specifications.
+
+Stage 3.2 — Illustration Grammar Application
+Realize each selected reference form by applying the Illustration Grammar. The realization procedure is determined by the source provenance recorded in the Realization Specification.
+
+Catalog Retrieval — when source provenance is catalog, Rule 3 retrieves the established SVG from the project's pictogram catalog using the Catalog ID recorded in the Realization Specification. The Catalog ID is the sole basis for retrieval. No new form is generated. The retrieved form is treated as an established catalog entry and proceeds directly to Stage 3.3.
+
+External Realization — when source provenance is external, Rule 3 realizes a new pictographic form for the selected reference by applying the Illustration Grammar. The realized form proceeds to Stage 3.3 validation. If the validation produces a Pass outcome, the form is assigned a Catalog ID, stored in the project's pictogram catalog, and then advances to Sequence-Ready status. If the validation produces a Fail outcome, the correction mechanism defined in Stage 3.3's output structure is applied: a Fail — Realization-level outcome initiates a realization retry within Rule 3; a Fail — Reference-level outcome initiates a Rule 2 re-selection. The catalog therefore grows automatically as the processor successfully realizes new concepts, making each successfully realized external form available for deterministic retrieval in future Rule 3 executions.
+
+All geometric construction rules originate from the Illustration Grammar.
+
+Stage 3.3 — Illustration Philosophy Validation
+
+Purpose:
+Evaluate each realized form against the four Illustration Philosophy principles. Produce a structured validation record that drives the execution model's correction routing decisions. Stage 3.3 applies the same evaluation to every realized form regardless of source provenance, though failures are the expected exception rather than the norm for catalog-retrieved forms, which have been established through prior validation.
+
+Stage 3.3 does not maintain state between calls. The orchestrator manages continuity — prior constraint history, retry counters, exclusion lists, and accumulated context — and passes the required context into Stage 3.3 on each invocation.
+
+Inputs:
+Stage 3.3 receives four inputs on each invocation.
+
+Current realized form: the SVG produced by Stage 3.2 in the current cycle.
+Realization Specification: the Realization Specification field from the Pictogram Specification produced by Phase 2.6, including the reference form description, source provenance, representational strategy, and recognizability basis.
+Prior constraint history: the correction constraints applied in all previous realization attempts for this element in the current session. Provided by the orchestrator. Empty on the first invocation for a given element.
+Current exclusion list: the identifiers of all references previously excluded for this element in the current session. Provided by the orchestrator. Empty on the first invocation for a given element.
+
+Diagnostic Algorithm:
+For each of the four Illustration Philosophy principles, Stage 3.3 applies a two-stage diagnostic test in sequence.
+
+Stage A — Realization-level test.
+The evaluating question is: does a valid realization of this reference exist — one that fully satisfies the Illustration Grammar's construction rules — that would also satisfy this principle?
+
+Stage 3.3 identifies the specific violation in the current form, traces it to the specific realization decision that caused it, and assesses whether that decision is required by the nature of the reference form itself or is an artifact of the current realization. If a valid realization of the same reference would avoid the violation, the failure is Realization-level. If no valid realization of the same reference would avoid the violation, Stage B follows.
+
+Stage B — Reference-level test.
+The evaluating question is: does a valid realization of a different reference for this concept exist within the language's current vocabulary that would satisfy this principle?
+
+If yes, the failure is Reference-level. If no, the failure is Non-correctable.
+
+Principle-by-Principle Diagnostic Application:
+The following specifies the evidence Stage 3.3 consults when running the diagnostic algorithm for each principle.
+
+Principle 1 — Identity over appearance.
+Stage A evidence: whether the reference form is category-level by nature. If the violation is instance-specific detail introduced by a realization decision that the reference form does not require — detail that a valid realization of the same reference would omit — the failure is Realization-level. If the reference form is inherently instance-specific regardless of how it is realized, Stage A fails and Stage B follows.
+
+Principle 2 — Maximum recognizability.
+Stage A evidence: whether the reference form has recognition-critical features that the current realization removed or degraded. If a valid realization retaining those features would achieve sufficient recognition within the language's geometric vocabulary, the failure is Realization-level. If no valid realization of the same reference achieves sufficient recognition at the standard pictogram size — because no configuration of the permitted geometric primitives produces a recognizable result for this reference form — Stage A fails and Stage B follows.
+
+Principle 3 — Language conformance.
+Stage A evidence: whether the reference form is constructible within the geometric primitive vocabulary through the permitted transformation operations. If the violation is a non-permitted construction element introduced by a realization decision, but the reference form can be approximated through permitted primitives at sufficient recognizability, a valid conforming realization of the same reference exists and the failure is Realization-level. If the reference form's visual identity cannot be approximated within the geometric vocabulary at sufficient recognizability regardless of realization approach, Stage A fails and Stage B follows. A Principle 3 failure at Stage A almost always co-occurs with a Principle 2 failure, since a form that cannot be constructed within the vocabulary also cannot achieve recognizability within the language.
+
+Principle 4 — Independent identifiability.
+Stage A evidence: whether the reference form has an unambiguous visual identity in the language's pictographic context. If the violation is ambiguity introduced by a realization decision, but the reference form has a stable canonical visual identity that a valid realization would render unambiguously recognizable in isolation, the failure is Realization-level. If the reference form is inherently ambiguous in the pictographic context regardless of how it is realized, Stage A fails and Stage B follows.
+
+Mixed-failure rule: when a single evaluation produces both Realization-level and Reference-level failures across different principles, the Reference-level classification governs the Overall Validation Outcome. Realization Constraints are still produced and passed to Rule 2 as supplementary context when a mixed failure occurs.
+
+Output:
+Stage 3.3 produces four components. Components 1, 2, and 3 are always present. Component 4 is conditional.
+
+Component 1 — Per-Principle Validation Record
+Four entries, one per Illustration Philosophy principle, in fixed order. Each entry contains:
+
+Principle Outcome: Pass or Fail.
+Failure Origin (present when Outcome is Fail): Realization-level or Reference-level.
+Realization Constraint (present when Outcome is Fail and Origin is Realization-level): identifies the specific realization decision that caused the violation and specifies what the next realization attempt must do differently. Expressed in terms Stage 3.2 can act on. The constraint must be meaningfully different from all constraints recorded in the prior constraint history for this element.
+Reference Constraint (present when Outcome is Fail and Origin is Reference-level): characterizes the property a viable reference must have in order to satisfy this principle. Expressed in terms that Rule 2 Stage B3 can apply during candidate re-evaluation.
+
+Component 2 — Overall Validation Outcome
+Derived mechanically from Component 1 by the fixed rule below. This is not an independent judgment made by Stage 3.3.
+
+Pass: all four Principle Outcomes are Pass.
+Fail — Realization-level: at least one Principle Outcome is Fail; all failures are Realization-level.
+Fail — Reference-level: at least one Principle Outcome is Fail and Reference-level. This outcome takes priority when both Realization-level and Reference-level failures are present simultaneously.
+
+Component 3 — In-Principle Correctability Assessment
+Present when the Overall Validation Outcome is any Fail outcome. Records Stage 3.3's assessment of whether a correction path exists within the language's current vocabulary.
+
+In-principle correctable: at least one correction path exists. The execution model proceeds to counter evaluation by the orchestrator before determining whether a retry attempt occurs.
+In-principle non-correctable: no correction path exists regardless of realization attempt or reference re-selection. The orchestrator routes this element directly to the Strategies Exhausted state, bypassing retry counters.
+
+Component 4 — Correction Constraints Record
+Present when the Overall Validation Outcome is any Fail outcome and the In-Principle Correctability Assessment is In-principle correctable.
+
+Realization Constraints: the consolidated set of Realization Constraints from all Realization-level entries in Component 1. Directed at Stage 3.2 for the next realization attempt. Present whenever at least one Realization-level failure exists, including when the Overall Validation Outcome is Fail — Reference-level due to a mixed failure. When the Overall Validation Outcome is Fail — Reference-level, these constraints are passed to Rule 2 as supplementary context alongside the Reference Constraints.
+Reference Constraints: the consolidated set of Reference Constraints from all Reference-level entries in Component 1. Directed at Rule 2 Stage B3 for candidate re-evaluation. Present whenever at least one Reference-level failure exists.
+Reference Exclusion: the identifier of the reference form that produced Reference-level failures in this evaluation, to be added to the element's current exclusion list by the orchestrator. Present whenever Reference Constraints are present. The exclusion applies to all subsequent re-selection cycles for this element within the current session. It does not apply across elements or across sessions.
+
+Stage 3.4 — Sequence Assembly and Rendering
+Produce the final pictographic representations and render the complete pictographic sequence.
+
+Inputs:
+Stage 3.4 receives three inputs, assembled by the orchestrator once all elements have reached Sequence-Ready status.
+
+Realized forms: the SVG form produced for each Representative Word assigned the Independent or Both representation mode, drawn from the Sequence-Ready set. In the MVP, every form in this set is the output of the element's final Stage 3.3 Pass evaluation. Elements that terminated with a validation failure at the Strategies Exhausted state are not present in the Sequence-Ready set and do not contribute a form to Stage 3.4.
+
+Sequence positions: the sequence position assigned to each Representative Word by R3 during Stage 1.6. Stage 3.4 does not establish or modify sequence positions. It consumes them as the ordering basis for slot construction.
+
+Representation Mode assignments: the representation mode assigned to each Representative Word by Phase 2.4 of Rule 2. Stage 3.4 does not determine representation modes. Representation mode is a decision made by Rule 2 and is fully established before Stage 3.4 executes. Stage 3.4 consumes it to determine how each element participates in the visual slot sequence: elements assigned Independent or Both occupy a rendered slot; elements assigned Contextual do not occupy a rendered slot and are instead expressed through the adjacency relationship between their flanking independently-represented elements.
+
+Sequence Slot Construction:
+Construct the visual slot sequence from the Validated Representative Words set. Only Representative Words assigned the Independent or Both representation mode occupy visual slots in the rendered sequence. Representative Words assigned the Contextual representation mode do not occupy a visual slot. Their sequence positions are retained in the semantic record as established by R3 and serve as the structural basis for the adjacency relationships through which their meaning is expressed, but they produce no independent visual element in the rendered output.
+
+Canvas and Layout Model:
+The output canvas is fixed in dimension. Canvas dimensions do not vary with the number of rendered pictograms in a given sequence. Rule 1 is bounded by a maximum of ten Representative Words, establishing a maximum supported rendered sequence length of ten pictograms. The canvas is sized to accommodate this maximum. For sequences shorter than the maximum, the fixed canvas is maintained and the unused width is distributed by the horizontal centering rule.
+
+Every pictogram is rendered at the standard construction size defined in the Illustration Grammar: 64×64 pixels. This size is not modified for sequence output. The standard size governs construction, rendering, and physical output without scaling. The geometry constructed at 64×64 pixels is what the user sees in the interactive system and what is reproduced in the final physical artifact.
+
+The output of Stage 3.4 is an SVG artifact containing the complete rendered pictographic sequence.
+
+Equal visual spacing is defined as a fixed edge-to-edge gap between every pair of adjacent rendered pictograms. This gap is uniform throughout the sequence and is not modified by the semantic relationship between adjacent elements. Contextual adjacency affects sequence structure and semantic interpretation. It does not affect visual spacing: the flanking elements of a contextual gap are separated by the same fixed edge-to-edge gap as any other pair of adjacent rendered slots. Inter-pictogram spacing: 24px.
+
+
+Horizontal centering is the governing layout rule. The rendered pictographic row is horizontally centered within the fixed canvas for every sequence length. The effective outer margin — the distance from the outermost rendered pictogram to the nearest canvas edge — is a derived value per output, not a fixed parameter. It varies with the number of rendered pictograms and is always a consequence of centering rather than an independently specified value.
+
+Each pictogram is vertically centered within the canvas height. Canvas height: 128px. Vertical padding is derived from the centering rule: (128 − 64) ÷ 2 = 32px above and 32px below each pictogram.
+
+Canvas width is a fixed derived value, computed from the maximum supported sequence length:
+Canvas width = (10 × 64px) + (9 × 24px) = 856px
+
+Sequence width and effective outer margin are derived per output from the actual number of rendered pictograms N:
+Sequence width = (N × 64px) + ((N − 1) × 24px)
+Effective outer margin = (856px − Sequence width) ÷ 2
+
+Sequence Rendering:
+Render each occupied slot at equal visual spacing in a single ordered row. For Hebrew memories, the sequence is rendered right to left in accordance with the directional convention established by R3 and the Illustration Philosophy; sequence position 1 corresponds to the rightmost rendered slot. For English memories, the sequence is rendered left to right; sequence position 1 corresponds to the leftmost rendered slot.
+
+Adjacency Rendering for Contextual Elements:
+When a Contextual element occupies a sequence position between two elements assigned Independent or Both representation mode, those flanking elements are rendered as immediate visual neighbors with no intervening slot between them. Their adjacency in the rendered output is the mechanism through which the contextual element's meaning is expressed, in accordance with the Sequential Adjacency mechanism defined in the Illustration Philosophy.
+
+The output must preserve the identity of the memory while remaining consistent with the visual language.  
+
+Rule 4 — Memory Packaging & Archival Integration
+Purpose:
+Rule 4 executes after Rule 3 has successfully completed. Its responsibility is to assemble the complete Memory Object — the canonical output of the processor — from all information produced by Rules 1, 2, and 3.
+
+Rule 4 does not generate new semantic or visual content. Its responsibility is to package, structure, and record everything the processor has produced for a given memory into a single archival object that can be stored, displayed, exported, and reproduced.
+
+Precondition:
+Rule 4 executes only when Rule 3 has produced a successful output — that is, when all elements in the Representative Words set have reached Sequence-Ready status and Stage 3.4 has produced a complete SVG sequence. If Rule 3 terminated with a validation failure for any element, Rule 4 does not execute. The pipeline output for that memory is the validation failure report produced by Rule 3.
+
+Inputs:
+Rule 4 assembles information from the complete outputs of Rules 1, 2, and 3.
+
+From Rule 1: the Validated Representative Words set, the Semantic Structure, the Event Model, and the Consideration Record — the complete semantic analysis of the memory.
+From Rule 2: the full set of Pictogram Specifications, including Realization Specifications, representational strategies, and fidelity assessments for each Representative Word.
+From Rule 3: the final SVG sequence produced by Stage 3.4, and the Catalog IDs of all catalog entries retrieved or created during the processing of this memory.
+From the system: the Memory ID assigned at the time of memory submission, the processor version, the execution timestamp, and the versions of all governing documents active at the time of execution.
+
+Memory Object:
+The Memory Object assembled by Rule 4 contains the following fields.
+
+Memory ID: the unique identifier assigned to this memory at submission. The Memory ID is the primary key by which this Memory Object is addressed throughout the archive, interface, export, and printing workflows.
+
+Original memory text: the written memory as submitted by the narrator. Preserved verbatim.
+
+Core Narrative: a structured summary of the memory's identity-critical semantic content, derived from the Event Model and Semantic Structure produced by Rule 1.
+
+Representative Words: the final ordered Representative Words set produced by Rule 1, including sequence positions, representation modes, semantic classifications, and the full Consideration Record for each element.
+
+Pictogram Specifications: the complete set of Pictogram Specifications produced by Rule 2, including Realization Specifications, representational strategies, recognizability bases, and fidelity assessments.
+
+Catalog IDs: the identifiers of all catalog entries involved in the processing of this memory. Retrieved catalog IDs and newly created catalog IDs are recorded separately. Newly created IDs represent processor-realized forms that entered the catalog during this execution session.
+
+Final SVG sequence: the SVG artifact produced by Stage 3.4, containing the complete rendered pictographic sequence.
+
+Metadata: system-level information including the processor version, execution timestamp, and any additional contextual information required by the archive and interface systems.
+
+Version information: the versions of the governing documents — Semantic Methodology, Illustration Grammar, Illustration Philosophy, and Workflow Grammar — under which this Memory Object was produced. This ensures that the archival record remains interpretable as the governing documents evolve.
+
+Output:
+The Memory Object. This is the canonical output of the complete processor pipeline for a given memory submission.
+
+Downstream consumers:
+The Memory Object is the input to the archive (for storage and retrieval), the interface (for display and interaction), the export workflow (for sharing and distribution), and the physical printing workflow (for reproduction as a physical artifact). The structure of the Memory Object is defined to support all four downstream contexts without requiring separate processing for each. 

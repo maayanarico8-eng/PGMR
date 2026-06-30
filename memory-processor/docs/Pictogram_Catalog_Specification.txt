@@ -1,0 +1,75 @@
+Pictogram Catalog Specification
+
+Purpose:
+The pictogram catalog is the project's accumulated visual vocabulary — the repository of pictographic forms that have been established within the language. It serves two complementary functions in the processor pipeline.
+
+As an evidence source, the catalog is the first source searched during Stage B1 of Rule 2. Catalog entries compete with externally sourced candidates in Stage B3 candidate evaluation. A catalog entry's prior establishment within the language contributes to its P2 grounding — it carries evidence of recognized use within this specific visual system. This contribution is evidence, not authority. Catalog entries do not receive automatic selection priority and do not override stronger candidates discovered through external search. The catalog functions as one P2 evidence source among others, not as the determiner of outcome.
+
+As a retrieval target, the catalog is the source from which Stage 3.2 of Rule 3 retrieves established SVG forms. When the Realization Specification records a catalog entry as the selected reference, Rule 3 retrieves the stored form using the Catalog ID as the sole lookup key. Retrieval is deterministic: the same Catalog ID always returns the same form.
+
+Role in the Pipeline:
+The catalog is consulted at two distinct pipeline moments.
+
+During Stage B1 of Rule 2, the catalog is searched first. Any catalog entry for the concept under evaluation enters the candidate pool and proceeds through Stage B3 evaluation alongside externally sourced candidates.
+
+During Stage 3.2 of Rule 3, when source provenance is catalog, the established SVG is retrieved using the Catalog ID recorded in the Realization Specification. No realization is performed. The retrieved form proceeds directly to Stage 3.3 for validation. Stage 3.3 validation for catalog-retrieved forms is primarily confirmatory: the form has been established through prior validation, so failures are the expected exception rather than the norm.
+
+Catalog Entry Structure:
+Each catalog entry contains the following fields.
+
+Catalog ID: the immutable identifier of the entry. The Catalog ID is the primary key for retrieval. It is not subject to interpretation or inference. Rule 3 uses only the Catalog ID for retrieval; no other field is used to locate an entry. Once assigned, a Catalog ID does not change.
+
+Visual form: the SVG representation of the pictographic form, constructed in conformance with the Illustration Grammar. This is the form that Stage 3.2 retrieves and Stage 3.3 evaluates.
+
+Concept: a human-readable description of the concept this form represents. Used for documentation and readability. Not used for retrieval.
+
+Source provenance: whether the entry originated as a designer-originated form (pre-processor) or as a processor-realized form (stored during a Rule 3 execution session).
+
+Representational strategy: the strategy classification identifying the mechanism by which the form represents its concept, established during Stage B2 of Rule 2.
+
+Recognizability basis: the evidence basis for the P2 recognizability assessment established during Stage B3 of Rule 2, identifying the cultural establishment on which the form's recognizability depends.
+
+Source Classification:
+Catalog entries originate through two pathways.
+
+Designer-originated entries are created outside the processor pipeline, designed manually and pre-loaded into the catalog before processor execution. These entries represent the founding vocabulary of the language and the initial pictographic inventory available to the system.
+
+Processor-realized entries are created automatically during Rule 3 execution. When an externally realized form passes Stage 3.3 validation, it is assigned a Catalog ID and stored in the catalog before the element advances to Sequence-Ready status. This makes the form available for deterministic retrieval in future Rule 3 executions. No human approval is required in the core processor pipeline. Human curation of processor-realized entries is a separate future workflow outside the scope of the core processor.
+
+Storage Rules:
+An entry is stored automatically when an externally realized form passes Stage 3.3 validation. Storage is a pipeline event, not a human decision, within the core processor.
+Storage occurs before the element advances to Sequence-Ready status.
+A new Catalog ID is assigned at the point of storage.
+Once stored, an entry is available for retrieval in all subsequent Rule 3 executions within the same session and in future sessions.
+The catalog does not shrink during normal processor operation. Modification and deletion of existing entries are handled through the human curation workflow, which is outside the scope of the core processor.
+
+Retrieval Rules:
+The Catalog ID is the sole basis for retrieval. No other field is used to locate an entry.
+Retrieval occurs in Stage 3.2 when source provenance in the Realization Specification is catalog.
+The Catalog ID recorded in the Realization Specification is the retrieval key passed to the catalog by the processor. The Concept field in the Realization Specification is documentation only and is not used for retrieval.
+The retrieved SVG is used as-is. No realization is performed on catalog-retrieved forms.
+
+Evidence and Authority:
+Catalog entries function as evidence within the candidate evaluation framework, not as authoritative selections. Their prior establishment within the language contributes to their P2 grounding — evidence of recognized use within this specific system. This evidence is weighed against other evidence during Stage B3 evaluation. A catalog entry that performs less well against Stage B3's fidelity criteria than an externally sourced candidate does not prevent that external candidate from being selected. The catalog supports evaluation; it does not determine its outcome.
+
+Growth Behavior:
+The catalog grows automatically as the processor successfully realizes new concepts. Each externally realized form that passes Stage 3.3 validation is stored as a new catalog entry. The catalog does not shrink during normal processor operation.
+
+The Reference Exclusion mechanism — through which a failed reference is excluded from Rule 2 re-selection cycles for a specific element within a single session — operates at the element-session level and does not modify the catalog. An excluded reference remains in the catalog. Its exclusion applies only to the current element's correction cycle within the current session. It does not affect the catalog's contents.
+
+Open Decisions:
+The following catalog behaviors were not resolved during Rule 2 and Rule 3 architectural discussions. They require explicit decisions before a production catalog implementation can be completed. None of these open decisions affect the MVP scope.
+
+Multiple entries per concept: no rule has been established for the case in which a concept already has an existing catalog entry and a stronger external candidate is selected and stored during the same or a future execution. It is not specified whether the catalog permits multiple entries per concept, whether a new entry supersedes the existing one, or whether a disambiguation rule applies.
+
+Update rules: no rule has been established for modifying an existing catalog entry's visual form or metadata fields while preserving its Catalog ID.
+
+Versioning: no versioning strategy for catalog entries has been specified. It is not established whether entries carry version identifiers, timestamps, or edit history.
+
+Removal rules: no rule has been established for removing entries from the catalog, whether through processor operation or through human curation.
+
+Human curation workflow: the full specification of human curation — the review, approval, modification, and retirement of catalog entries — is explicitly deferred outside the core processor. Its interface with the catalog has not yet been specified.
+
+Catalog ID format: the internal format and generation rule for Catalog IDs has not been specified. The architecture requires only that Catalog IDs are immutable and unique. The implementation format is an open decision.
+
+These open decisions belong to the human curation workflow specification and the production catalog implementation, both of which are outside the MVP scope.

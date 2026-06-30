@@ -1,0 +1,94 @@
+About this project:
+This project is my graduation project in Visual Communication.
+It explores memory not as something that is fixed and stored, but as something that is constantly reconstructed, translated, and transformed over time.
+The starting point of the project is my late grandfather. Some of my understanding of him comes from my own memories, while much of it comes from stories told by family members and other people who knew him. Therefore, the person I know today is not an objective historical truth, but a figure assembled from fragments of memories, interpretations, and different perspectives.
+The project does not attempt to reconstruct reality or verify historical facts.
+Instead, it investigates how memories can be translated into a visual language and how different relationships to the same memory can produce different visual representations.
+
+The long-term vision:
+The final outcome of this project is to build a fully functional interactive digital system.
+The system will allow users to write a memory, identify the elements that are meaningful to them, and translate those elements into a visual language through a consistent generative process.
+The goal is not to create an AI image generator.
+The goal is to create a computational visual language.
+Every generated illustration should belong to the same visual family and feel as though it was created by the same designer, regardless of its subject.
+The system should eventually be capable of generating an unlimited number of new illustrations while preserving complete stylistic consistency.
+
+The core research objective:
+The true subject of this project is not illustration.
+It is the creation of a visual language.
+Illustrations are only one possible expression of that language.
+The real challenge is to define a system of rules that can generate infinite visual outcomes while maintaining a coherent identity.
+In other words: We are not designing images, We are designing the language that produces those images.
+
+Our current objective:
+At this stage we are not:
+• Designing the interface
+• Building the software
+• Implementing the technology
+The project's semantic and visual foundations have been substantially defined through the Semantic Methodology, Workflow Grammar, Illustration Philosophy, and Illustration Grammar.
+Our current objective is to synchronize, validate, and refine these documents into a coherent and internally consistent system.
+The goal of this phase is to ensure that the methodology is complete, executable, and ready for generative implementation. This includes validating the processor, identifying remaining ambiguities, and resolving inconsistencies before implementation begins.
+
+
+The rulebook:
+The rulebook is the foundation of the entire project.
+Its purpose is to describe the semantic and visual rules required to transform written memories into pictographic representations through a consistent generative process.
+
+Every rule should be:
+• Explicit
+• Objective
+• Reproducible
+• Consistent
+• Computationally understandable
+
+Subjective descriptions are not sufficient.
+Whenever possible, rules should be translated into measurable and reproducible specifications.
+
+How we will work:
+The methodology below describes the discovery process through which the project's visual language and methodology were developed.
+The project has largely completed this phase and produced the current documentation set through this process. The same methodology remains available whenever future language expansion or unresolved questions require investigation.
+
+Phase 1 — Observation:
+Analyze my existing illustrations without making assumptions.
+Only describe what can be observed.
+
+Phase 2 — Pattern detection:
+Identify recurring visual patterns.
+Determine whether each pattern is:
+• Clearly consistent
+• Probably consistent
+• Inconsistent
+• Impossible to determine
+
+Phase 3 — Reverse engineering:
+Ask "If a computational system had to generate new illustrations in this language, what information would it need that is still missing?"
+Identify every missing variable.
+
+Phase 4 — Decision making:
+Whenever something cannot be inferred from the existing illustrations:
+Do not invent a rule.
+Instead:
+• Explain why the decision matters.
+• Explain the possible alternatives.
+• Explain how each alternative affects the system.
+• Ask me to make the final decision.
+
+Phase 5 — Rulebook construction:
+Once a decision has been made, formalize it into the rulebook.
+The rulebook should evolve continuously throughout the project.
+
+Guiding principle:
+Every decision should be evaluated by asking one question:
+If a machine had to generate a completely new illustration tomorrow using only this rulebook, would it have enough information to do so without making a subjective design decision?
+If the answer is no, then the rulebook is still incomplete.
+
+Success criteria:
+The project will be successful when we have created a semantic and visual language system so complete that:
+• A software engineer could implement it.
+• A computational system could execute it.
+• Unlimited new illustrations could be generated.
+• Every illustration would belong to the same visual language.
+• No additional artistic intuition would be required.
+Our objective is not to build a collection of illustrations.
+Our objective is to build a semantic and visual language system capable of transforming written memories into infinite pictographic representations through a consistent generative process.
+

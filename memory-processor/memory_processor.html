@@ -1,0 +1,2047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Processor</title>
+<style>
+
+:root{--bg:#fff;--bg2:#f8f7f5;--bg3:#f1efe8;--t1:#1a1918;--t2:#4a4845;--t3:#888780;--b1:rgba(26,25,24,.40);--b2:rgba(26,25,24,.22);--b3:rgba(26,25,24,.11);--err-bg:#fef2f2;--err-t:#991b1b;--err-b:#fecaca;--r:8px;--f:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif}
+@media(prefers-color-scheme:dark){:root{--bg:#1a1918;--bg2:#242320;--bg3:#2e2c28;--t1:#f0ede8;--t2:#b8b4ae;--t3:#6b6865;--b1:rgba(240,237,232,.40);--b2:rgba(240,237,232,.22);--b3:rgba(240,237,232,.11);--err-bg:#2d1515;--err-t:#fca5a5;--err-b:rgba(127,29,29,.5)}}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--f);background:var(--bg);color:var(--t1);line-height:1.5}
+.app{max-width:760px;margin:0 auto;padding:40px 28px 80px}
+.hdr-meta{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin-bottom:10px}
+h1{font-size:22px;font-weight:500;margin-bottom:16px}
+.hyp-panel{border:1px solid var(--b3);border-radius:var(--r);overflow:hidden;margin-bottom:32px}
+.hyp-toggle{width:100%;padding:10px 14px;background:none;border:none;cursor:pointer;font-family:var(--f);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.hyp-toggle-l{display:flex;align-items:center;gap:10px}
+.hyp-content{border-top:1px solid var(--b3);padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:var(--bg2)}
+.hyp-card{border:1px solid var(--b3);border-radius:5px;overflow:hidden}
+.hyp-card-hdr{width:100%;padding:10px 12px;background:none;border:none;cursor:pointer;font-family:var(--f);display:flex;align-items:flex-start;gap:10px;text-align:left}
+.hyp-card-body{flex:1}
+.hyp-card-name{font-size:11px;font-weight:600;color:var(--t1);display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.hyp-card-sum{font-size:11px;line-height:1.6;color:var(--t3)}
+.hyp-card-det{padding:0 12px 12px;border-top:1px solid var(--b3);background:var(--bg2)}
+.hyp-card-det ul{margin:10px 0 0;padding-left:16px;display:flex;flex-direction:column;gap:5px}
+.hyp-card-det li{font-size:11px;line-height:1.65;color:var(--t2)}
+.input-section{margin-bottom:24px}
+.input-lbl{display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:10px}
+textarea{width:100%;padding:16px;font-size:15px;line-height:1.75;color:var(--t1);background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r);resize:vertical;outline:none;font-family:var(--f);display:block}
+textarea:focus{border-color:var(--b1)}
+.input-footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.word-count{font-size:12px;color:var(--t3)}
+.analyze-btn{padding:10px 22px;font-size:13px;font-weight:500;color:#fff;background:#231F20;border:none;border-radius:var(--r);cursor:pointer;font-family:var(--f);display:flex;align-items:center;gap:8px}
+.analyze-btn:disabled{background:var(--b2);cursor:not-allowed}
+.spinner{width:13px;height:13px;border:1.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-card{padding:13px 16px;border-radius:var(--r);border:1px solid var(--err-b);background:var(--err-bg);color:var(--err-t);font-size:13px;margin-bottom:24px}
+.divider{height:1px;background:var(--b3);margin:36px 0}
+.sec-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.sec-label span{font-weight:400;text-transform:none;letter-spacing:0}
+.mb28{margin-bottom:28px}.mb36{margin-bottom:36px}
+.card{padding:14px 16px;border-radius:var(--r);border:1px solid var(--b2);background:var(--bg2)}
+.lang-meta{display:flex;align-items:center;gap:12px;margin-bottom:28px;flex-wrap:wrap}
+.lang-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;background:var(--bg2);color:var(--t2);border:1px solid var(--b2);letter-spacing:.04em}
+.meta-counts{font-size:12px;color:var(--t3)}
+.narrative-card{padding:16px 18px;border-radius:var(--r);border:1px solid var(--b2);background:var(--bg2);font-size:15px;line-height:1.75;color:var(--t1)}
+.frame-card{padding:14px 16px;border-radius:var(--r);border:1px solid var(--b2);background:var(--bg2);display:flex;flex-wrap:wrap;gap:16px 32px}
+.frame-item-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--t3);margin-bottom:6px}
+.frame-item-val{font-size:13px;color:var(--t1)}
+.events-list{display:flex;flex-direction:column;gap:10px}
+.event-card{border:1px solid var(--b2);border-radius:var(--r);overflow:hidden}
+.event-hdr{padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--b3);display:flex;align-items:center;gap:10px}
+.event-num{width:20px;height:20px;border-radius:50%;border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--t3);flex-shrink:0}
+.event-type{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.event-desc{font-size:14px;font-weight:500;color:var(--t1);flex:1}
+.event-loc{font-size:11px;color:var(--t3)}
+.event-parts{padding:0 14px}
+.part-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--b3)}
+.part-row:last-child{border-bottom:none}
+.role-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.part-ref{font-size:13px;flex:1;display:flex;align-items:center;gap:6px}
+.narrator-tag{font-size:10px;color:var(--t3);font-weight:400}
+.purpose-row{display:flex;align-items:center;gap:10px;padding:8px 0}
+.purpose-dot{width:8px;height:8px;border-radius:50%;background:var(--b2);flex-shrink:0}
+.purpose-lbl{font-size:12px;color:var(--t3);flex:1}
+.sem-summary{font-size:13px;line-height:1.65;color:var(--t2);margin-bottom:12px}
+.must-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--t3);margin-bottom:8px}
+.must-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+.must-item{display:flex;align-items:flex-start;gap:8px}
+.must-dot{width:5px;height:5px;border-radius:50%;background:var(--b1);flex-shrink:0;margin-top:7px}
+.must-text{font-size:12px;line-height:1.6;color:var(--t2)}
+.uniq-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--t3);margin-bottom:8px}
+.uniq-text{font-size:13px;line-height:1.65;color:var(--t2)}
+.sel-strip{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:14px}
+.strip-dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.filter-tabs{display:flex;gap:4px;margin-bottom:14px}
+.filter-tab{padding:4px 12px;border-radius:4px;font-size:11px;border:1px solid var(--b3);background:transparent;color:var(--t3);cursor:pointer;font-family:var(--f)}
+.filter-tab.active{border-color:var(--b1);background:var(--bg2);color:var(--t1);font-weight:500}
+.trace-rows{display:flex;flex-direction:column;gap:5px}
+.trace-row{border:1px solid var(--b3);border-radius:6px;overflow:hidden}
+.trace-hdr{width:100%;padding:11px 14px;background:none;border:none;cursor:pointer;font-family:var(--f);display:flex;align-items:center;gap:10px;text-align:left}
+.trace-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.trace-name{font-size:13px;font-weight:500;color:var(--t1);flex:1}
+.trace-det{padding:12px 14px 14px;border-top:1px solid var(--b3);display:flex;flex-direction:column;gap:10px;background:var(--bg2)}
+.field-row{display:grid;grid-template-columns:138px 1fr;gap:10px;align-items:baseline}
+.field-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--t3);line-height:1.65}
+.field-lbl.hl{color:var(--t2)}
+.field-val{font-size:13px;line-height:1.65;color:var(--t2)}
+.trace-ref{padding-top:8px;border-top:1px dashed var(--b3);font-size:10px;color:var(--t3);font-family:monospace}
+.units-list{display:flex;flex-direction:column;gap:8px}
+.unit-card{padding:14px 18px;border-radius:var(--r);border:1px solid var(--b2);background:var(--bg2);display:flex;gap:14px;align-items:center}
+.unit-num{width:24px;height:24px;border-radius:50%;border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--t3);flex-shrink:0}
+.unit-body{flex:1}
+.unit-name-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px}
+.unit-name{font-size:14px;font-weight:500;color:var(--t1)}
+.unit-src{font-size:12px;color:var(--t3)}
+.badge{padding:2px 8px;border-radius:3px;font-size:10px;font-weight:500;white-space:nowrap;display:inline-block}
+.id-badge{font-size:9px;font-weight:700;letter-spacing:.05em;color:#231F20;background:#F1EFE8;border:1px solid #D3D1C7;border-radius:3px;padding:2px 6px;white-space:nowrap;flex-shrink:0}
+.count-badge{padding:1px 7px;border-radius:10px;font-size:10px;font-weight:600;background:var(--bg2);color:var(--t2);border:1px solid var(--b2)}
+.chevron{display:inline-block;font-size:11px;color:var(--t3);transition:transform .15s;flex-shrink:0;line-height:1}
+.chevron.open{transform:rotate(180deg)}
+/* VRP */
+.vrp-trigger-zone{margin-top:36px;padding-top:32px;border-top:1px solid var(--b3)}
+.generate-vrp-btn{padding:10px 22px;font-size:13px;font-weight:500;color:#fff;background:#231F20;border:none;border-radius:var(--r);cursor:pointer;font-family:var(--f);display:flex;align-items:center;gap:8px}
+.generate-vrp-btn:disabled{background:var(--b2);cursor:not-allowed}
+.vrp-loading{display:flex;align-items:center;gap:12px;padding:20px 0}
+.vrp-loading-txt{font-size:13px;color:var(--t2)}
+.vrp-dark-spinner{width:13px;height:13px;border:1.5px solid var(--b2);border-top-color:var(--t2);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;flex-shrink:0}
+.vrp-summary-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+.vrp-chip{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid}
+.vrp-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.vrp-ensemble{margin-bottom:20px}
+.vrp-ensemble-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--t3);margin-bottom:8px}
+.vrp-ensemble-text{font-size:13px;line-height:1.65;color:var(--t2)}
+.vrp-cards{display:flex;flex-direction:column;gap:6px}
+.vrp-card{border:1px solid var(--b2);border-radius:var(--r);overflow:hidden}
+.vrp-card-hdr{width:100%;padding:11px 14px;background:none;border:none;cursor:pointer;font-family:var(--f);display:flex;align-items:center;gap:10px;text-align:left}
+.vrp-card-name{font-size:13px;font-weight:500;color:var(--t1);flex:1}
+.vrp-card-body{border-top:1px solid var(--b3)}
+.vrp-phase{padding:12px 16px;border-bottom:1px solid var(--b3)}
+.vrp-phase:last-child{border-bottom:none}
+.vrp-phase-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--t3);margin-bottom:10px}
+/* Phase 2 steps */
+.vrp-step{border:1px solid var(--b3);border-radius:5px;margin-bottom:6px;overflow:hidden}
+.vrp-step:last-child{margin-bottom:0}
+.vrp-step-hdr{padding:5px 11px;background:var(--bg2);border-bottom:1px solid var(--b3)}
+.vrp-step-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--t3)}
+.vrp-step-body{padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.poss-row{display:flex;align-items:flex-start;gap:9px}
+.poss-icon{width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;margin-top:2px;line-height:1}
+.poss-yes{background:#E1F5EE;border:1px solid #5DCAA5;color:#04342C}
+.poss-no{background:#F1EFE8;border:1px solid #B4B2A9;color:#6B6865}
+.poss-label{font-size:11px;font-weight:600;color:var(--t1);margin-bottom:2px}
+.poss-rationale{font-size:12px;color:var(--t2);line-height:1.55}
+.poss-body{flex:1}
+.testv-na{font-size:12px;color:var(--t3);font-style:italic}
+.testv-alt-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--t3);margin-bottom:4px}
+.testv-alt{padding:8px 10px;background:var(--bg);border:1px dashed var(--b2);border-radius:4px;font-size:12px;color:var(--t2);line-height:1.55}
+.testv-conclusion{display:flex;align-items:center;gap:8px;margin-top:4px}
+.mode-decision-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.vrp-mode-box{padding:10px 12px;border-radius:5px;border:1px solid;display:flex;flex-direction:column;gap:6px}
+.vrp-mode-box-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;margin-bottom:1px}
+.dep-units{display:flex;gap:4px;flex-wrap:wrap;margin-top:2px}
+.dep-chip{font-size:10px;padding:2px 8px;border-radius:3px;background:var(--bg);border:1px solid var(--b2);color:var(--t2);font-family:monospace}
+.surv-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.conf-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.conf-table{display:flex;flex-direction:column;gap:5px;margin-bottom:5px}
+.conf-row{display:flex;align-items:center;gap:8px}
+.conf-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--t3);width:130px;flex-shrink:0}
+.feat-list{list-style:none;display:flex;flex-direction:column;gap:4px;margin-top:2px}
+.feat-item{display:flex;align-items:flex-start;gap:7px}
+.viability-banner{margin-top:16px;padding:12px 16px;border-radius:var(--r);border:1px solid;border-left-width:3px}
+.viability-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;margin-bottom:5px}
+.viability-txt{font-size:13px;line-height:1.6}
+/* Consistency gate */
+.gate-card{padding:14px 16px;border-radius:var(--r);border:1px solid;border-left-width:3px;margin-bottom:28px}
+.gate-hdr{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.gate-status-lbl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.gate-note{font-size:12px;line-height:1.6;margin-top:8px}
+.compliance-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.compliance-row{display:flex;align-items:flex-start;gap:9px}
+.compliance-icon{width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0;margin-top:2px;line-height:1}
+.compliance-pass{background:#E1F5EE;border:1px solid #5DCAA5;color:#04342C}
+.compliance-fail{background:#FAECE7;border:1px solid #F0997B;color:#4A1B0C}
+.compliance-body{flex:1}
+.compliance-req{font-size:12px;line-height:1.55;color:var(--t2)}
+.compliance-units{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px}
+.compliance-violation{font-size:11px;margin-top:4px;color:#D85A30;line-height:1.5}
+.gate-warn{font-size:12px;color:#D85A30;margin-bottom:12px;line-height:1.55}
+/* ARA */
+.ara-context{margin-bottom:16px;padding:13px 16px;border-radius:var(--r);border:1px solid var(--b2);background:var(--bg2)}
+.ara-base-seq{font-family:monospace;font-size:11px;padding:6px 9px;background:var(--bg);border:1px solid var(--b3);border-radius:4px;line-height:1.55;color:var(--t1);margin:6px 0}
+.ara-card{border:1px solid var(--b2);border-radius:var(--r);overflow:hidden;margin-bottom:6px}
+.ara-card-hdr{width:100%;padding:11px 14px;background:none;border:none;cursor:pointer;font-family:var(--f);display:flex;align-items:center;gap:10px;text-align:left}
+.ara-card-body{border-top:1px solid var(--b3)}
+.ara-strategy-grid{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--b3)}
+@media(max-width:540px){.ara-strategy-grid{grid-template-columns:1fr}}
+.ara-strategy-col{padding:12px 14px;border-right:1px solid var(--b3);display:flex;flex-direction:column;gap:6px}
+.ara-strategy-col:last-child{border-right:none}
+.ara-strategy-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--t3);margin-bottom:4px}
+.ara-seq{font-family:monospace;font-size:11px;padding:6px 9px;background:var(--bg);border:1px solid var(--b3);border-radius:4px;line-height:1.55;color:var(--t1)}
+.ara-pres-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:4px}
+.ara-pres-note{font-size:11px;color:var(--t3);line-height:1.5;margin-top:3px}
+.ara-finding{padding:12px 14px;background:var(--bg2)}
+.ara-finding-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--t3);margin-bottom:6px}
+.ara-finding-text{font-size:12px;line-height:1.6;color:var(--t2)}
+.ara-seq-finding{padding:14px 16px;border-radius:var(--r);border:1px solid var(--b2);background:var(--bg2);margin-top:14px}
+.ara-open-q{margin-top:14px;padding:13px 16px;border-radius:var(--r);border:1px solid var(--b2)}
+.ara-open-q-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--t3);margin-bottom:8px}
+.ara-q-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--b3)}
+.ara-q-item:last-child{border-bottom:none}
+.ara-q-dot{width:5px;height:5px;border-radius:50%;background:var(--b1);flex-shrink:0;margin-top:7px}
+.ara-q-text{font-size:12px;line-height:1.6;color:var(--t2)}
+.h002-flag{font-size:11px;color:#412402;line-height:1.5;margin-top:2px}
+.sf-list{display:flex;flex-direction:column;gap:5px}
+.sf-row{display:flex;align-items:flex-start;gap:10px;padding:8px 12px;border-radius:5px;border:1px solid var(--b3);background:var(--bg2);flex-wrap:wrap}
+.sf-field{font-size:13px;font-weight:500;color:var(--t1);flex:1;min-width:120px}
+.sf-desc{font-size:12px;color:var(--t3);line-height:1.5;flex:2}
+.crit-list{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+.crit-row{display:flex;align-items:flex-start;gap:8px}
+.crit-lbl-col{width:140px;flex-shrink:0;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);line-height:1.65;padding-top:3px}
+.crit-content{flex:1;display:flex;flex-direction:column;gap:3px}
+.crit-reason{font-size:12px;color:var(--t2);line-height:1.55}
+.id-gate-row{padding:8px 10px;border-radius:5px;border:1px solid;margin-bottom:8px}
+.id-gate-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;margin-bottom:4px}
+.id-gate-reason{font-size:12px;line-height:1.55}
+
+
+/* ── Catalog / Library additions ── */
+.cat-hit{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--r);border:1px solid #5DCAA5;background:#E1F5EE;margin-bottom:6px}
+.cat-miss{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--r);border:1px solid #F0997B;background:#FAECE7;margin-bottom:6px;border-left-width:3px}
+.cat-svg-wrap{width:56px;height:56px;flex-shrink:0;background:#fff;border:1px solid rgba(26,25,24,.11);border-radius:5px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.cat-svg-wrap svg{width:52px;height:52px;display:block}
+.cat-hit-info{flex:1}
+.cat-hit-word{font-size:14px;font-weight:500;direction:rtl}
+.cat-hit-meta{font-size:11px;color:#04342C;margin-top:3px}
+.cat-miss-info{flex:1}
+.cat-miss-word{font-size:14px;font-weight:500;direction:rtl;color:#4A1B0C}
+.cat-miss-meta{font-size:11px;color:#9B4D2C;margin-top:3px}
+.seq-display{background:#fff;border:1px solid rgba(26,25,24,.22);border-radius:var(--r);padding:20px;display:flex;justify-content:center;overflow-x:auto;margin:14px 0}
+.seq-display svg{display:block}
+.mode-toggle{display:flex;gap:4px;margin-bottom:20px}
+.mode-btn{padding:5px 14px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid var(--b2);background:transparent;color:var(--t3);cursor:pointer;font-family:var(--f)}
+.mode-btn.active{border-color:var(--b1);background:var(--bg2);color:var(--t1)}
+.settings-panel{border:1px solid var(--b3);border-radius:var(--r);overflow:hidden;margin-bottom:24px}
+.settings-toggle{width:100%;padding:10px 14px;background:none;border:none;cursor:pointer;font-family:var(--f);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.settings-content{border-top:1px solid var(--b3);padding:14px;background:var(--bg2)}
+.key-input{width:100%;padding:8px 11px;font-size:12px;color:var(--t1);background:var(--bg);border:1px solid var(--b2);border-radius:5px;outline:none;font-family:monospace}
+.key-input:focus{border-color:var(--b1)}
+.key-status{font-size:10px;color:var(--t3);margin-top:5px}
+.key-status.ok{color:#04342C}
+.mem-banner{padding:10px 0;font-size:13px;line-height:1.65;color:var(--t2);border-bottom:1px solid var(--b3);margin-bottom:24px;direction:rtl;text-align:right}
+.mem-banner-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--t3);margin-bottom:5px;direction:ltr;text-align:left}
+.prov-note{font-size:10px;color:#412402;margin-top:2px}
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Settings -->
+  <div class="settings-panel">
+    <button class="settings-toggle" id="settings-toggle">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--t3)">Settings</span>
+      </div>
+      <span class="chevron" id="settings-chevron">&#9662;</span>
+    </button>
+    <div id="settings-content" class="settings-content" hidden>
+      <div>
+        <label class="input-lbl">Processor Mode</label>
+        <div class="mode-toggle">
+          <button class="mode-btn active" data-mode="mock" id="mode-mock">Mock (example memory)</button>
+          <button class="mode-btn" data-mode="real" id="mode-real">Real (any memory)</button>
+        </div>
+        <div style="font-size:11px;color:var(--t3);line-height:1.55" id="mode-desc">
+          Mock: pre-scripted analysis of the built-in example. Real: full API analysis of any memory you write.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="mb28">
+    <div class="hdr-meta">Memory Processor &middot; Validation Build</div>
+    <h1>Memory Processor</h1>
+  </div>
+
+  <!-- Input -->
+  <div class="input-section" id="input-section">
+    <label class="input-lbl" for="memory-input">Written memory</label>
+    <textarea id="memory-input" dir="auto" rows="5" placeholder="Write your memory in Hebrew or English…"></textarea>
+    <div class="input-footer">
+      <span class="word-count" id="word-count"></span>
+      <button class="analyze-btn" id="analyze-btn">Analyze memory</button>
+    </div>
+  </div>
+
+  <div class="error-card" id="error-card" hidden></div>
+  <div id="results"></div>
+
+</div>
+<script>
+
+let currentResult=null,currentVrpResult=null,currentAraResult=null,currentFilter='all';
+let processorMode='mock';
+const MOCK_MEMORY='בשבת בבוקר, סבא היה קורא לי עיתון ושרנו ביחד.';
+const MOCK_R1={"memoryLanguage": "Hebrew", "coreNarrative": "בשבת בבוקר, סבא קרא לנכד/ה עיתון ושרו ביחד.", "memoryFrame": {"location": null, "temporalContext": "recurring", "recurrencePattern": "כל שבת בבוקר", "period": null}, "events": [{"id": "e_01", "nucleus": {"type": "activity", "description": "קריאת עיתון לנכד/ה"}, "participants": [{"referent": "סבא", "canonicalReferent": "grandfather", "role": "agent", "isNarrator": false}, {"referent": "מספר/ת", "canonicalReferent": "narrator", "role": "recipient", "isNarrator": true}], "specificLocation": null, "purpose": null}, {"id": "e_02", "nucleus": {"type": "activity", "description": "שירה משותפת"}, "participants": [{"referent": "סבא", "canonicalReferent": "grandfather", "role": "co-agent", "isNarrator": false}, {"referent": "מספר/ת", "canonicalReferent": "narrator", "role": "co-agent", "isNarrator": true}], "specificLocation": null, "purpose": null}], "semanticFields": [{"id": "sf_01", "field": "סבא", "canonicalReferent": "grandfather", "category": "person", "sourceText": "סבא", "description": "הסוכן המרכזי"}, {"id": "sf_02", "field": "מספר/ת", "canonicalReferent": "narrator", "category": "person", "sourceText": "לי", "description": "מקבל הקריאה, שותף לשירה"}, {"id": "sf_03", "field": "קריאת עיתון", "canonicalReferent": "reading newspaper", "category": "action", "sourceText": "קורא לי עיתון", "description": "הפעולה המרכזית"}, {"id": "sf_04", "field": "עיתון", "canonicalReferent": "newspaper", "category": "object", "sourceText": "עיתון", "description": "מושא הקריאה הספציפי"}, {"id": "sf_05", "field": "שירה ביחד", "canonicalReferent": "singing together", "category": "action", "sourceText": "שרנו ביחד", "description": "הפעולה השנייה"}, {"id": "sf_06", "field": "שבת בבוקר", "canonicalReferent": "saturday morning", "category": "temporal-pattern", "sourceText": "בשבת בבוקר", "description": "הקשר זמני חוזר"}], "semanticStructure": {"summary": "כל שבת, סבא קרא לנכד/ה עיתון ואחר כך שרו ביחד — פעילות קבועה של קשר בין-דורי.", "mustPreserve": ["הקשר סבא-נכד/ה חייב להישמר — שני המשתתפים נחוצים", "העיתון נחוץ להבחין בין קריאה זו לכל פעילות קריאה אחרת"]}, "considerationRecord": [{"fieldId": "sf_01", "field": "סבא", "canonicalReferent": "grandfather", "category": "person", "identityGate": "changes-identity", "identityGateReason": "הסרת סבא מבטלת את כל מבנה הזיכרון — אין קורא, אין שר. הזיכרון הופך לאחר לחלוטין.", "decision": "representative", "criterion1": "not-evaluated", "criterion1Reason": "", "criterion2": "not-evaluated", "criterion2Reason": "", "criterion3": "not-evaluated", "criterion3Reason": "", "criterion4": "not-evaluated", "criterion4Reason": "", "decisionReason": "נשמר על ידי שער זהות הזיכרון."}, {"fieldId": "sf_02", "field": "מספר/ת", "canonicalReferent": "narrator", "category": "person", "identityGate": "changes-identity", "identityGateReason": "הסרת הנכד/ה מבטלת את הרלציה 'קרא לי' ואת השירה המשותפת. ללא מקבל, הזיכרון מאבד את תצורתו.", "decision": "representative", "criterion1": "not-evaluated", "criterion1Reason": "", "criterion2": "not-evaluated", "criterion2Reason": "", "criterion3": "not-evaluated", "criterion3Reason": "", "criterion4": "not-evaluated", "criterion4Reason": "", "decisionReason": "נשמר על ידי שער זהות הזיכרון."}, {"fieldId": "sf_03", "field": "קריאת עיתון", "canonicalReferent": "reading newspaper", "category": "action", "identityGate": "reduces-detail", "identityGateReason": "הסרת הקריאה משאירה זיכרון של שירה בלבד עם סבא ונכד/ה.", "decision": "representative", "criterion1": "satisfied", "criterion1Reason": "'קורא לי עיתון' מצוין במפורש כמרכז הנרטיב הראשון", "criterion2": "satisfied", "criterion2Reason": "ייצוג ללא קריאה לא יתאר את שתי הפעולות הספציפיות", "criterion3": "satisfied", "criterion3Reason": "הקריאה מגדירה את תפקידי סבא (קורא) ומספר/ת (מקשיב/ה)", "criterion4": "satisfied", "criterion4Reason": "אין אלמנט אחר שנושא את ממד הקריאה", "decisionReason": "ארבעת הקריטריונים מסופקים."}, {"fieldId": "sf_04", "field": "עיתון", "canonicalReferent": "newspaper", "category": "object", "identityGate": "reduces-detail", "identityGateReason": "הסרת העיתון מותירה 'קריאה כלשהי' — פחות ספציפי.", "decision": "representative", "criterion1": "satisfied", "criterion1Reason": "'עיתון' מצוין במפורש ולא בצורה כללית", "criterion2": "satisfied", "criterion2Reason": "ללא עיתון הייצוג לא מבחין בין קריאת עיתון לכל קריאה אחרת", "criterion3": "unsatisfied", "criterion3Reason": "הסרת העיתון אינה משנה מבנה תפקידים", "criterion4": "satisfied", "criterion4Reason": "העיתון מביע ספציפיות שאין בשום אלמנט אחר", "decisionReason": "קריטריונים 1, 2, 4 מסופקים. העיתון מבחין בין זיכרון זה לאחרים."}, {"fieldId": "sf_05", "field": "שירה ביחד", "canonicalReferent": "singing together", "category": "action", "identityGate": "reduces-detail", "identityGateReason": "הסרת השירה מותירה זיכרון של קריאת עיתון בלבד.", "decision": "representative", "criterion1": "satisfied", "criterion1Reason": "'שרנו ביחד' מצוין במפורש", "criterion2": "satisfied", "criterion2Reason": "ייצוג ללא שירה לא יתאר את הממד השני של הזיכרון", "criterion3": "unsatisfied", "criterion3Reason": "מבנה סבא-נכד/ה שורד ללא שירה", "criterion4": "satisfied", "criterion4Reason": "השירה מביעה ממד שאין בקריאה", "decisionReason": "קריטריונים 1, 2, 4 מסופקים."}, {"fieldId": "sf_06", "field": "שבת בבוקר", "canonicalReferent": "saturday morning", "category": "temporal-pattern", "identityGate": "reduces-detail", "identityGateReason": "הסרת שבת בבוקר מותירה את אותו זיכרון ללא הקשר זמני.", "decision": "semantic-only", "criterion1": "satisfied", "criterion1Reason": "מצוין במפורש", "criterion2": "unsatisfied", "criterion2Reason": "הסרתו משאירה ייצוג נאמן לאירוע עצמו", "criterion3": "unsatisfied", "criterion3Reason": "לא מחזיק מבנה", "criterion4": "satisfied", "criterion4Reason": "תרומה ייחודית כהקשר זמני", "decisionReason": "קריטריון 2 אינו מסופק — הסרתו לא פוגעת בנאמנות הייצוג."}], "representativeWords": [{"id": "rw_01", "word": "סבא", "canonicalReferent": "grandfather", "category": "person", "sourceText": "סבא", "narrativePosition": 1}, {"id": "rw_02", "word": "מספר/ת", "canonicalReferent": "narrator", "category": "person", "sourceText": "לי", "narrativePosition": 2}, {"id": "rw_03", "word": "קריאת עיתון", "canonicalReferent": "reading newspaper", "category": "action", "sourceText": "קורא לי עיתון", "narrativePosition": 3}, {"id": "rw_04", "word": "עיתון", "canonicalReferent": "newspaper", "category": "object", "sourceText": "עיתון", "narrativePosition": 4}, {"id": "rw_05", "word": "שירה ביחד", "canonicalReferent": "singing together", "category": "action", "sourceText": "שרנו ביחד", "narrativePosition": 5}], "mustPreserveCompliance": [{"requirement": "הקשר סבא-נכד/ה חייב להישמר", "satisfied": true, "satisfiedBy": ["rw_01", "rw_02"], "violation": null}, {"requirement": "העיתון נחוץ להבחנה", "satisfied": true, "satisfiedBy": ["rw_04"], "violation": null}], "consistencyGateStatus": "pass", "consistencyGateNote": "כל אילוצי Must Preserve מסופקים."};
+const MOCK_VRP={"ensembleReasoning": "חמש יחידות עם נוכחות עצמאית לרוב. הקריאה תיוצג הקשרית דרך סבא-עיתון. שירה קיבלה Both — תווים מוזיקליים + קרבה לשני הסוכנים.", "vrp": [{"unitId": "rw_01", "unit": "סבא", "phase1": {"entityNature": "person", "identityFeatures": ["זקן", "נוכחות בוגרת", "מטפח"], "inherentlyVisual": true}, "phase2": {"possibilityInventory": {"independentPossible": true, "independentRationale": "דמות זקן — צלל פרונטלי עם מקל הליכה", "contextualPossible": false, "contextualRationale": "הסוכן המרכזי, לא ניתן להקשרה", "contextualDependencies": []}, "testV": {"applied": false, "alternativeMemory": null, "visuallyDistinguishable": null, "testVConclusion": "not-applicable"}, "modeDecision": {"mode": "independent", "modeRationale": "contextualPossible=false AND independentPossible=true", "independent": {"visualConcept": "זקן עם מקל הליכה", "constructible": true}}}, "phase3": {"survivabilityStatus": "recognized", "independentConfidence": "high", "contextualConfidence": "n/a", "mutuallyReinforcing": null, "assessment": "מוכר מיידית"}, "phase4": {"h002Status": "compliant", "auditNote": "none"}}, {"unitId": "rw_02", "unit": "מספר/ת", "phase1": {"entityNature": "person", "identityFeatures": ["ילד/ה", "קטן/ה", "מקבל/ת"], "inherentlyVisual": true}, "phase2": {"possibilityInventory": {"independentPossible": true, "independentRationale": "דמות ילד/ה — צלל פרונטלי קטן", "contextualPossible": true, "contextualRationale": "ניתן כמקבל בצמידות לסבא, אך Test V נדרש", "contextualDependencies": ["rw_01"]}, "testV": {"applied": true, "alternativeMemory": "סבא קורא עיתון לבדו", "visuallyDistinguishable": false, "testVConclusion": "fails"}, "modeDecision": {"mode": "independent", "modeRationale": "testV fails AND independentPossible=true", "independent": {"visualConcept": "ילד/ה — גוף קטן", "constructible": true}}}, "phase3": {"survivabilityStatus": "recognized", "independentConfidence": "medium", "contextualConfidence": "n/a", "mutuallyReinforcing": null, "assessment": "ניתן לזיהוי, עמימות מין"}, "phase4": {"h002Status": "risk", "auditNote": "מין לא מצוין — בחירה תוסיף אינפורמציה לא בטקסט"}}, {"unitId": "rw_03", "unit": "קריאת עיתון", "phase1": {"entityNature": "action", "identityFeatures": ["פעולה מכוונת", "מועברת", "קשורה לאובייקט"], "inherentlyVisual": false}, "phase2": {"possibilityInventory": {"independentPossible": false, "independentRationale": "פעולה מופשטת — לא ניתנת לבנייה עצמאית", "contextualPossible": true, "contextualRationale": "קרבת סבא-עיתון מבטאת קריאה", "contextualDependencies": ["rw_01", "rw_04"]}, "testV": {"applied": true, "alternativeMemory": "סבא מחזיק עיתון ללא קריאה", "visuallyDistinguishable": true, "testVConclusion": "passes"}, "modeDecision": {"mode": "contextual", "modeRationale": "contextualPossible=true AND testV passes", "contextual": {"expressedThrough": ["rw_01", "rw_04"], "relationalMechanism": "sequencing", "emergenceExplanation": "סבא + עיתון בצמידות = קריאה"}}}, "phase3": {"survivabilityStatus": "emergent", "independentConfidence": "n/a", "contextualConfidence": "high", "mutuallyReinforcing": null, "assessment": "צמידות סבא-עיתון תצמיח קריאה בצורה אמינה"}, "phase4": {"h002Status": "compliant", "auditNote": "none"}}, {"unitId": "rw_04", "unit": "עיתון", "phase1": {"entityNature": "object", "identityFeatures": ["מלבני", "שורות טקסט", "כותרת"], "inherentlyVisual": true}, "phase2": {"possibilityInventory": {"independentPossible": true, "independentRationale": "צורה מלבנית עם קווים — גאומטריה פשוטה", "contextualPossible": false, "contextualRationale": "האובייקט הספציפי — חייב נוכחות עצמאית", "contextualDependencies": []}, "testV": {"applied": false, "alternativeMemory": null, "visuallyDistinguishable": null, "testVConclusion": "not-applicable"}, "modeDecision": {"mode": "independent", "modeRationale": "contextualPossible=false AND independentPossible=true", "independent": {"visualConcept": "עיתון מלבני עם שורות טקסט", "constructible": true}}}, "phase3": {"survivabilityStatus": "recognized", "independentConfidence": "high", "contextualConfidence": "n/a", "mutuallyReinforcing": null, "assessment": "מוכר מיידית"}, "phase4": {"h002Status": "compliant", "auditNote": "none"}}, {"unitId": "rw_05", "unit": "שירה ביחד", "phase1": {"entityNature": "action", "identityFeatures": ["קולי", "משותף", "שמחה"], "inherentlyVisual": false}, "phase2": {"possibilityInventory": {"independentPossible": true, "independentRationale": "תווים מוזיקליים — ייצוג קונבנציונלי", "contextualPossible": true, "contextualRationale": "צמידות שני הסוכנים + תווים = שירה ביחד", "contextualDependencies": ["rw_01", "rw_02"]}, "testV": {"applied": true, "alternativeMemory": "סבא ונכד/ה יושבים ביחד ללא שירה", "visuallyDistinguishable": false, "testVConclusion": "fails"}, "modeDecision": {"mode": "both", "modeRationale": "testV fails AND independentPossible=true → both", "independent": {"visualConcept": "תווים מוזיקליים", "constructible": true}, "contextual": {"expressedThrough": ["rw_01", "rw_02"], "relationalMechanism": "co-presence", "emergenceExplanation": "שני הסוכנים + תווים = שירה ביחד"}}}, "phase3": {"survivabilityStatus": "both-reinforcing", "independentConfidence": "high", "contextualConfidence": "medium", "mutuallyReinforcing": true, "assessment": "שתי השכבות מחזקות זו את זו"}, "phase4": {"h002Status": "compliant", "auditNote": "none"}}], "vrpSummary": {"independent": 3, "contextual": 1, "both": 1, "gap": 0, "sequenceViability": "full", "sequenceComment": "כל חמשת היחידות ניתנות לייצוג. הרצף מובחן."}};
+
+const PROMPT = `You are the Memory Analyzer of a pictographic language engine.
+
+Analyze the written memory and return a structured JSON object.
+
+PIPELINE: Memory > Semantic Analysis (Part A) > Representative Words (Part B)
+
+PART A — SEMANTIC ANALYSIS
+Purpose: Complete and accurate understanding of the memory. No selection decisions occur here.
+
+ACTIVE HYPOTHESES
+
+H-001 — Identity Criterion
+The purpose of this stage is to understand what was remembered and identify which elements best represent that remembered experience. Selection is based on experiential fidelity, not on visual constraints or compression.
+
+H-002 — No Semantic Enrichment
+Do not invent emotional, symbolic, social, or psychological meaning not explicitly present in the text. All reasoning must be factual and observable.
+
+PART A STEPS
+
+Step 1: Detect language (Hebrew, English, or Mixed).
+
+Step 2: Core narrative [H-002]. One sentence in the memory language restating the event using only what is explicitly present.
+
+Step 3: Memory Frame. From explicit signals only: location (null if not stated), temporalContext (singular/recurring/habitual), recurrencePattern (null if not applicable), period (null if not stated).
+
+Step 4: Event Model [H-002]. For each event: nucleus (type: action/activity/state/achievement, description in memory language), participants (referent in memory language, canonicalReferent in English lowercase, role, isNarrator), specificLocation (null if same as frame), purpose (null if not stated).
+Role taxonomy: agent (initiates action), co-agent (joint participation), patient (undergoes action), recipient (receives transfer), experiencer (internal experience), beneficiary (benefits), instrument (used to perform).
+Roles must be derivable from what is explicitly stated only.
+
+Step 5: Semantic Fields. Enumerate every distinct semantic element present in the memory. Include every element identified in the Event Model and Memory Frame, whether or not it will become a representative word. Do not omit any element. Assign each a category:
+  person — a human participant
+  object — a physical thing present in the event
+  action — something done; the mechanism or process of the event
+  quality — a sensory, emotional, or atmospheric property of the encounter
+  place — a spatial element or environmental setting
+  relational-state — the nature of the connection between participants
+  temporal-pattern — timing, frequency, or ritual quality
+  environmental-condition — a physical condition of the setting (cold, darkness, noise)
+
+Step 6: Semantic Structure. From the Event Model, identify:
+  summary: what makes this specific memory distinctly itself (factual, not emotional)
+  mustPreserve: 2-4 identity-critical relational facts about this memory
+
+PART B — REPRESENTATIVE WORDS SELECTION
+Purpose: Select which semantic fields best represent the remembered experience.
+
+CRITICAL: Part B operates entirely without reference to visual constraints. Do not reason about:
+- What can be drawn within the language vocabulary
+- Whether a pictogram might absorb another element
+- What a viewer would read from a pictogram sequence
+- Whether an element might become a Gap or visual substitute
+These concerns belong to Stage 2. Part B asks: would removing this element make the resulting representation less faithful to this memory as written?
+
+Step 7: Representative Words Selection.
+
+For each semantic field, apply a two-step evaluation in order.
+
+STEP 7A — MEMORY IDENTITY GATE
+Question: If this element is removed, does the memory become a meaningfully different memory, or does it remain the same memory with less detail?
+
+This is not a visual question. It asks about the semantic identity of the written memory as described by the narrator.
+
+A memory becomes MEANINGFULLY DIFFERENT when removal:
+- Changes the participant structure of the event (removing a co-participant turns a shared event into a solo event; removing the learner from a teaching event leaves a non-teaching event)
+- Changes the event's essential character (removing "Yiddish" from a Yiddish singing memory leaves a generic singing memory that no longer describes the same remembered experience)
+- Collapses a defining relational structure (removing the recipient from a gift event; removing the guide from a guided walk)
+- Removes the specific element that makes this memory this memory rather than another memory of the same general type
+
+A memory REMAINS THE SAME WITH LESS DETAIL when:
+- The event type and participant structure survive the removal
+- The core encounter described by the narrator can still be identified from the remaining elements
+- Removal reduces specificity without changing what kind of memory this is or who it involves
+
+Decision rule for Step 7a:
+identityGate: "changes-identity" → RETAIN automatically. This field becomes a representative word. Do not evaluate criteria.
+identityGate: "reduces-detail" → proceed to Step 7b.
+
+[H-002]: The gate assessment must be based on the written memory only. Do not infer significance beyond what is explicitly stated.
+
+STEP 7B — REPRESENTATIVE EVALUATION (only for fields where identityGate is "reduces-detail")
+
+GOVERNING PRINCIPLE
+A semantic field becomes a representative word if removing it from the representative set would result in a representation that is less faithful to this memory as written and described by the narrator.
+
+For each element reaching Step 7b, apply four diagnostic criteria. The criteria are tools for applying the governing principle, not independent gates.
+
+CRITERION 1 — Memorial Centrality
+Is this element explicitly present in the written memory and part of what the narrator describes as central to what they are remembering?
+satisfied: the narrator explicitly names, foregrounds, or specifically describes this element as part of the memory
+unsatisfied: the element is semantically implied but not described — present in the event structure but not in what the narrator chose to express
+ambiguous: the element is mentioned but its centrality to how the memory is described is unclear
+
+CRITERION 2 — Fidelity Consequence
+Would removing this element from the representative set produce a representation that is less faithful to this memory as written — one that could reasonably describe a different memory, or that misrepresents what this narrator described?
+satisfied: removing this element would make the representation ambiguous or descriptive of a different kind of encounter
+unsatisfied: removing this element leaves a representation that remains specific and faithful to what the narrator described
+ambiguous: uncertain whether removal would reduce fidelity to the written memory
+
+CRITERION 3 — Relational Anchoring
+Does this element hold the relational configuration of the memory in place as described by the narrator?
+satisfied: its absence would collapse or change the relational shape of the encounter as written
+unsatisfied: its absence leaves the relational shape intact; other elements hold the configuration
+ambiguous: partially holds the relational configuration
+
+CRITERION 4 — Distinct Contribution
+Does this element carry something about this specific memory that is not already carried by another element in the representative set?
+satisfied: carries an aspect of what the narrator described that no other selected element already covers
+unsatisfied: another selected element fully covers what this would contribute at the level of the written memory
+ambiguous: partial overlap with another element's contribution
+
+For fields retained by the Memory Identity Gate (identityGate: "changes-identity"): set all criterion values to "not-evaluated".
+For fields reaching Step 7b: assess all four criteria and record the reasoning explicitly.
+
+DECISION: Fields retained by the Memory Identity Gate are automatically representative words. For fields evaluated in Step 7b: a semantic field becomes a representative word when the criterion assessments together support the conclusion that removing it would reduce the representation's fidelity to the written memory. The decision must be stated with explicit reference to the written memory. [H-002]: all criterion assessments must be factual. Do not infer significance beyond what is stated.
+
+Step 8: Must Preserve Consistency Gate.
+For each mustPreserve statement:
+  a. Identify which participants or relationships are required
+  b. Verify all required participants appear in representativeWords
+  c. If a relationship requires multiple participants, all must appear or absence must be justified on fidelity grounds — specifically, why the written memory's requirements are still satisfied
+  d. Silent violation is not permitted
+
+RULES
+LANGUAGE RULE: All user-facing fields in the memory language. canonicalReferent always English lowercase.
+OUTPUT RULE: Valid JSON only. No markdown. No preamble. Begin with {.
+
+JSON SCHEMA:
+{"memoryLanguage":"Hebrew|English|Mixed","coreNarrative":"string","memoryFrame":{"location":"string or null","temporalContext":"singular|recurring|habitual","recurrencePattern":"string or null","period":"string or null"},"events":[{"id":"e_01","nucleus":{"type":"action|activity|state|achievement","description":"string"},"participants":[{"referent":"string","canonicalReferent":"string","role":"agent|co-agent|patient|recipient|experiencer|beneficiary|instrument","isNarrator":false}],"specificLocation":"string or null","purpose":"string or null"}],"semanticFields":[{"id":"sf_01","field":"string in memory language","canonicalReferent":"english lowercase","category":"person|object|action|quality|place|relational-state|temporal-pattern|environmental-condition","sourceText":"memory text fragment","description":"its role in the event"}],"semanticStructure":{"summary":"string","mustPreserve":["string"]},"considerationRecord":[{"fieldId":"sf_01","field":"string in memory language","canonicalReferent":"english lowercase","category":"string","identityGate":"changes-identity|reduces-detail","identityGateReason":"string — what changes or is preserved if this element is removed","decision":"representative|semantic-only","criterion1":"satisfied|unsatisfied|ambiguous|not-evaluated","criterion1Reason":"string","criterion2":"satisfied|unsatisfied|ambiguous|not-evaluated","criterion2Reason":"string","criterion3":"satisfied|unsatisfied|ambiguous|not-evaluated","criterion3Reason":"string","criterion4":"satisfied|unsatisfied|ambiguous|not-evaluated","criterion4Reason":"string","decisionReason":"string"}],"representativeWords":[{"id":"rw_01","word":"string in memory language","canonicalReferent":"english lowercase","category":"string","sourceText":"memory text fragment","narrativePosition":1}],"mustPreserveCompliance":[{"requirement":"string","satisfied":true,"satisfiedBy":["rw_01"],"violation":"string or null"}],"consistencyGateStatus":"pass|fail","consistencyGateNote":"string"}
+
+---
+
+CRITICAL RULES — THESE ARE HARD CONSTRAINTS FROM THE GOVERNING DOCUMENTS:
+
+RULE A — Habitual and Recurring temporal annotations (Workflow Grammar, Stage 1.2, Step 4 and Stage 1.3, Step 5):
+"Recurring and Habitual temporal annotations do not become Semantic Field candidates. They are preserved in the Event Model as a record of the memory's occurrence pattern."
+In Hebrew, the grammatical construction "היה + verb" (e.g. "היה מכין", "היה קורא") is the structural modifier that signals habitual recurrence. It is not a temporal referent — it carries no independently meaningful time content. It is the equivalent of "used to" or "would" in English.
+Procedure: record temporalContext as "habitual" in memoryFrame ONLY. The habitual annotation must not enter semanticFields. It must not enter representativeWords. No form of "הרגל חוזר", "recurring", "habitual", or equivalent may appear in representativeWords under any circumstances.
+
+RULE B — Temporal referents and the D1 identity gate (Workflow Grammar Stage 1.3 Reducibility Clarification; Semantic Methodology D1 and D2):
+Temporal referents such as "לצהריים", "בבוקר", "בערב" pass the Reducibility Criterion and enter as Candidate Semantic Fields. BUT Stage 1.3 states: "D1 remains responsible for determining whether any specific instance survives as a Representative Word."
+Apply D1 strictly: "If this element is removed, would the resulting representation still be recognized as the same memory, or would it become a different memory?" (Semantic Methodology D1)
+For time-of-day references like "לצהריים": removing "לצהריים" from "סבא מכין לי אורז עם אפונה וגזר במיקרוגל" leaves the same memory with reduced temporal specificity — not a different memory. This is a Detail (D2), not a Constituent. Do not promote it to Representative Word status.
+The rule: temporal referents that contextualize WHEN without altering WHAT the memory is are Details. Only temporal referents whose removal would make the memory unrecognizable as itself are Constituents.
+
+MANDATORY SELF-VALIDATION CHECKLIST — run this before producing output:
+
+Check 1 — Habitual/recurring annotation not in representativeWords:
+Scan your representativeWords array. If ANY entry contains: "הרגל", "חוזר", "recurring", "habitual", "pattern", or any description of occurrence frequency — REMOVE it immediately. This is a hard constraint with no exceptions (Workflow Grammar Stage 1.2 Step 4-5).
+
+Check 2 — Each temporal referent in representativeWords has passed D1:
+For each representativeWord with category "temporal-pattern" or "temporal-referent": ask "If I remove only this element from the memory, does the memory become a DIFFERENT memory, or the SAME memory with reduced specificity?" If the answer is "same memory with reduced specificity" — reclassify it as a Detail and REMOVE it from representativeWords. Do not retain temporal referents by default. (Semantic Methodology D1, D2)
+
+Check 3 — No invented elements:
+Every element in representativeWords must trace directly to a word or grammatical structure in the written memory. If an element has no direct textual anchor — REMOVE it. (Semantic Methodology P1, P3)
+
+Check 4 — Consideration record matches representativeWords:
+Every element in representativeWords must have a corresponding entry in considerationRecord with decision="representative". If an element appears in representativeWords but not in considerationRecord — add the entry or remove the word.
+
+Check 5 — Word label derived from written memory (Semantic Methodology P1 Clarification — Lexical Form Fidelity):
+The word field of each Representative Word must be derived from the written memory. The processor may not replace, normalize, or restructure the narrator's own words.
+If the written memory contains "אותנו" — the word field must be "אותנו", not "אנחנו".
+If the written memory contains "קורא לי עיתון" — the word field reflects that phrase, not a nominalized reconstruction.
+The "canonicalReferent" field may hold a normalized or English description. The "word" field may not.
+Violation: any word field that contains a lexical form not present in the written memory.
+
+`;
+
+const VRP_PROMPT = `You are the Visual Representation Planner of a pictographic language engine.
+
+You receive Representative Words selected by Stage 1 of the pipeline, plus context.
+
+Your task: determine how each unit's meaning should survive into the final visual representation (Stage 2).
+
+H-001 - Identity Criterion (Stage 2 - Visual Instantiation)
+The identity criterion governs this stage independently. A mode assignment is valid only if the resulting pictogram sequence remains sufficient to distinguish this memory from the most plausible alternative memory a viewer could read from the same sequence.
+Assumed viewer: familiar with the language conventions, but has no prior knowledge of this specific memory.
+The criterion is NOT inherited from Stage 1. Passing Stage 1 does not guarantee Stage 2.
+
+Test V - Visual Disambiguation Test: Assume a given unit has no independent pictogram. Construct the most plausible different memory a viewer could read from the remaining pictogram sequence. If the two memories are not visually distinguishable without prior knowledge, contextual expression alone fails the identity criterion.
+
+CORE QUESTION: Not "Can this unit become a standalone pictogram?" Not "Is this meaning contextually readable?" Yes: "How should this meaning be represented such that the full sequence remains sufficient to identify this specific memory?"
+
+MANDATORY REASONING ORDER
+Step 1: Read the complete Representative Words set as a whole. Identify likely Independent candidates - these will be the contextual anchors available for other units.
+Step 2: For each unit, execute Phase 2 in strict order: Possibility Inventory > Test V > Mode Decision. Do not assign a mode before completing Test V where applicable.
+Step 3: Verify no expressedThrough list references a Contextual, Both, or Gap unit. Only Independent units produce pictograms and can serve as contextual anchors.
+
+ILLUSTRATION GRAMMAR CONSTRAINTS
+Construction: stroke-based geometry only, no filled areas.
+Vocabulary: circle, ellipse, rectangle, square, line, arc, triangle. No free-form or invented shapes.
+Viewpoint: frontal only. No perspective, profile, or 3/4 view.
+Manipulation: combine, intersect, proportional scale, rotate only. No arbitrary deformation.
+
+AVAILABLE MODES
+INDEPENDENT: The unit requires its own pictogram. Contextual expression unavailable or fails Test V.
+CONTEXTUAL: No independent pictogram. Meaning carried by co-presence, spatial relationship, sequencing, or combination with other Independent units. Valid only when contextual expression passes Test V. All expressedThrough references must be Independent units.
+BOTH: Contextual expression available but fails Test V - sequence collapses without independent representation. Both encodings must be mutually reinforcing. Conflicting encodings are not valid.
+GAP: Neither independent nor contextual expression available within the illustration grammar. The unit has been selected as a Representative Word and must be represented — a Gap records that the current language does not yet have the resources to do so.
+
+FOUR-PHASE ANALYSIS PER UNIT
+
+PHASE 1 - Semantic Nature Characterization (always run)
+entityNature: person|object|place|symbol|action|relationship|quality
+identityFeatures: 1-3 visual characteristics defining this referent's identity (what makes it recognizable as THIS specific thing)
+inherentlyVisual: true if stable physical form; false if relational or abstract
+
+PHASE 2 - Representation Mode Determination (three mandatory steps in order)
+
+STEP 1 - Possibility Inventory
+independentPossible: Can a frontal-viewpoint pictogram be built from the geometric vocabulary? (true/false)
+independentRationale: Explain.
+contextualPossible: Can the meaning be carried through relationship with other units? (true/false)
+contextualRationale: Explain. If possible, name candidate units and mechanism.
+contextualDependencies: array of candidate unit IDs (must be Independent-classified; empty if not possible)
+
+STEP 2 - Test V - Visual Disambiguation Test [H-001 Stage 2]
+ACTIVE CONSTRUCTION REQUIRED. Cannot be passed by intuition.
+
+If contextualPossible is true:
+  Assume this unit has NO independent pictogram.
+  Construct the most plausible different memory a viewer could read from the remaining pictogram sequence, given no prior knowledge.
+  applied: true
+  alternativeMemory: the constructed alternative (in memory's language)
+  visuallyDistinguishable: true if two memories distinguishable; false if they collapse
+  testVConclusion: "passes"|"fails"
+
+If contextualPossible is false:
+  applied: false, alternativeMemory: null, visuallyDistinguishable: null, testVConclusion: "not-applicable"
+
+STEP 3 - Mode Decision
+Apply this decision table strictly:
+  contextualPossible=true AND testVConclusion=passes -> contextual
+  contextualPossible=true AND testVConclusion=fails AND independentPossible=true -> both
+  contextualPossible=true AND testVConclusion=fails AND independentPossible=false -> gap
+  contextualPossible=false AND independentPossible=true -> independent
+  contextualPossible=false AND independentPossible=false -> gap
+
+mode: "independent"|"contextual"|"both"|"gap"
+modeRationale: one sentence stating which decision table row was applied
+Provide sub-objects only for relevant mode(s):
+  independent: {"visualConcept":"what would be drawn","constructible":true}
+  contextual: {"expressedThrough":["unit_01"],"relationalMechanism":"co-presence|spatial-proximity|sequencing|combination","emergenceExplanation":"string"}
+  gap: {"gapType":"vocabulary|construction|viewpoint|relational-encoding","gapRationale":"string","alternativeStrategy":"string or null"}
+For Both mode: provide BOTH independent and contextual sub-objects.
+
+PHASE 3 - Survivability Assessment
+Confidence assessment on the mode decision. NOT a substitute for Test V. Assesses quality of a decision that has already satisfied the identity criterion.
+
+For independent: survivabilityStatus:"recognized", independentConfidence:high|medium|low, contextualConfidence:"n/a", mutuallyReinforcing:null, assessment: will pictogram be immediately recognizable?
+For contextual: survivabilityStatus:"emergent", independentConfidence:"n/a", contextualConfidence:high|medium|low, mutuallyReinforcing:null, assessment: will meaning reliably emerge?
+For both: survivabilityStatus:"both-reinforcing"|"both-conflicting", independentConfidence:high|medium|low, contextualConfidence:high|medium|low, mutuallyReinforcing:true|false, assessment: do the two encodings strengthen each other or compete?
+For gap: survivabilityStatus:"gap-absolute"|"gap-conditional", independentConfidence:"n/a", contextualConfidence:"n/a", mutuallyReinforcing:null, assessment: is gap resolvable through language extension?
+
+PHASE 4 - Expressive Audit [H-002]
+h002Status: "compliant"|"risk"|"violation"
+auditNote: describe excess; state "none" if compliant.
+
+LANGUAGE RULE: All user-facing text fields in the memory's language. canonicalReferent always English lowercase.
+OUTPUT RULE: Valid JSON only. No markdown. No preamble. Begin with {.
+
+JSON SCHEMA:
+{"ensembleReasoning":"paragraph: holistic analysis before individual classification; identify likely Independent candidates first","vrp":[{"unitId":"rw_01","unit":"string","canonicalReferent":"string","phase1":{"entityNature":"string","identityFeatures":["string"],"inherentlyVisual":true},"phase2":{"possibilityInventory":{"independentPossible":true,"independentRationale":"string","contextualPossible":false,"contextualRationale":"string","contextualDependencies":[]},"testV":{"applied":false,"alternativeMemory":null,"visuallyDistinguishable":null,"testVConclusion":"not-applicable"},"modeDecision":{"mode":"independent|contextual|both|gap","modeRationale":"string","independent":{"visualConcept":"string","constructible":true},"contextual":{"expressedThrough":["rw_01"],"relationalMechanism":"string","emergenceExplanation":"string"},"gap":{"gapType":"string","gapRationale":"string","alternativeStrategy":"string or null"}}},"phase3":{"survivabilityStatus":"string","independentConfidence":"string","contextualConfidence":"string","mutuallyReinforcing":null,"assessment":"string"},"phase4":{"h002Status":"string","auditNote":"string"}}],"vrpSummary":{"independent":0,"contextual":0,"both":0,"gap":0,"sequenceViability":"viable|partial|blocked","sequenceComment":"string"}}`;
+
+
+/* ─── Library ─── */
+const LIBRARY_SVG=`<defs>
+<style>
+.cls-1, .cls-2, .cls-3, .cls-4, .cls-5, .cls-6, .cls-7 {
+fill: none;
+}
+
+.cls-2 {
+stroke-width: 1px;
+}
+
+.cls-2, .cls-3, .cls-4, .cls-5, .cls-6, .cls-7 {
+stroke: #231f20;
+}
+
+.cls-2, .cls-3, .cls-4, .cls-5, .cls-7 {
+stroke-linejoin: round;
+}
+
+.cls-2, .cls-3, .cls-4, .cls-7 {
+stroke-linecap: round;
+}
+
+.cls-3 {
+stroke-width: 1px;
+}
+
+.cls-4 {
+stroke-width: 1px;
+}
+
+.cls-8 {
+fill: #231f20;
+}
+
+.cls-6 {
+stroke-miterlimit: 10;
+}
+
+.cls-9 {
+clip-path: url(#clippath-1);
+}
+
+.cls-10 {
+font-family: MyriadHebrew-Regular, 'Myriad Hebrew';
+font-size: 22px;
+}
+
+.cls-11 {
+clip-path: url(#clippath);
+}
+</style>
+<clipPath id="clippath">
+<path class="cls-1" d="M280.1,111.04l.02.3v47.83c0-.06,100.25,0,100.25,0v-44.21l-.06-4.2c-2.35-.64-4.76-1.19-7.22-1.66l-.12.36c-8.22,19.61-24,32.47-42.34,32.47s-34.27-13.08-42.47-32.77l-.15-.09c-2.75.57-5.3,1.2-7.91,1.97Z" />
+</clipPath>
+<clipPath id="clippath-1">
+<rect class="cls-1" x="279.08" y="108.56" width="101.29" height="51.14" />
+</clipPath>
+</defs>
+
+<g>
+<path class="cls-7" d="M102.23,87.98l-.03.09-.1.27c-.67,1.19-1.92,1.96-3.38,1.96-1.75,0-3.23-1.15-3.72-2.74l-4.64-14.66c-.27-.74-.41-1.53-.41-2.36,0-3.83,3.1-6.93,6.93-6.93,1.05,0,2.05.24,2.94.66l.05-.52c.12-1.4.23-1.88.44-3.24l.04-.3s-.36-.14-.4-.15c-1-.31-2.07-.48-3.17-.48-5.9,0-10.67,4.78-10.67,10.67,0,1.28.22,2.5.64,3.64l7.15,22.58c.76,2.44,3.04,4.22,5.74,4.22s5.11-1.88,5.8-4.44l-.06-.12-.07-.15c-1.25-2.57-2.16-5.14-3.03-8h-.05Z" />
+<path class="cls-7" d="M90.35,72.9c-.27-.74-.41-1.53-.41-2.36,0-3.83,3.1-6.93,6.93-6.93,1.05,0,2.05.24,2.94.66-.17,1.87-.26,3.78-.26,5.71,0,6.37.98,12.42,2.68,18v.09l-.13.27c-.67,1.19-1.92,1.96-3.38,1.96-1.75,0-3.23-1.15-3.72-2.74l-4.64-14.66h-.01,0Z" />
+<path class="cls-7" d="M173.51,87.91l.03.09.1.27c.67,1.19,1.92,1.96,3.38,1.96,1.75,0,3.23-1.15,3.72-2.74l4.64-14.66c.27-.74.41-1.53.41-2.36,0-3.83-3.1-6.93-6.93-6.93-1.05,0-2.05.24-2.94.66l-.05-.52c-.12-1.4-.23-1.88-.44-3.24l-.04-.3s.36-.14.4-.15c1-.31,2.07-.48,3.17-.48,5.9,0,10.67,4.78,10.67,10.67,0,1.28-.22,2.5-.64,3.64l-7.15,22.58c-.76,2.44-3.04,4.22-5.74,4.22s-5.11-1.88-5.8-4.44l.06-.12.07-.15c1.25-2.57,2.16-5.14,3.03-8h.05,0Z" />
+<path class="cls-7" d="M185.39,72.83c.27-.74.41-1.53.41-2.36,0-3.83-3.1-6.93-6.93-6.93-1.05,0-2.05.24-2.94.66.17,1.87.26,3.78.26,5.71,0,6.37-.98,12.42-2.68,18v.09l.13.27c.67,1.19,1.92,1.96,3.38,1.96,1.75,0,3.23-1.15,3.72-2.74l4.64-14.66h0,0Z" />
+<g>
+<path class="cls-7" d="M105.08,38.9c-2.31,3.19-4,8.53-5.3,13.74-.31,1.25-.87,3.98-1.09,6.84.53.11,1.06.26,1.62.49l.05.02.27.07c2.74-1.3,4.82-5.46,6.18-13.13.65-3.65.52-6.09.34-7.39-.71-.2-1.4-.42-2.07-.63h0Z" />
+<path class="cls-7" d="M165.33,30.37c.06.03.12.08.17.11.06.04.12.07.17.11-.19-.12-.35-.22-.35-.22h.01Z" />
+<path class="cls-7" d="M175.41,60.13c-3.03-2.54-6.02-6.44-7.32-16-.6-4.37-.81-5.36-.81-5.36-8.35,2.78-18.32,4.43-29.29,4.58-12.11.16-24.81-1.74-33.76-4.83-.16-.06-.23-.25-.14-.4,5.59-8.74,19.93-14.82,34.91-15.02,10.02-.14,19.83,3.03,26.5,7.38.25.15.49.31.75.49,4.71,3.35,10.71,11.69,12.35,19.96.31,1.58.92,5.21,1.04,8.57-1.94,0-4.24.63-4.24.63h0Z" />
+</g>
+<path class="cls-7" d="M168.09,44.13c-.54-4.38-.81-5.36-.81-5.36-8.11,2.85-18.07,4.4-29.29,4.58-10.6.18-21.98-1.39-30.58-3.83l-.22.35c.1,1.41.13,4.14-.38,7.05-1.36,7.66-3.75,11.95-6.48,13.25-.47,3.12-.73,6.34-.73,9.63,0,27.4,17.13,49.61,38.27,49.61s38.27-22.21,38.27-49.61c0-3.33-.26-6.59-.74-9.74-3.21-2.29-6.27-7.54-7.31-15.93Z" />
+</g>
+
+<line class="cls-6" x1="94.08" y1="109.88" x2="94.08" y2="159.33" />
+
+<line class="cls-5" x1="117.76" y1="111.68" x2="117.76" y2="159.33" />
+
+<line class="cls-7" x1="69.89" y1="119.97" x2="69.86" y2="159.33" />
+
+<line class="cls-7" x1="74.07" y1="116.48" x2="74.04" y2="159.33" />
+
+<line class="cls-7" x1="98.25" y1="109.15" x2="98.22" y2="159.33" />
+
+<line class="cls-7" x1="121.38" y1="118.61" x2="121.38" y2="159.33" />
+
+<line class="cls-7" x1="125.14" y1="128.24" x2="125.14" y2="159.33" />
+
+<line class="cls-5" x1="158.16" y1="159.33" x2="158.16" y2="111.68" />
+
+<line class="cls-7" x1="154.54" y1="159.33" x2="154.54" y2="118.61" />
+
+<line class="cls-7" x1="150.78" y1="159.33" x2="150.78" y2="128.24" />
+
+<line class="cls-7" x1="102.23" y1="108.34" x2="102.23" y2="159.33" />
+
+<line class="cls-6" x1="181.66" y1="140.84" x2="181.66" y2="109.32" />
+
+<line class="cls-7" x1="177.53" y1="140.84" x2="177.49" y2="108.85" />
+
+<line class="cls-7" x1="173.51" y1="140.84" x2="173.51" y2="108.34" />
+
+<line class="cls-7" x1="78.22" y1="114.6" x2="78.22" y2="159.33" />
+
+<line class="cls-7" x1="205.5" y1="159.33" x2="205.47" y2="119.97" />
+
+<line class="cls-7" x1="201.32" y1="159.33" x2="201.29" y2="116.48" />
+
+<line class="cls-7" x1="197.14" y1="159.33" x2="197.14" y2="114.6" />
+
+<line class="cls-5" x1="64.77" y1="148.86" x2="134.04" y2="148.86" />
+
+<line class="cls-5" x1="64.77" y1="144.51" x2="131.79" y2="144.51" />
+
+<path class="cls-7" d="M167.16,159.33v-16.7c0-.73.59-1.33,1.33-1.33h21.09c.73,0,1.33.59,1.33,1.33v16.7h-23.75Z" />
+
+<line class="cls-7" x1="148.47" y1="132.89" x2="210.3" y2="132.97" />
+
+<line class="cls-7" x1="64.77" y1="132.89" x2="127" y2="132.89" />
+
+<line class="cls-5" x1="150.16" y1="128.54" x2="210.3" y2="128.62" />
+
+<line class="cls-7" x1="65.62" y1="128.54" x2="125.16" y2="128.54" />
+
+<path class="cls-7" d="M137.87,119.41c-6.81,0-13.2-2.32-18.75-6.36l18.6,45.4,19.18-45.61c-5.61,4.18-12.1,6.58-19.03,6.58h0Z" />
+
+<g>
+<path class="cls-7" d="M146.34,90.68c-1.95,2.57-5.03,4.22-8.5,4.22-3.68,0-6.93-1.87-8.85-4.71" />
+<path class="cls-7" d="M146.16,54.96c1.91-1.78,4.47-2.87,7.28-2.87,2.98,0,5.68,1.22,7.62,3.2" />
+<path class="cls-7" d="M114.68,54.96c1.91-1.78,4.47-2.87,7.28-2.87,2.98,0,5.68,1.22,7.62,3.2" />
+<path class="cls-7" d="M127.38,63.56c-1.55.87-3.33,1.37-5.23,1.37s-3.73-.51-5.29-1.4" />
+<path class="cls-7" d="M158.87,63.56c-1.55.87-3.33,1.37-5.23,1.37s-3.73-.51-5.29-1.4" />
+<circle class="cls-7" cx="153.61" cy="57.43" r="1.66" />
+<circle class="cls-7" cx="122.12" cy="57.43" r="1.66" />
+<path class="cls-7" d="M113.45,59.93c1.95-2.57,5.03-4.22,8.5-4.22,3.68,0,6.93,1.87,8.85,4.71" />
+<path class="cls-7" d="M144.94,59.93c1.95-2.57,5.03-4.22,8.5-4.22,3.68,0,6.93,1.87,8.85,4.71" />
+</g>
+
+<path class="cls-7" d="M163.06,107.43c13.9.67,27.04,3.19,37.88,8.76l-.12-.08c6.44,3.55,9.95,10.78,9.95,19.59v.8-1.26,24.09H64.55v-24.09,1.26-.8c0-8.81,3.51-16.04,9.95-19.59l-.12.08c10.84-5.57,24.23-8.47,38.14-9.14,6.74,7.69,15.58,12.36,25.26,12.36s17.26-4.32,24.17-11.07l1.1-.92h0Z" />
+
+<line class="cls-7" x1="190.91" y1="144.57" x2="210.3" y2="144.59" />
+
+<line class="cls-5" x1="143.27" y1="144.51" x2="167.16" y2="144.54" />
+
+<line class="cls-7" x1="190.91" y1="148.92" x2="210.3" y2="148.95" />
+
+<line class="cls-5" x1="141.75" y1="148.86" x2="167.16" y2="148.89" />
+
+<g>
+<path class="cls-7" d="M367.64,70.92c-7.48,0-13.77-12.1-15.68-21.06-3.95-.88-7.42-3.6-9.85-7.48-2.94,3.72-6.93,5.26-11.35,5.26s-8.42-2.3-11.35-6.02c-2.43,3.88-5.9,6.6-9.86,7.48-1.92,8.96-8.87,16.11-16.35,16.11-.45,0-.89-.04-1.33-.09,2.05,25.18,13.57,53.88,38.94,54.17,22.86.26,36.13-23.29,38.18-48.47-.44.05-.89.09-1.34.09h-.01Z" />
+<g>
+<path class="cls-7" d="M338.9,92.44c-1.95,2.57-5.03,4.22-8.5,4.22-3.68,0-6.93-1.87-8.85-4.71" />
+<path class="cls-7" d="M338.72,56.72c1.91-1.78,4.47-2.87,7.28-2.87,2.98,0,5.68,1.22,7.62,3.2" />
+<path class="cls-7" d="M307.23,56.72c1.91-1.78,4.47-2.87,7.28-2.87,2.98,0,5.68,1.22,7.62,3.2" />
+<path class="cls-7" d="M319.94,65.32c-1.55.87-3.33,1.37-5.23,1.37s-3.73-.51-5.29-1.4" />
+<path class="cls-7" d="M351.43,65.32c-1.55.87-3.33,1.37-5.23,1.37s-3.73-.51-5.29-1.4" />
+<circle class="cls-7" cx="346.17" cy="59.18" r="1.66" />
+<circle class="cls-7" cx="314.68" cy="59.18" r="1.66" />
+<path class="cls-7" d="M306,61.69c1.95-2.57,5.03-4.22,8.5-4.22,3.68,0,6.93,1.87,8.85,4.71" />
+<path class="cls-7" d="M337.49,61.69c1.95-2.57,5.03-4.22,8.5-4.22,3.68,0,6.93,1.87,8.85,4.71" />
+</g>
+<path class="cls-7" d="M356.21,107.31c13.9.67,27.04,3.19,37.88,8.76l-.12-.08c6.44,3.55,9.95,10.78,9.95,19.59v.8-1.26,24.09h-146.22v-24.09,1.26-.8c0-8.81,3.51-16.04,9.95-19.59l-.12.08c10.84-5.57,24.87-8.57,38.78-9.24,6.74,7.69,13.94,12.46,24.62,12.46s17.26-4.32,24.17-11.07l1.1-.92h0Z" />
+<path class="cls-7" d="M299.14,95.05c-1.28.42-3.79.99-5.17.99-9,0-16.3-9.52-16.3-21.26,0-2.75.41-5.37,1.14-7.78-3.97-3.88-6.55-10.04-6.55-17.01,0-8.7,4.01-16.17,9.75-19.46.71-10.89,8.01-17.16,16.23-19.44,3.07-.86,9.07-.86,11.55,1.14,5.96-8.46,11.51-11.73,21.01-11.73s16.65,3.43,22.61,11.9c2.49-2.01,7.82-2.04,11.09-.89,8.05,2.81,14.39,8.14,15.1,19.03,5.74,3.29,9.75,10.76,9.75,19.46,0,6.97-2.58,13.13-6.55,17.01.73,2.41,1.14,5.03,1.14,7.78,0,11.74-7.3,21.26-16.3,21.26-1.39,0-3.23-.53-4.52-.96l.36-.77c2.85-6.13,4.94-16,5.55-23.48-.44.05-.89.09-1.34.09-7.48,0-13.77-12.1-15.68-21.06-3.95-.88-7.42-3.6-9.85-7.48-2.94,3.72-6.93,5.26-11.35,5.26s-8.42-2.3-11.35-6.02c-2.43,3.88-5.9,6.6-9.86,7.48-1.92,8.96-8.87,16.11-16.35,16.11-.45,0-.89-.04-1.33-.09.64,8.03,2.97,21.27,7.03,29.53l.2.39h-.01Z" />
+<g class="cls-11">
+<g>
+<path class="cls-7" d="M298.08,119.28c-.89,0-1.71.25-2.41.68.43-.71.68-1.53.68-2.42,0-2.58-2.09-4.67-4.67-4.67s-4.67,2.09-4.67,4.67c0,.88.25,1.71.68,2.42-.7-.43-1.53-.68-2.41-.68-2.58,0-4.67,2.09-4.67,4.67s2.09,4.67,4.67,4.67c.88,0,1.71-.25,2.41-.68-.43.7-.68,1.53-.68,2.41,0,2.58,2.09,4.67,4.67,4.67s4.67-2.09,4.67-4.67c0-.88-.25-1.71-.68-2.41.7.43,1.53.68,2.41.68,2.58,0,4.67-2.09,4.67-4.67s-2.09-4.67-4.67-4.67Z" />
+<path class="cls-7" d="M316.89,150.62c-.85.25-1.57.73-2.12,1.34.21-.8.21-1.66-.04-2.51-.74-2.47-3.34-3.87-5.81-3.13s-3.87,3.34-3.13,5.81c.25.85.73,1.57,1.34,2.12-.8-.21-1.66-.21-2.51.04-2.47.74-3.87,3.34-3.13,5.81s3.34,3.87,5.81,3.13c.85-.25,1.57-.73,2.12-1.34-.21.8-.21,1.66.04,2.51.74,2.47,3.34,3.87,5.81,3.13s3.87-3.34,3.13-5.81c-.25-.85-.73-1.57-1.34-2.12.8.21,1.66.21,2.51-.04,2.47-.74,3.87-3.34,3.13-5.81s-3.34-3.87-5.81-3.13Z" />
+<path class="cls-7" d="M379.55,109.14c-.83-.32-1.69-.37-2.5-.23.65-.51,1.18-1.19,1.49-2.01.92-2.41-.29-5.11-2.7-6.02s-5.11.29-6.02,2.7c-.32.83-.37,1.69-.23,2.5-.51-.65-1.19-1.18-2.01-1.49-2.41-.92-5.11.29-6.02,2.7s.29,5.11,2.7,6.02c.83.32,1.69.37,2.5.23-.65.51-1.18,1.19-1.49,2.01-.92,2.41.29,5.11,2.7,6.02s5.11-.29,6.02-2.7c.32-.83.37-1.69.23-2.5.51.65,1.19,1.18,2.01,1.49,2.41.92,5.11-.29,6.02-2.7s-.29-5.11-2.7-6.02Z" />
+<path class="cls-7" d="M370.49,143.62c-.84-.27-1.7-.29-2.51-.1.63-.54,1.12-1.24,1.4-2.08.8-2.45-.54-5.09-2.99-5.89s-5.09.54-5.89,2.99c-.27.84-.29,1.7-.1,2.51-.54-.63-1.24-1.12-2.08-1.4-2.45-.8-5.09.54-5.89,2.99s.54,5.09,2.99,5.89c.84.27,1.7.29,2.51.1-.63.54-1.12,1.24-1.4,2.08-.8,2.45.54,5.09,2.99,5.89s5.09-.54,5.89-2.99c.27-.84.29-1.7.1-2.51.54.63,1.24,1.12,2.08,1.4,2.45.8,5.09-.54,5.89-2.99s-.54-5.09-2.99-5.89Z" />
+<path class="cls-7" d="M337.76,130.62c-.88,0-1.71.25-2.42.68.43-.7.68-1.53.68-2.42,0-2.58-2.09-4.67-4.67-4.67s-4.67,2.09-4.67,4.67c0,.89.25,1.71.68,2.42-.7-.43-1.53-.68-2.41-.68-2.58,0-4.67,2.09-4.67,4.67s2.09,4.67,4.67,4.67c.88,0,1.71-.25,2.41-.68-.43.71-.68,1.53-.68,2.42,0,2.58,2.09,4.67,4.67,4.67s4.67-2.09,4.67-4.67c0-.89-.25-1.71-.68-2.42.71.43,1.53.68,2.42.68,2.58,0,4.67-2.09,4.67-4.67s-2.09-4.67-4.67-4.67Z" />
+<path class="cls-7" d="M278.8,151.17c-.89,0-1.71.25-2.42.68.43-.7.68-1.53.68-2.41,0-2.58-2.09-4.67-4.67-4.67s-4.67,2.09-4.67,4.67c0,.89.25,1.71.68,2.41-.7-.43-1.53-.68-2.41-.68-2.58,0-4.67,2.09-4.67,4.67s2.09,4.67,4.67,4.67c.88,0,1.71-.25,2.41-.68-.43.71-.68,1.53-.68,2.41,0,2.58,2.09,4.67,4.67,4.67s4.67-2.09,4.67-4.67c0-.88-.25-1.71-.68-2.41.7.43,1.53.68,2.42.68,2.58,0,4.67-2.09,4.67-4.67s-2.09-4.67-4.67-4.67Z" />
+</g>
+</g>
+<g class="cls-9">
+<path class="cls-7" d="M372.59,109.13c2.46.47,4.87,1.01,7.22,1.66l.06,4.2v44.21s-100.25-.06-100.25,0v-47.83l-.02-.3c2.61-.78,5.16-1.4,7.91-1.97l.15.08c8.2,19.7,24.08,32.77,42.47,32.77s34.12-12.86,42.34-32.47l.12-.36h0Z" />
+</g>
+</g>
+
+<g>
+<path class="cls-7" d="M555.84,143.18v-.31.18c-.04-6.07-2.48-11.06-6.93-13.51l.08.05c-7.56-3.88-14.37-5.08-24.06-5.55l-.77.64c-.62.46-1.3.92-2,1.38-5.01,3.52-10.92,5.57-17.27,5.57-4.62,0-9.02-1.09-13-3.04-2.58-1.16-4.82-2.59-6.41-4.17-.15-.13-.3-.26-.45-.39-9.66.47-16.69,1.69-24.23,5.56l.08-.05c-4.46,2.46-6.9,7.44-6.93,13.51v-.18,16.78h101.9v-16.47h-.01Z" />
+<path class="cls-7" d="M524.8,124.29l.26-.22c6.38.31,11.52.94,16.44,2.44v-39.12h-.77c-1.07.79-2.24,1.5-3.51,2.11l.02.15c.25,1.85.37,3.62.37,5.55,0,11.86-5.03,22.4-12.81,29.09Z" />
+<path class="cls-7" d="M468.4,86.68c3.88,3.19,9.42,4.19,15.56,4.19,10.5,0,19.2-5.84,20.93-13.52,1.72,7.67,10.43,13.52,20.93,13.52,5.87,0,11.19-.82,15.03-3.77l.53-.42c-4.3-18.12-19-31.47-36.49-31.47s-32.19,13.35-36.49,31.47h0Z" />
+<path class="cls-7" d="M525.82,90.92c-10.5,0-19.2-5.84-20.93-13.52-1.72,7.67-10.43,13.52-20.93,13.52-4.15,0-7.85-.42-11.28-1.5-.26,1.85-.39,3.74-.39,5.66,0,20.23,14.59,36.63,32.6,36.63s32.6-16.4,32.6-36.63c0-1.93-.13-3.82-.39-5.66-3.14,1.03-7.13,1.5-11.28,1.5h0Z" />
+<path class="cls-7" d="M513.57,114.93c-1.95,2.57-5.03,4.22-8.5,4.22-3.68,0-6.93-1.87-8.85-4.71" />
+<path class="cls-7" d="M485.1,124.29l-.26-.22c-6.38.31-11.52.86-16.44,2.36v-39.05h.77c1.07.79,2.24,1.5,3.51,2.11l-.02.15c-.25,1.85-.37,3.62-.37,5.55,0,11.86,5.03,22.4,12.81,29.09h0Z" />
+<path class="cls-7" d="M470.02,126l-.03,33.63,70.24.06-.11-30.9v-2.64c-1.65-.45-3.8-.74-5.51-1.07l.02-.07c-5.73,13.65-16.71,22.61-29.48,22.61s-26.81-14.93-29.54-22.69c-.06-.17-5.59,1.06-5.59,1.06h0Z" />
+<path class="cls-7" d="M495.73,101.3c-1.55-.61-3.33-.96-5.23-.96s-3.73.36-5.29.98" />
+<circle class="cls-7" cx="490.47" cy="98.21" r="1.66" />
+<path class="cls-7" d="M481.79,97.73c1.95-2.57,5.03-4.22,8.5-4.22,3.68,0,6.93,1.87,8.85,4.71" />
+<path class="cls-7" d="M524.58,101.3c-1.55-.61-3.33-.96-5.23-.96s-3.73.36-5.29.98" />
+<circle class="cls-7" cx="519.32" cy="98.21" r="1.66" />
+<path class="cls-7" d="M510.64,97.73c1.95-2.57,5.03-4.22,8.5-4.22,3.68,0,6.93,1.87,8.85,4.71" />
+</g>
+
+<g>
+<path class="cls-7" d="M704.44,143.23v-.31.18c-.04-6.07-2.48-11.06-6.93-13.51l.08.05c-7.56-3.88-14.37-5.08-24.06-5.55l-.77.64c-.62.46-1.3.92-2,1.38-5.01,3.52-10.92,5.57-17.27,5.57-4.62,0-9.02-1.09-13-3.04-2.58-1.16-4.82-2.59-6.41-4.17-.15-.13-.3-.26-.45-.39-9.66.47-16.69,1.69-24.23,5.56l.08-.05c-4.46,2.46-6.9,7.44-6.93,13.51v-.18,16.78h101.9v-16.47h-.01Z" />
+<path class="cls-7" d="M662.16,113.78c-1.95,2.57-5.03,4.22-8.5,4.22-3.68,0-6.93-1.87-8.85-4.71" />
+<path class="cls-7" d="M644.32,101.35c-1.55-.61-3.33-.96-5.23-.96s-3.73.36-5.29.98" />
+<circle class="cls-7" cx="639.06" cy="98.25" r="1.66" />
+<path class="cls-7" d="M630.38,97.77c1.95-2.57,5.03-4.22,8.5-4.22,3.68,0,6.93,1.87,8.85,4.71" />
+<path class="cls-7" d="M673.17,101.35c-1.55-.61-3.33-.96-5.23-.96s-3.73.36-5.29.98" />
+<circle class="cls-7" cx="667.91" cy="98.25" r="1.66" />
+<path class="cls-7" d="M659.23,97.77c1.95-2.57,5.03-4.22,8.5-4.22,3.68,0,6.93,1.87,8.85,4.71" />
+<path class="cls-7" d="M675.38,88.05c-8.39,0-16.03-3.44-21.81-9.09l-.08.06c-5.77,5.62-13.39,9.04-21.75,9.04-3.34,0-6.56-.55-9.6-1.57-.75,3-1.16,6.16-1.16,9.42,0,19.65,14.59,35.57,32.58,35.57s32.58-15.93,32.58-35.57c0-3.26-.41-6.42-1.16-9.42-3.03,1.01-6.25,1.57-9.6,1.57h0Z" />
+<path class="cls-7" d="M686.38,85.6c-3.93-15.12-17.16-25.24-32.89-25.24s-28.96,10.12-32.89,25.24h.02c3.25,2.05,7.63,2.45,11.12,2.45,8.74,0,15.64-3.29,21.67-8.9l.09-.06c6.04,5.65,13.11,8.96,21.88,8.96,3.5,0,7.85-.92,10.97-2.44h.03Z" />
+<path class="cls-7" d="M673.57,124.15l.03-.07c9.69.47,16.5,1.67,24.06,5.55l-.08-.05c4.46,2.46,6.9,7.44,6.93,13.51v-.18,16.78h-101.9v-16.78.18c.04-6.07,2.48-11.06,6.93-13.51l-.08.05c7.54-3.87,14.31-5.09,23.97-5.56l.15.13c.39.38,4.68,3.3,6.9,4.42l14.09,20.38,12.71-20.83,6.28-4.02h0Z" />
+</g>
+
+<g>
+<path class="cls-7" d="M819.41,135.24c-25.78,0-46.68-20.9-46.68-46.68,0-7.42,1.74-14.43,4.82-20.67-19.97,5.29-34.7,23.48-34.7,45.12,0,25.78,20.9,46.68,46.68,46.68,18.36,0,34.23-10.6,41.85-26.01-3.82,1.01-7.84,1.56-11.98,1.56h.01Z" />
+<polygon class="cls-7" points="807.59 92.51 810.51 101.49 819.94 101.49 812.31 107.03 815.23 116.01 807.59 110.46 799.96 116.01 802.87 107.03 795.24 101.49 804.68 101.49 807.59 92.51" />
+<polygon class="cls-7" points="795.24 78.59 796.97 83.91 802.56 83.91 798.04 87.19 799.76 92.51 795.24 89.23 790.72 92.51 792.44 87.19 787.92 83.91 793.51 83.91 795.24 78.59" />
+</g>
+
+<g>
+<polygon class="cls-7" points="933.16 5.01 919.66 5.01 869.74 159.7 883.23 159.7 933.16 5.01" />
+<polygon class="cls-7" points="1050.72 5.01 1064.22 5.01 1113.14 159.7 1099.65 159.7 1050.72 5.01" />
+<rect class="cls-6" x="917.26" y="107.26" width="149.37" height="8.5" />
+<polygon class="cls-6" points="913.57 23.62 916.4 15.1 916.4 15.1 904.29 15.09 904.29 23.59 913.57 23.62" />
+<polygon class="cls-6" points="1070.18 23.59 1067.43 15.09 1067.43 15.09 1079.66 15.09 1079.66 23.59 1070.18 23.59" />
+<polygon class="cls-6" points="927.18 23.62 1056.62 23.59 1056.62 23.59 1053.87 15.09 929.92 15.09 927.18 23.62" />
+<line class="cls-7" x1="934.13" y1="15.47" x2="928.61" y2="107.18" />
+<line class="cls-7" x1="1049.75" y1="15.33" x2="1055.27" y2="107.18" />
+<rect class="cls-7" x="934.16" y="66.89" width="115.57" height="40.29" />
+</g>
+
+<g>
+<circle class="cls-7" cx="1217.82" cy="317.57" r="7.88" />
+<circle class="cls-7" cx="1252.26" cy="308.62" r="7.88" />
+<line class="cls-7" x1="1260.12" y1="308.41" x2="1260.12" y2="266.65" />
+<line class="cls-7" x1="1225.7" y1="317.28" x2="1225.7" y2="275.07" />
+<polygon class="cls-7" points="1225.7 283.53 1260.08 274.53 1260.08 266.03 1225.7 275.03 1225.7 283.53" />
+<circle class="cls-7" cx="1259.58" cy="335.07" r="7.88" />
+<circle class="cls-7" cx="1294.02" cy="326.13" r="7.88" />
+<line class="cls-7" x1="1301.88" y1="325.92" x2="1301.88" y2="284.15" />
+<line class="cls-7" x1="1267.46" y1="334.78" x2="1267.46" y2="292.58" />
+<polygon class="cls-7" points="1267.46 301.04 1301.83 292.04 1301.83 283.53 1267.46 292.53 1267.46 301.04" />
+</g>
+
+<g>
+<g>
+<rect class="cls-7" x="82.69" y="303.68" width="76.15" height="35.82" />
+<line class="cls-7" x1="92.27" y1="289.74" x2="92.27" y2="303.44" />
+<path class="cls-7" d="M158.85,307.01c0,5.26-4.26,9.52-9.52,9.52s-9.52-4.26-9.52-9.52c0,5.26-4.26,9.52-9.52,9.52s-9.52-4.26-9.52-9.52v.11c0,5.26-4.26,9.52-9.52,9.52s-9.52-4.26-9.52-9.52c0,5.26-4.26,9.52-9.52,9.52s-9.52-4.26-9.52-9.52v-3.44h76.15v3.33h.01Z" />
+<path class="cls-7" d="M95.62,285.02c.13.37.2.76.2,1.18,0,1.96-1.59,3.55-3.55,3.55s-3.55-1.59-3.55-3.55c0-.36.05-.7.15-1.03h0c.62-2,3.39-5.3,3.39-5.3,0,0,2.68,3.16,3.36,5.15h0Z" />
+<line class="cls-7" x1="111.05" y1="289.74" x2="111.05" y2="303.44" />
+<path class="cls-7" d="M114.4,285.02c.13.37.2.76.2,1.18,0,1.96-1.59,3.55-3.55,3.55s-3.55-1.59-3.55-3.55c0-.36.05-.7.15-1.03h0c.62-2,3.39-5.3,3.39-5.3,0,0,2.68,3.16,3.36,5.15h0Z" />
+<line class="cls-7" x1="129.83" y1="289.74" x2="129.83" y2="303.44" />
+<path class="cls-7" d="M133.17,285.02c.13.37.2.76.2,1.18,0,1.96-1.59,3.55-3.55,3.55s-3.55-1.59-3.55-3.55c0-.36.05-.7.15-1.03h0c.62-2,3.39-5.3,3.39-5.3,0,0,2.68,3.16,3.36,5.15h0Z" />
+<line class="cls-7" x1="148.86" y1="289.74" x2="148.86" y2="303.44" />
+<path class="cls-7" d="M152.21,285.02c.13.37.2.76.2,1.18,0,1.96-1.59,3.55-3.55,3.55s-3.55-1.59-3.55-3.55c0-.36.05-.7.15-1.03h0c.62-2,3.39-5.3,3.39-5.3,0,0,2.68,3.16,3.36,5.15h0Z" />
+</g>
+<path class="cls-7" d="M159.2,344.32h-77.48c-1.33,0-2.41-1.08-2.41-2.41s1.08-2.41,2.41-2.41h77.48c1.33,0,2.41,1.08,2.41,2.41s-1.08,2.41-2.41,2.41Z" />
+</g>
+
+<g>
+<ellipse class="cls-7" cx="182.11" cy="242.85" rx="26.88" ry="35.07" />
+<path class="cls-7" d="M184.7,277.75c-.85.11-1.72.17-2.59.17s-1.74-.06-2.59-.17h-1.22l-3.38,8.5h14.38l-3.96-8.5h-.64Z" />
+<path class="cls-7" d="M180.42,286.26c3.13,0,5.67,2.54,5.67,5.67s-2.54,5.67-5.67,5.67" />
+<path class="cls-7" d="M180.59,308.93c-3.13,0-5.67-2.54-5.67-5.67s2.54-5.67,5.67-5.67" />
+<path class="cls-7" d="M180.24,308.93c3.13,0,5.67,2.54,5.67,5.67s-2.54,5.67-5.67,5.67" />
+<path class="cls-7" d="M180.24,331.61c3.13,0,5.67,2.54,5.67,5.67s-2.54,5.67-5.67,5.67" />
+<path class="cls-7" d="M180.59,331.61c-3.13,0-5.67-2.54-5.67-5.67s2.54-5.67,5.67-5.67" />
+</g>
+
+<g>
+<path class="cls-7" d="M489.39,280.94c0-5.26,4.26-9.52,9.52-9.52s9.52,4.26,9.52,9.52c0-5.26,4.26-9.52,9.52-9.52s9.52,4.26,9.52,9.52v-.11" />
+<path class="cls-7" d="M468.68,282.54c0-.78.63-1.42,1.42-1.42h27.58v18.79h-27.58c-.78,0-1.42-.63-1.42-1.42h0v-15.95h0Z" />
+<path class="cls-7" d="M548.62,299.92h-27.58v-18.79h27.58c.78,0,1.42.63,1.42,1.42v15.95c0,.78-.63,1.42-1.42,1.42h0Z" />
+<rect class="cls-7" x="497.59" y="281.13" width="23.42" height="18.79" />
+<path class="cls-7" d="M473.84,341.53v-41.64h27.41v43.05h-26c-.78,0-1.42-.63-1.42-1.42h.01Z" />
+<line class="cls-7" x1="498.94" y1="299.9" x2="517.73" y2="299.9" />
+<rect class="cls-7" x="501.22" y="299.9" width="15.88" height="43.05" />
+<path class="cls-7" d="M543.09,342.95h-26v-43.05h27.41v41.64c0,.78-.63,1.42-1.42,1.42h.01Z" />
+</g>
+
+<g>
+<circle class="cls-7" cx="663.86" cy="276.48" r="39.4" />
+<path class="cls-7" d="M701.61,264.64c1.19,3.75,1.81,7.7,1.81,11.84s-.66,8.28-1.89,12.09h0l28.92-11.85-28.86-12.13.02.05h0Z" />
+<path class="cls-7" d="M652.15,238.91c3.79-1.22,7.68-1.82,11.88-1.82s8.01.62,11.72,1.77l.19.06-11.81-28.82-12.14,28.86.16-.05h0Z" />
+<path class="cls-7" d="M628.98,258.48c3.63-7.05,9.32-12.86,16.27-16.64l.68-.35-28.83-12.12,11.85,29.05.02.06h.01Z" />
+<path class="cls-7" d="M626.47,288.4c-1.21-3.78-1.83-7.73-1.83-11.91s.54-8.03,1.84-11.95l.02-.05-28.89,11.84,28.89,12.15-.02-.07h-.01Z" />
+<path class="cls-7" d="M645.62,311.38c-7.26-3.78-12.98-9.7-16.71-16.99h0l-12.1,28.92,29-11.83-.19-.1h0Z" />
+<path class="cls-7" d="M675.87,314.07c-3.74,1.18-7.72,1.81-11.84,1.81-4.4,0-8.07-.53-12.02-1.87l-.16-.05,11.88,28.99,12-28.53.15-.35h-.01Z" />
+<path class="cls-7" d="M682,311.55l28.76,12.04-11.79-28.89-.02.04c-3.77,7.2-9.61,13.04-16.85,16.76l-.1.05h0Z" />
+<path class="cls-7" d="M682.09,241.47c7.2,3.73,13.14,9.63,16.88,16.82l.13-.3,11.94-28.33-28.95,11.81h0Z" />
+</g>
+
+<g>
+<line class="cls-7" x1="782.86" y1="303.73" x2="796.81" y2="342.21" />
+<polygon class="cls-7" points="847.2 287.34 858.98 319.83 796.86 342.34 782.8 303.56 839.71 282.94 847.2 287.34" />
+<polygon class="cls-7" points="794.89 342.95 774.26 307.23 833.98 272.75 839.71 282.94 780.37 304.37 794.89 342.95" />
+<polygon class="cls-7" points="847.41 287.92 858.98 319.83 795.19 342.95 780.37 304.37 839.68 282.96 842.04 289.69 847.41 287.92" />
+</g>
+
+<g>
+<line class="cls-7" x1="922.27" y1="256.79" x2="924.36" y2="306.17" />
+<path class="cls-7" d="M984.48,342.94h-55.52c-2.51.01-4.54-2.02-4.54-4.53v-47.12c0-17.84,14.46-32.3,32.3-32.3s32.3,14.46,32.3,32.3v47.12c0,2.51-2.03,4.54-4.54,4.54h0Z" />
+<path class="cls-7" d="M931.57,291.29c0-13.89,11.26-25.15,25.15-25.15s25.15,11.26,25.15,25.15" />
+<path class="cls-7" d="M931.73,321.37v-11.13c0-.78.63-1.42,1.42-1.42h47.15c.78,0,1.42.63,1.42,1.42v12.25-.59,11.13c0,.78-.63,1.42-1.42,1.42h-47.15c-.78,0-1.42-.63-1.42-1.42v-12.25.59Z" />
+<path class="cls-7" d="M947.2,260.13c0-5.26,4.26-9.52,9.52-9.52s9.52,4.26,9.52,9.52" />
+<path class="cls-7" d="M935.55,256.3l3.01,8.2h0c-4.13,2.8-7.54,6.45-10.01,10.81l-.04.07-6.13-18.06c-.06-.16-.1-.34-.1-.52,0-.78.63-1.42,1.42-1.42h10.52c.61,0,1.13.38,1.33.92h0Z" />
+<line class="cls-7" x1="991.17" y1="256.79" x2="989.09" y2="306.17" />
+<path class="cls-7" d="M977.9,256.3l-3.01,8.2h0c4.13,2.8,7.54,6.45,10.01,10.81l.04.07,6.13-18.06c.06-.16.1-.34.1-.52,0-.78-.63-1.42-1.42-1.42h-10.52c-.61,0-1.13.38-1.33.92h0Z" />
+</g>
+
+<g>
+<path class="cls-7" d="M1064.53,253.03c0-3.13,2.41-5.79,5.54-5.79h.13l20.69.12h0c3.13,0,5.67,2.54,5.67,5.67v31.17c0,3.13-2.54,5.67-5.67,5.67h-20.69c-3.13,0-5.67-2.54-5.67-5.67v-31.17Z" />
+<path class="cls-7" d="M1100.84,253.03c0-3.13,2.41-5.79,5.54-5.79h.13l20.69.12h0c3.13,0,5.67,2.54,5.67,5.67v31.17c0,3.13-2.54,5.67-5.67,5.67h-20.69c-3.13,0-5.67-2.54-5.67-5.67v-31.17Z" />
+<ellipse class="cls-7" cx="1052.93" cy="261.87" rx="2.95" ry="3.85" />
+<line class="cls-7" x1="1116.86" y1="311.22" x2="1081.59" y2="311.22" />
+<line class="cls-7" x1="1116.86" y1="315.02" x2="1081.59" y2="315.02" />
+<line class="cls-7" x1="1058.89" y1="265.72" x2="1052.79" y2="265.72" />
+<ellipse class="cls-7" cx="1144.47" cy="261.81" rx="2.95" ry="3.85" />
+<line class="cls-7" x1="1138.51" y1="265.66" x2="1144.61" y2="265.66" />
+<circle class="cls-7" cx="1070.86" cy="311.22" r="5.67" />
+<circle class="cls-7" cx="1126.54" cy="310.59" r="5.67" />
+<path class="cls-7" d="M1064.67,330.14c-3.13,0-5.67-2.54-5.67-5.67h-.11l.11-75.69h0c0-3.13,2.54-5.67,5.67-5.67h68.17c3.13,0,5.67,2.54,5.67,5.67v75.69c0,3.13-2.54,5.67-5.67,5.67h-68.17Z" />
+<path class="cls-7" d="M1066.16,330.92v8.61c0,1.89,1.53,3.42,3.42,3.42s3.42-1.53,3.42-3.42v-8.61c0-.27-.04-.52-.1-.77h-6.65c-.06.25-.1.51-.1.77h.01,0Z" />
+<path class="cls-7" d="M1124.95,330.92v8.61c0,1.89,1.53,3.42,3.42,3.42s3.42-1.53,3.42-3.42v-8.61c0-.27-.04-.52-.1-.77h-6.65c-.06.25-.1.51-.1.77h0Z" />
+</g>
+
+<g>
+<ellipse class="cls-7" cx="1278.98" cy="122.83" rx="2.95" ry="3.85" />
+<line class="cls-7" x1="1283.97" y1="126.68" x2="1278.84" y2="126.68" />
+<ellipse class="cls-7" cx="1354.85" cy="122.83" rx="2.95" ry="3.85" />
+<line class="cls-7" x1="1349.86" y1="126.68" x2="1354.99" y2="126.68" />
+<circle class="cls-7" cx="1296.77" cy="137.1" r="5.67" />
+<circle class="cls-7" cx="1337.65" cy="136.47" r="5.67" />
+<path class="cls-7" d="M1290.44,147.66v8.61c0,1.89,1.53,3.42,3.42,3.42s3.42-1.53,3.42-3.42v-8.61c0-.27-.04-.52-.1-.77h-6.65c-.06.25-.1.51-.1.77h0Z" />
+<path class="cls-7" d="M1337.84,147.66v8.61c0,1.89,1.53,3.42,3.42,3.42s3.42-1.53,3.42-3.42v-8.61c0-.27-.04-.52-.1-.77h-6.65c-.06.25-.1.51-.1.77h0Z" />
+<path class="cls-7" d="M1292.07,99.76h49.63-.02c.66,0,1.22.45,1.37,1.07h0l6.72,25.85h-65.81l6.73-25.88h0c.16-.6.71-1.05,1.37-1.05h.01Z" />
+<path class="cls-7" d="M1283.97,145.47v-18.79h65.81v18.79c0,.78-.63,1.42-1.42,1.42h-62.97c-.78,0-1.42-.63-1.42-1.42h0Z" />
+<path class="cls-7" d="M1342.47,123.18h-51.18c-.78,0-1.42-.63-1.42-1.42,0-.16.03-.3.08-.46l4.25-17h0c.16-.6.71-1.05,1.37-1.05h42.63-.02c.66,0,1.22.45,1.37,1.07h0l4.29,17.1c.03.11.04.22.04.34,0,.78-.63,1.42-1.42,1.42h.01Z" />
+</g>
+
+<g>
+<path class="cls-7" d="M1202.91,159.69h-14.91c-2.2,0-3.98-1.78-3.98-3.97h0l.05-12.14h0c.22-3.71,1.87-7.71,3.79-10.17l14.97-.03c2.36,2.5,3.79,6,4.04,10.2h0c0,.17.03,1.68.03,1.68v10.46h0c0,2.2-1.78,3.97-3.98,3.97h-.01Z" />
+<path class="cls-7" d="M1204.63,131.19c-1.06-3.05-3.6-5.41-6.77-6.22v-3.35c0-1.3-1.05-2.36-2.36-2.36s-2.36,1.05-2.36,2.36v3.33c-3.18.78-5.75,3.12-6.83,6.16h0c-.07.18-.1.38-.1.59,0,.93.76,1.69,1.69,1.69h15.09c.93,0,1.69-.76,1.69-1.69,0-.17,0-.35-.06-.51h.01Z" />
+</g>
+
+<g>
+<path class="cls-7" d="M305.01,543.27c0-3.37,2.73-6.11,6.11-6.11s6.11,2.73,6.11,6.11c0-3.37,2.73-6.11,6.11-6.11s6.11,2.73,6.11,6.11v-.07l.25.07c0-3.37,2.73-6.11,6.11-6.11s6.11,2.73,6.11,6.11c0-3.37,2.73-6.11,6.11-6.11s6.11,2.73,6.11,6.11v-.07" />
+<path class="cls-7" d="M305.01,550.1c0-3.37,2.73-6.11,6.11-6.11s6.11,2.73,6.11,6.11c0-3.37,2.73-6.11,6.11-6.11s6.11,2.73,6.11,6.11v-.07l.25.07c0-3.37,2.73-6.11,6.11-6.11s6.11,2.73,6.11,6.11c0-3.37,2.73-6.11,6.11-6.11s6.11,2.73,6.11,6.11v-.07" />
+<path class="cls-7" d="M329.19,490.05l30.79,7.9c.5,0,.91.41.91.91l-10.94,30.11c-.3.63-.78.77-1.29.77h-39.88c-.5,0-.99-.14-1.29-.77l-10.94-30.11c0-.5.41-.91.91-.91l31.26-7.9h0c.07-.02.15-.03.22-.03.08,0,.16.01.24.03h.01Z" />
+<path class="cls-7" d="M328.73,490.05c.07-.02.15-.03.22-.03.08,0,.16.01.24.03l18.14,4.65v-16.74c0-.5-.41-.91-.91-.91h-35.42c-.5,0-.91.41-.91.91v16.79l18.61-4.7h.03Z" />
+<path class="cls-7" d="M328.7,477.06h12.22v-3.86c0-.5-.41-.91-.91-.91h-22.59c-.5,0-.91.41-.91.91v3.86h12.19Z" />
+<line class="cls-7" x1="328.9" y1="472.67" x2="328.9" y2="466.62" />
+</g>
+
+<g>
+<g>
+<circle class="cls-2" cx="152.34" cy="492.54" r="26.7" transform="translate(-27 9.18) rotate(-3.17)" />
+<path class="cls-7" d="M204.97,511.51v-27.68c0-2.41,1.95-4.36,4.36-4.36s4.36,1.95,4.36,4.36v27.68" />
+<path class="cls-7" d="M213.73,519.25v-27.82c0-2.41,1.95-4.36,4.36-4.36s4.36,1.95,4.36,4.36v32.34" />
+<path class="cls-7" d="M196.26,519.29v-27.68c0-2.41,1.95-4.36,4.36-4.36s4.36,1.95,4.36,4.36v28.54" />
+<path class="cls-7" d="M222.47,521.95l.03-13.14c0-2.41,2.09-3.97,4.49-3.97s4.36,1.95,4.36,4.36l.04,12.37c0,15.77-9.89,28.55-21.98,28.55s-21.85-12.78-21.85-28.55v-12.37c0-2.41,1.95-4.36,4.36-4.36s4.36,1.95,4.36,4.36l.03,13.14" />
+<path class="cls-7" d="M90.58,511.51v-27.68c0-2.41,1.95-4.36,4.36-4.36s4.36,1.95,4.36,4.36v27.68" />
+<path class="cls-7" d="M99.34,519.25v-27.82c0-2.41,1.95-4.36,4.36-4.36s4.36,1.95,4.36,4.36v32.34" />
+<path class="cls-7" d="M81.88,519.29v-27.68c0-2.41,1.95-4.36,4.36-4.36s4.36,1.95,4.36,4.36v28.54" />
+<path class="cls-7" d="M108.08,521.95l.03-13.14c0-2.41,2.09-3.97,4.49-3.97s4.36,1.95,4.36,4.36l.04,12.37c0,15.77-9.89,28.55-21.98,28.55s-21.85-12.78-21.85-28.55v-12.37c0-2.41,1.95-4.36,4.36-4.36s4.36,1.95,4.36,4.36l.03,13.14" />
+</g>
+<path class="cls-7" d="M169.01,529.2c0,.07.02.14.02.21,0,.78-.63,1.42-1.42,1.42h-30.58.05c-.78,0-1.42-.63-1.42-1.42,0-.12.02-.24.04-.35h0l2.03-14.17c4.2,2.75,9.21,4.35,14.6,4.35s10.41-1.6,14.6-4.35l2.06,14.31h.02,0Z" />
+</g>
+
+<g>
+<path class="cls-7" d="M470.25,523.4c0,6.84-2.58,13.09-6.82,17.81-1.5,1.69-3.23,3.19-5.14,4.45-4.22,2.81-9.28,4.44-14.73,4.44-14.75,0-26.7-11.96-26.7-26.7s11.95-26.7,26.7-26.7c5.45,0,10.51,1.63,14.73,4.44-1.88,1.23-3.59,2.71-5.09,4.38-2.88-1.57-6.18-2.46-9.68-2.46-11.2,0-20.27,9.08-20.27,20.28s9.07,20.27,20.27,20.27c3.47,0,6.74-.87,9.6-2.42,1.91-1.02,3.65-2.36,5.14-3.93,3.42-3.63,5.53-8.53,5.53-13.92s-2.11-10.3-5.53-13.93c1.47-1.56,3.19-2.89,5.09-3.91,4.29,4.73,6.9,11.01,6.9,17.9h0Z" />
+<path class="cls-7" d="M499.72,523.4c0,14.74-11.95,26.7-26.7,26.7-5.45,0-10.51-1.63-14.73-4.44,1.91-1.26,3.64-2.76,5.14-4.45,2.85,1.54,6.1,2.4,9.56,2.4,11.19,0,20.27-9.08,20.27-20.27s-9.08-20.28-20.27-20.28c-3.49,0-6.77.88-9.64,2.44-1.9,1.02-3.62,2.35-5.09,3.91-3.44,3.63-5.55,8.54-5.55,13.93s2.11,10.29,5.55,13.92c-1.49,1.57-3.23,2.91-5.14,3.93-4.23-4.72-6.8-10.96-6.8-17.79s2.6-13.15,6.88-17.88c1.5-1.67,3.21-3.15,5.09-4.38,4.22-2.81,9.28-4.44,14.73-4.44,14.75,0,26.7,11.95,26.7,26.7h0Z" />
+</g>
+
+<g>
+<ellipse class="cls-4" cx="1301.81" cy="679.24" rx="21.26" ry="16.3" transform="translate(-25.32 1307.59) rotate(-52.89)" />
+<ellipse class="cls-3" cx="1313.55" cy="719.65" rx="16.3" ry="21.26" transform="translate(215.36 1738.12) rotate(-71.56)" />
+<g>
+<line class="cls-7" x1="1282.11" y1="712.64" x2="1293.3" y2="712.64" />
+<path class="cls-7" d="M1282.11,740.31v-19.18c0-7.01-1.11-20.74,5.73-25.8h0" />
+</g>
+<path class="cls-7" d="M1279.03,688.93c-1.61-3.46-4.77-7.9-8.26-10.59-1.02-.79-2.12-1.42-3.2-2.03h0l.07.04h0c-6.84-4.15-22.35-6.8-22.35-6.8,0,0-.02,16.36,3.06,23.71h0c1.61,3.46,4.7,7.86,8.19,10.55,1.02.79,2.12,1.42,3.2,2.03h0c6.84,4.15,22.35,6.8,22.35,6.8,0,0,.02-16.36-3.06-23.71h0Z" />
+</g>
+
+<g>
+<circle class="cls-7" cx="609.28" cy="481.33" r="1.42" />
+<line class="cls-7" x1="599.56" y1="540.19" x2="599.56" y2="550.1" />
+<line class="cls-7" x1="597.83" y1="550.1" x2="601.28" y2="550.1" />
+<line class="cls-7" x1="592.83" y1="540.19" x2="592.83" y2="550.1" />
+<line class="cls-7" x1="591.11" y1="550.1" x2="594.55" y2="550.1" />
+<path class="cls-7" d="M626.42,484.19l-7.7-2.16.03.07c.36,1.04.57,2.05.66,3.18.06.78.06,1.53.01,2.26l.26-.11,6.75-3.25h-.01Z" />
+<path class="cls-7" d="M551.49,521.19l15.38-9.13,12.04-6.96,13.13-7.58h-.02c.19-.09.4-.15.63-.14.18,0,.34.04.5.09,5.5,1.98,9.4,7.03,9.62,12.9,0,.2.01.41.01.61,0,10.73-13.04,19.42-29.12,19.42-2.29,0-4.52-.18-6.65-.51-6.38-.99-11.73-3.19-15.7-6.44h0c-.3-.26-.49-.64-.49-1.07,0-.51.27-.95.67-1.2h0Z" />
+<path class="cls-7" d="M616.52,494.56c2.23-2.53,3.23-5.56,2.94-9.27-.5-6.37-5.68-11.58-12.17-12.2-4.08-.39-7.84.99-10.57,3.45s-4.27,6.12-4.27,9.83l.07,11.02c.11-.02.34.02.34.02,5.82,1.81,9.64,6.97,9.87,13.07,0,.2.01.41.01.61,0,10.73-13.04,19.42-29.12,19.42-.95,0-1.78-.02-2.71-.08l-.12.13-16,16.78-.57.53,28.47-8.78.17-.05c.14-.05.29-.07.45-.07.19,0,.38.04.55.11,2.94,1,6.06,1.53,9.35,1.53,15.78,0,28.57-12.53,28.57-28,0-6.08-1.98-11.7-5.34-16.29h0c-.16-.23-.26-.51-.26-.82,0-.36.13-.69.35-.93h0Z" />
+</g>
+
+<g>
+<path class="cls-7" d="M1074.54,652.9h-2.04l-23.77-.02h0c-2.91,0-5.27-2.36-5.27-5.27s2.36-5.27,5.27-5.27h25.86-.17s2.04-.01,2.04-.01l13.37.02h0c2.91,0,5.27,2.36,5.27,5.27s-2.36,5.27-5.27,5.27h-15.47.17s.01.01.01.01Z" />
+<rect class="cls-7" x="1041.67" y="678.19" width="55.65" height="49.05" />
+<path class="cls-7" d="M1097.33,726.81h0c0,.16-.04-64.53-.04-64.53l.07,76h0c0,2.08-1.69,3.76-3.76,3.76h-48.12c-2.08,0-3.76-1.68-3.76-3.76h0l.05-75.97h0c0-5.18,4.2-9.38,9.38-9.38h0l36.77-.03c5.18,0,9.38,4.2,9.38,9.38" />
+</g>
+
+<g>
+<g>
+<circle class="cls-8" cx="802.91" cy="733.31" r="1.66" />
+<circle class="cls-8" cx="823" cy="733.31" r="1.66" />
+</g>
+<path class="cls-7" d="M794.81,743.91c-3.12,0-5.66-2.54-5.66-5.67h-.11l.11-9.56h0c0-3.13,2.53-5.67,5.66-5.67l36.6-.19c2.68,0,4.93,1.87,5.51,4.38.1.41.15.85.15,1.29v9.56c0,3.13-2.53,5.67-5.66,5.67l-36.6.19h0Z" />
+<circle class="cls-7" cx="789.33" cy="677.12" r="5.67" />
+<circle class="cls-7" cx="836.25" cy="677.95" r="5.67" />
+<path class="cls-7" d="M835.78,716.02c.34-9.27,3.68-17.49,8.72-22.87l.02.02c4.08-4.13,6.6-9.8,6.6-16.07,0-12.62-10.23-22.85-22.85-22.85h-11.1c3.48,4.22,5.9,10.15,5.9,16.3,0,4.55-1.07,8.58-3.08,12.19l-.33.85c-1.18,2.94-1.6,5.58-1.6,9.01,0,11.8,7.53,21.59,17.72,23.41h0Z" />
+<path class="cls-7" d="M790.2,716.02c-.34-9.27-3.68-17.49-8.72-22.87l-.02.02c-4.08-4.13-6.6-9.8-6.6-16.07,0-12.62,10.23-22.85,22.85-22.85h11.1c-3.48,4.22-5.9,10.15-5.9,16.3,0,4.55,1.07,8.58,3.08,12.19l.33.85c1.18,2.94,1.6,5.58,1.6,9.01,0,11.8-7.53,21.59-17.72,23.41h0Z" />
+<path class="cls-7" d="M777.41,665.92c-7.33,0-13.27-5.94-13.27-13.27,0-1.81.36-3.53,1.02-5.1h0c2.4,5.82,8.76,9.97,16.24,9.97,2.38,0,4.67-.37,6.72-1.19.94-.38,1.71-.74,2.64-1.01h0c-5.63,1.77-10.12,5.23-12.94,10.3l-.4.29h0Z" />
+<path class="cls-7" d="M848.5,665.92c7.33,0,13.27-5.94,13.27-13.27,0-1.81-.36-3.53-1.02-5.1h0c-2.4,5.82-8.76,9.97-16.24,9.97-2.38,0-4.67-.37-6.72-1.19-.94-.38-1.71-.74-2.64-1.01h0c5.63,1.77,10.12,5.23,12.94,10.3l.4.29h0Z" />
+<path class="cls-7" d="M836.95,727.25c-.73-3.04-1.13-6.29-1.13-9.66,0-9.92,3.42-18.75,8.75-24.44l.02.02c4.08-4.13,6.6-9.8,6.6-16.07,0-12.62-10.23-22.85-22.85-22.85h-30.56c-12.62,0-22.85,10.23-22.85,22.85,0,6.63,2.83,12.61,7.34,16.78l-1.99-2.05c6.08,5.58,10.08,15.04,10.08,25.76,0,3.24-.44,6.68-1.12,9.62l.04-.16c.72-2.31,2.87-3.98,5.41-3.98l36.68-.19c2.69,0,4.94,1.87,5.52,4.38h.06,0Z" />
+<path class="cls-7" d="M865.42,671.76h0c-1.21-2.59-3.56-5.9-6.17-7.91-.61-.47-1.26-.86-1.91-1.23-2.35,2.11-5.44,3.4-8.85,3.4l-.4-.29s-.03-.05-.05-.07c1.99,3.39,3.13,7.33,3.13,11.54,0,2.33-.35,4.58-1,6.7.27.16.55.33.82.48,5.11,3.1,16.69,5.08,16.69,5.08,0,0,.02-12.22-2.28-17.7h.02,0Z" />
+<path class="cls-7" d="M760.64,671.76h0c1.21-2.59,3.56-5.9,6.17-7.91.61-.47,1.26-.86,1.91-1.23,2.35,2.11,5.44,3.4,8.85,3.4l.4-.29s.03-.05.05-.07c-1.99,3.39-3.13,7.33-3.13,11.54,0,2.33.35,4.58,1,6.7-.27.16-.55.33-.82.48-5.11,3.1-16.69,5.08-16.69,5.08,0,0-.02-12.22,2.28-17.7h-.02,0Z" />
+<path class="cls-7" d="M836.93,727.06c-.73-3.04-1.13-6.29-1.13-9.66,0-9.92,3.42-18.75,8.75-24.44l.02.02c4.08-4.13,6.6-9.8,6.6-16.07,0-12.62-10.23-22.85-22.85-22.85h-30.56c-12.62,0-22.85,10.23-22.85,22.85,0,6.63,2.83,12.61,7.34,16.78l-1.99-2.05c6.08,5.58,10.08,15.04,10.08,25.76,0,3.24-.44,6.68-1.12,9.62l.04-.16c.72-2.31,2.87-3.98,5.41-3.98l36.68-.19c2.69,0,4.94,1.87,5.52,4.38h.06,0Z" />
+</g>
+
+<g>
+<path class="cls-7" d="M722.18,713.86c-.32-1.75.8-4.3.8-4.3,1.92-4.5,4.57-9.99,9.96-15.47,7.34-7.45,16.65-10.89,22.28-12.77-6.21-1.34-18.71,3.23-28.78,9.41-1.11.68-2.18,1.38-3.22,2.08.66-1.89,1.45-3.84,2.39-5.85,4.28-9.12,11.87-14.99,16.53-18.34-6.36.45-16.56,8.29-23.89,16.96-.91,1.08-1.77,2.16-2.57,3.23.21-3.84,1.36-8.12,3.43-12.55,4.28-9.12,13.9-14.24,19.87-17.12-8.95-.5-21.9,6.32-30.61,14.49-.72.67-1.4,1.35-2.06,2.03-1.2-2.55-2.68-5.21-4.42-7.87-6.17-9.4-15.3-18.27-21.56-19.4,4.2,3.83,10.99,10.47,14.07,19.99,3.01,9.31,3.41,17.35.98,21.83-.02-.01-.03-.02-.05-.03-9.85-6.52-22.18-11.53-28.43-10.41,5.56,2.08,14.75,5.85,21.82,13.55s10.42,15.46,9.99,20.44l23.48.11h0Z" />
+<path class="cls-7" d="M723.43,723.29h-26.48c-1.33,0-2.41-1.08-2.41-2.41s1.08-2.41,2.41-2.41h26.48c1.33,0,2.41,1.08,2.41,2.41s-1.08,2.41-2.41,2.41Z" />
+<path class="cls-7" d="M723.43,718.65h-26.48c-1.33,0-2.41-1.08-2.41-2.41s1.08-2.41,2.41-2.41h26.48c1.33,0,2.41,1.08,2.41,2.41s-1.08,2.41-2.41,2.41Z" />
+<path class="cls-7" d="M722,723.69l-.06,11.74v-.59,5.13c0,.78-.63,1.42-1.42,1.42l-20.52-.09c-.78,0-1.42-.63-1.42-1.42v-6.25.59l.06-10.62" />
+</g>
+
+<g>
+<path class="cls-7" d="M1278.78,502.95c1.65,0,3.26.16,4.79.46v-5.7h-9.44v5.67c1.49-.28,3.04-.43,4.65-.43Z" />
+<path class="cls-7" d="M1271.27,504.5c-2.1,0-3.8-1.7-3.8-3.8s1.7-3.8,3.8-3.8" />
+<path class="cls-7" d="M1269.92,489.5c0-1.86,1.43-3.44,3.29-3.44h.08l12.3.07h0c1.86,0,3.37,1.51,3.37,3.37v4.86c0,1.86-1.51,3.37-3.37,3.37h-12.3c-1.86,0-3.37-1.51-3.37-3.37v-4.86Z" />
+<path class="cls-7" d="M1295.34,552.73h-33c-1.49,0-2.7-1.2-2.7-2.7v-28.01c0-10.6,8.6-19.2,19.2-19.2s19.2,8.6,19.2,19.2v28.01c0,1.49-1.21,2.7-2.7,2.7h0Z" />
+</g>
+
+<g>
+<path class="cls-7" d="M274.26,317.02h-11.48c-1.33,0-2.41-1.08-2.41-2.41s1.08-2.41,2.41-2.41h11.48c1.33,0,2.41,1.08,2.41,2.41s-1.08,2.41-2.41,2.41Z" />
+<path class="cls-7" d="M263.17,317.02v24.6c0,.73.59,1.33,1.33,1.33h8.64c.73,0,1.33-.59,1.33-1.33v-24.6h-11.3Z" />
+<path class="cls-7" d="M272.28,283.44c.26.26.42.62.42,1.01h0l-.06,3.37v24.28h-8.25v-20.28l.02-2.99.07-4.36h0v-.02c0-.36.15-.7.38-.94h0l3.32-3.51.04-.04c.07-.04.15-.06.23-.06s.12,0,.21.05l.08.06,3.55,3.43h-.01Z" />
+</g>
+
+<path class="cls-7" d="M915.84,483.42c-5.76-14.66-17.44-24.63-30.93-24.63-19.2,0-34.77,20.3-34.77,45.35l.53,45.96h103.51v-30.17c0-18.07-14.65-32.7-32.72-32.7h0c-2.44,0-4.55-1.45-5.5-3.54-.04-.09-.08-.19-.12-.28h0Z" />
+
+<g>
+<line class="cls-7" x1="1088.44" y1="499.52" x2="1088.44" y2="550.1" />
+<path class="cls-7" d="M1090.1,476.67c0-7.95-7.42-14.56-17.24-16,.39-1.23.62-2.51.62-3.83,0-6.75-5.36-12.51-12.99-14.99-.43-8.71-9.75-15.68-21.22-15.68-.1,0-.2.01-.3.01s-.2-.01-.3-.01c-11.47,0-20.79,6.97-21.22,15.68-7.62,2.48-12.99,8.24-12.99,14.99,0,1.32.23,2.6.62,3.83-9.82,1.44-17.24,8.05-17.24,16,0,6.9,5.59,12.78,13.48,15.16,1.83,7.58,10.48,13.32,20.89,13.32,6.24,0,11.83-2.07,15.72-5.36,3.89,3.28,9.48,5.36,15.72,5.36,10.16,0,18.64-5.47,20.75-12.77,9.04-1.88,15.69-8.19,15.69-15.71h.01Z" />
+<path class="cls-7" d="M1123.23,460.67c.39-1.23.62-2.51.62-3.83,0-6.75-5.36-12.51-12.99-14.99-.43-8.71-9.75-15.68-21.22-15.68-.1,0-.2.01-.3.01s-.2-.01-.3-.01c-11.47,0-20.79,6.97-21.22,15.68-1.29.42-2.52.94-3.67,1.54,5.62,2.93,9.32,7.85,9.32,13.45,0,1.32-.23,2.6-.62,3.83,9.82,1.44,17.24,8.05,17.24,16,0,7.52-6.65,13.84-15.69,15.71-1.4,4.86-5.63,8.89-11.29,11.05,2.85,1.09,6.06,1.72,9.47,1.72,6.24,0,11.83-2.07,15.72-5.36,3.89,3.28,9.48,5.36,15.72,5.36,10.16,0,18.64-5.47,20.75-12.77,9.04-1.88,15.69-8.19,15.69-15.71,0-7.95-7.42-14.56-17.24-16h.01Z" />
+<line class="cls-7" x1="1138.81" y1="499.52" x2="1138.81" y2="550.1" />
+<path class="cls-7" d="M1173.6,460.67c.39-1.23.62-2.51.62-3.83,0-6.75-5.36-12.51-12.99-14.99-.43-8.71-9.75-15.68-21.22-15.68-.1,0-.2.01-.3.01s-.2-.01-.3-.01c-11.47,0-20.79,6.97-21.22,15.68-1.29.42-2.52.94-3.67,1.54,5.62,2.93,9.32,7.85,9.32,13.45,0,1.32-.23,2.6-.62,3.83,9.82,1.44,17.24,8.05,17.24,16,0,7.52-6.65,13.84-15.69,15.71-1.4,4.86-5.63,8.89-11.29,11.05,2.85,1.09,6.06,1.72,9.47,1.72,6.24,0,11.83-2.07,15.72-5.36,3.89,3.28,9.48,5.36,15.72,5.36,10.16,0,18.64-5.47,20.75-12.77,9.04-1.88,15.69-8.19,15.69-15.71,0-7.95-7.42-14.56-17.24-16h.01Z" />
+<line class="cls-7" x1="1038.07" y1="499.52" x2="1038.07" y2="550.1" />
+</g>
+
+<g>
+<path class="cls-7" d="M134.21,678.17c0-2.51,0,19.94,0,19.94v-22.2c0-.99-.7-1.79-1.56-1.79h-53.75c-.86,0-1.56.8-1.56,1.79v22.2-19.94" />
+<g>
+<ellipse class="cls-7" cx="68.26" cy="697.14" rx="2.95" ry="3.85" />
+<line class="cls-7" x1="73.25" y1="700.99" x2="68.12" y2="700.99" />
+<ellipse class="cls-7" cx="144.13" cy="697.14" rx="2.95" ry="3.85" />
+<line class="cls-7" x1="139.14" y1="700.99" x2="144.27" y2="700.99" />
+<circle class="cls-7" cx="88.59" cy="709.75" r="5.67" />
+<circle class="cls-7" cx="124.53" cy="709.12" r="5.67" />
+<path class="cls-7" d="M79.72,726.4v8.61c0,1.89,1.53,3.42,3.42,3.42s3.42-1.53,3.42-3.42v-8.61c0-.27-.04-.52-.1-.77h-6.65c-.06.25-.1.51-.1.77h.01Z" />
+<path class="cls-7" d="M127.12,726.4v8.61c0,1.89,1.53,3.42,3.42,3.42s3.42-1.53,3.42-3.42v-8.61c0-.27-.04-.52-.1-.77h-6.65c-.06.25-.1.51-.1.77h.01Z" />
+<polygon class="cls-7" points="73.39 718.35 73.12 701.02 138.93 701.02 138.93 718.41 73.39 718.35" />
+<path class="cls-7" d="M139.52,718.42h-66.98c-.78,0-1.42.63-1.42,1.42v2.56-.77,2.56c0,.78.63,1.42,1.42,1.42h66.97c.78,0,1.42-.63,1.42-1.42v-2.56c0-1.99,0,.77,0,.77v-2.56c0-.78-.63-1.42-1.42-1.42h.01Z" />
+</g>
+<path class="cls-7" d="M127.66,678.7h-44.02c-.7,0-1.27.57-1.27,1.27v13.78-12.17,13.78c0,.7.57,1.27,1.27,1.27h44.02c.7,0,1.27-.57,1.27-1.27v-13.78c0-1.79,0,12.17,0,12.17v-13.78c0-.7-.57-1.27-1.27-1.27Z" />
+<polyline class="cls-7" points="77.34 698.1 77.34 701.02 134.21 701.02 134.21 698.1" />
+</g>
+
+<g>
+<g>
+<g>
+<path class="cls-7" d="M287.1,690.87c.33-2.45.85-5.61,1.52-7.87,4.42-14.86,18.46-24.78,33.62-24.78h.06c15.16,0,29.24,9.91,33.62,24.78.56,1.9,1.1,5.26,1.47,7.87h-70.3.01Z" />
+<path class="cls-7" d="M298.72,690.87h-11.62c.33-2.45.85-5.61,1.52-7.87.5-1.69,1.13-3.31,1.86-4.86h0c.21,0,.42.03.63.06h0c2.96.47,5,3.28,4.53,6.24l-.35,2.18,2.1,2.1c.62.62,1.06,1.37,1.32,2.16h.01Z" />
+<path class="cls-7" d="M305.75,662.98l.04-.69c5-2.63,9.73-4.09,15.54-4.09h.66c1.55.96,2.59,2.68,2.59,4.63s-1,3.6-2.5,4.57l-11.7,8.51c-2.43,1.76-5.85,1.21-7.61-1.21h0c-1.76-2.43-1.21-5.85,1.21-7.61l1.78-1.29v-2.83h-.01Z" />
+<path class="cls-7" d="M253.79,690.87h-11.62c.33-2.45.85-5.61,1.52-7.87.5-1.69,1.13-3.31,1.86-4.86h0c.21,0,.42.03.63.06h0c2.96.47,5,3.28,4.53,6.24l-.35,2.18,2.1,2.1c.62.62,1.06,1.37,1.32,2.16h.01Z" />
+<path class="cls-7" d="M260.82,662.98l.04-.69c5-2.63,9.73-4.09,15.54-4.09h.66c1.55.96,2.59,2.68,2.59,4.63s-1,3.6-2.5,4.57l-11.7,8.51c-2.43,1.76-5.85,1.21-7.61-1.21h0c-1.76-2.43-1.21-5.85,1.21-7.61l1.78-1.29v-2.83h-.01Z" />
+<path class="cls-7" d="M208.64,690.87h-11.62c.33-2.45.85-5.61,1.52-7.87.5-1.69,1.13-3.31,1.86-4.86h0c.21,0,.42.03.63.06h0c2.96.47,5,3.28,4.53,6.24l-.35,2.18,2.1,2.1c.62.62,1.06,1.37,1.32,2.16h0Z" />
+<path class="cls-7" d="M215.67,662.98l.04-.69c5-2.63,9.73-4.09,15.54-4.09h.66c1.55.96,2.59,2.68,2.59,4.63s-1,3.6-2.5,4.57l-11.7,8.51c-2.43,1.76-5.85,1.21-7.61-1.21h0c-1.76-2.43-1.21-5.85,1.21-7.61l1.78-1.29v-2.83h0Z" />
+<path class="cls-7" d="M355.92,683c-2.26-7.66-6.53-13.6-12.76-17.95l-.58-.37c-2.68.34-4.76,2.64-4.76,5.41v7.92c0,3,2.45,5.45,5.45,5.45h2.97l1.29,1.78c1.76,2.43,5.18,2.97,7.61,1.21h0c.52-.37.95-.82,1.29-1.32l-.52-2.12h0Z" />
+<path class="cls-7" d="M299.68,666.13c-.97-.86-2-1.67-3.09-2.43l-.58-.37c-2.68.34-4.76,2.64-4.76,5.41v7.92" />
+<path class="cls-7" d="M254.57,666.13c-.97-.86-2-1.67-3.09-2.43l-.58-.37c-2.68.34-4.76,2.64-4.76,5.41v7.92" />
+<path class="cls-7" d="M315,690.87h18.23c.5-.98.72-2.14.52-3.35-.43-2.66-2.84-4.56-5.54-4.56h-1.62c-1.26-2.08-4.54-2.62-7.56-1.19-2.79,1.33-4.41,3.9-3.99,6.09,0,0,0,.02-.03.03-1.07.78-1.16,2.31,0,2.97h1.11-1.12Z" />
+<path class="cls-7" d="M268.35,690.87h18.23c.5-.98.72-2.14.52-3.35-.43-2.66-2.84-4.56-5.54-4.56h-1.62c-1.26-2.08-4.54-2.62-7.56-1.19-2.79,1.33-4.41,3.9-3.99,6.09,0,0,0,.02-.03.03-1.07.78-1.16,2.31,0,2.97h1.11-1.12Z" />
+<path class="cls-7" d="M223.91,690.87h18.23c.5-.98.72-2.14.52-3.35-.43-2.66-2.84-4.56-5.54-4.56h-1.62c-1.26-2.08-4.54-2.62-7.56-1.19-2.79,1.33-4.41,3.9-3.99,6.09,0,0,0,.02-.03.03-1.07.78-1.16,2.31,0,2.97h1.11-1.12Z" />
+<path class="cls-7" d="M359.21,695.73h-73.92c-1.33,0-2.41-1.08-2.41-2.41s1.08-2.41,2.41-2.41h73.92c1.33,0,2.41,1.08,2.41,2.41s-1.08,2.41-2.41,2.41h0Z" />
+</g>
+<g>
+<path class="cls-7" d="M313.08,705.9c-1.55-.61-3.33-.96-5.23-.96s-3.73.36-5.29.98" />
+<path class="cls-7" d="M327.63,721.22c-1.55-.61-3.33-.96-5.23-.96s-3.73.36-5.29.98" />
+<circle class="cls-7" cx="307.82" cy="702.8" r="1.66" />
+<path class="cls-7" d="M299.14,704.84c1.95-2.57,5.03-4.22,8.5-4.22,3.68,0,6.93,1.87,8.85,4.71" />
+<path class="cls-7" d="M341.93,705.9c-1.55-.61-3.33-.96-5.23-.96s-3.73.36-5.29.98" />
+<circle class="cls-7" cx="336.67" cy="702.8" r="1.66" />
+<path class="cls-7" d="M327.99,704.84c1.95-2.57,5.03-4.22,8.5-4.22,3.68,0,6.93,1.87,8.85,4.71" />
+</g>
+<path class="cls-7" d="M324.98,738.43h-5.48c-1.33,0-2.41-1.08-2.41-2.41s1.08-2.41,2.41-2.41h5.48c1.33,0,2.41,1.08,2.41,2.41s-1.08,2.41-2.41,2.41Z" />
+<path class="cls-7" d="M354.53,695.73h-64.58c-.19,1.54-.29,3.12-.29,4.72,0,17.75,11.91,32.46,27.48,35.14.21-1.12,1.18-1.97,2.37-1.97h5.48c1.18,0,2.16.85,2.37,1.97,15.57-2.68,27.47-17.39,27.47-35.14,0-1.6-.1-3.17-.29-4.72h-.01Z" />
+</g>
+<g>
+<path class="cls-7" d="M222.94,705.9c-1.55-.61-3.33-.96-5.23-.96s-3.73.36-5.29.98" />
+<path class="cls-7" d="M237.48,721.22c-1.55-.61-3.33-.96-5.23-.96s-3.73.36-5.29.98" />
+<circle class="cls-7" cx="217.67" cy="702.8" r="1.66" />
+<path class="cls-7" d="M209,704.84c1.95-2.57,5.03-4.22,8.5-4.22,3.68,0,6.93,1.87,8.85,4.71" />
+<path class="cls-7" d="M245.21,705c-1.42.13-2.76.45-3.95.93" />
+<path class="cls-7" d="M237.85,704.84c1.64-2.16,4.08-3.67,6.89-4.1" />
+</g>
+<path class="cls-7" d="M234.84,738.43h-5.48c-1.33,0-2.41-1.08-2.41-2.41s1.08-2.41,2.41-2.41h5.48c1.33,0,2.41,1.08,2.41,2.41s-1.08,2.41-2.41,2.41Z" />
+<path class="cls-7" d="M244.66,700.45c0-1.6.1-3.17.29-4.72h-45.14c-.19,1.54-.29,3.12-.29,4.72,0,17.75,11.91,32.46,27.48,35.14.21-1.12,1.18-1.97,2.37-1.97h5.48c1.18,0,2.16.85,2.37,1.97,6.73-1.16,12.77-4.56,17.46-9.49-6.17-6.47-10.01-15.57-10.01-25.65h-.01Z" />
+<g>
+<path class="cls-7" d="M268,705.9c-1.55-.61-3.33-.96-5.23-.96s-3.73.36-5.29.98" />
+<path class="cls-7" d="M282.54,721.22c-1.55-.61-3.33-.96-5.23-.96s-3.73.36-5.29.98" />
+<circle class="cls-7" cx="262.73" cy="702.8" r="1.66" />
+<path class="cls-7" d="M254.06,704.84c1.95-2.57,5.03-4.22,8.5-4.22,3.68,0,6.93,1.87,8.85,4.71" />
+<path class="cls-7" d="M290.27,705c-1.42.13-2.76.45-3.95.93" />
+<path class="cls-7" d="M282.91,704.84c1.64-2.16,4.08-3.67,6.89-4.1" />
+</g>
+<path class="cls-7" d="M279.9,738.43h-5.48c-1.33,0-2.41-1.08-2.41-2.41s1.08-2.41,2.41-2.41h5.48c1.33,0,2.41,1.08,2.41,2.41s-1.08,2.41-2.41,2.41Z" />
+<path class="cls-7" d="M289.72,700.45c0-1.6.1-3.17.29-4.72h-45.14c-.19,1.54-.29,3.12-.29,4.72,0,17.75,11.91,32.46,27.48,35.14.21-1.12,1.18-1.97,2.37-1.97h5.48c1.18,0,2.16.85,2.37,1.97,6.73-1.16,12.77-4.56,17.46-9.49-6.17-6.47-10.01-15.57-10.01-25.65h0Z" />
+<path class="cls-7" d="M242.12,690.69h0c.33-2.45.85-5.61,1.52-7.87,1.99-6.68,5.92-12.35,11.02-16.58-6.22-5.08-14.16-8.03-22.42-8.03h-.06c-15.16,0-29.2,9.92-33.62,24.78-.67,2.27-1.19,5.42-1.52,7.87h0" />
+<path class="cls-7" d="M312.48,690.68h-25.2c.33-2.47.85-5.64,1.52-7.92,1.99-6.72,5.92-12.43,11.02-16.69-6.22-5.12-14.16-8.08-22.42-8.08h-.06c-15.16,0-29.2,9.98-33.62,24.93-.67,2.28-1.19,5.46-1.52,7.92h70.3s-.02-.11-.02-.16h0Z" />
+<path class="cls-7" d="M195.27,695.81l46.7-.11c-1.33,0-2.41-1.07-2.42-2.4s1.07-2.41,2.4-2.42l-46.7.11c-1.33,0-2.41,1.08-2.4,2.42s1.08,2.41,2.42,2.4Z" />
+</g>
+
+<g>
+<path class="cls-7" d="M415.49,709h0c-.02-.2,0-.4.08-.6.21-.59.78-.96,1.38-.94h0l64-.18c.15,0,.31.03.46.08.55.2.91.7.94,1.26l.13,28.09h0c.02.2,0,.4-.08.6-.21.59-.78.96-1.38.94h0l-64.32.18c-.15,0-.31-.03-.46-.08-.55-.2-.91-.7-.94-1.26l.18-28.09h.01Z" />
+<path class="cls-7" d="M412.49,706.07l-.1,27.97c.03.55.38,1.06.94,1.26.15.05.31.08.46.08h1.61l-.12-26.41h0c-.02-.2,0-.4.08-.6.21-.59.78-.96,1.38-.94h0l62.69-.18v-1.68c-.02-.55-.37-1.06-.93-1.26-.15-.05-.31-.08-.46-.08l-64.09.3h0c-.6-.02-1.17.34-1.38.94-.07.2-.1.4-.08.6h0Z" />
+<path class="cls-7" d="M409.44,703.02l-.1,27.97c.03.55.38,1.06.94,1.26.15.05.31.08.46.08h1.61l-.12-26.41h0c-.02-.2,0-.4.08-.6.21-.59.78-.96,1.38-.94h0l62.69-.18v-1.68c-.02-.55-.37-1.06-.93-1.26-.15-.05-.31-.08-.46-.08l-64.09.3h0c-.6-.02-1.17.34-1.38.94-.07.2-.1.4-.08.6h0Z" />
+<g>
+<path class="cls-7" d="M434.22,725.34c0-5.32,4.31-9.63,9.63-9.63s9.63,4.31,9.63,9.63" />
+<path class="cls-7" d="M463.06,723.21c0,5.32-4.31,9.63-9.63,9.63s-9.63-4.31-9.63-9.63" />
+</g>
+</g>
+
+<g>
+<path class="cls-7" d="M573.21,680.65c1.56,5.68,3.13,9.86,2.19,19.67-.85,8.83-10.64,25.35-10.64,25.35" />
+<path class="cls-7" d="M576.08,718.36c1.11-.26,2.59-.92,3.59-1.77.29-.25.54-.53.78-.81h0l-.02.02h0c1.62-1.75,3.33-6.11,3.33-6.11,0,0-4.77-.99-7.1-.53h0c-1.11.26-2.58.9-3.57,1.76-.29.25-.54.53-.78.81h0c-1.62,1.75-3.33,6.11-3.33,6.11,0,0,4.77.99,7.1.53h0Z" />
+<g>
+<path class="cls-7" d="M580.29,715.79l.02-.02-.02.02h0Z" />
+<path class="cls-7" d="M583.62,709.68s-4.77-.99-7.1-.53c-.5.12-1.08.33-1.66.59v-5.64h-11.29v20.6c0,.73.59,1.33,1.33,1.33h8.64c.73,0,1.33-.59,1.33-1.33v-6.22c.39-.01.76-.05,1.08-.11h0c1.11-.26,2.59-.92,3.59-1.77.29-.25.53-.52.77-.79h0c1.62-1.75,3.33-6.11,3.33-6.11l-.02-.02h0Z" />
+</g>
+<path class="cls-7" d="M581.79,703.99c1.11-.26,2.59-.92,3.59-1.77.29-.25.54-.53.78-.81h0l-.02.02h0c1.62-1.75,3.33-6.11,3.33-6.11,0,0-4.77-.99-7.1-.53h0c-1.11.26-2.58.9-3.57,1.76-.29.25-.54.53-.78.81h0c-1.62,1.75-3.33,6.11-3.33,6.11,0,0,4.77.99,7.1.53h0Z" />
+<path class="cls-7" d="M574.07,703.55s-4.74-1.12-6.66-2.51c-.55-.44-1.16-1.07-1.67-1.76h-2.75c-1.33,0-2.41,1.08-2.41,2.41s1.08,2.41,2.41,2.41h11.48c.47,0,.91-.14,1.28-.37-.85-.14-1.44-.26-1.44-.26" />
+<path class="cls-7" d="M581.65,684.61c.98-.58,2.2-1.65,2.89-2.76.2-.33.36-.67.51-1.01h0v.02h-.01c1.03-2.15,1.35-6.83,1.35-6.83,0,0-4.85.48-6.94,1.61h0c-.98.58-2.19,1.63-2.88,2.74-.2.33-.36.67-.51,1.01h0c-1.03,2.15-1.35,6.83-1.35,6.83,0,0,4.85-.48,6.94-1.61h0Z" />
+<path class="cls-7" d="M571.11,692.44c.89.71,1.96,1.93,2.5,3.12.16.35.27.71.37,1.07h0v-.02h0c.73,2.27.44,6.95.44,6.95,0,0-4.74-1.12-6.66-2.51h0c-.89-.71-1.96-1.9-2.5-3.1-.16-.35-.27-.71-.37-1.07h0c-.73-2.27-.44-6.95-.44-6.95,0,0,4.74,1.12,6.66,2.51h0Z" />
+<path class="cls-7" d="M568.56,676.55c1.05.43,2.41,1.32,3.26,2.32.25.29.45.61.65.92h0v-.02h-.01c1.32,1.98,2.32,6.56,2.32,6.56,0,0-4.87.22-7.09-.6h0c-1.05-.43-2.4-1.3-3.25-2.3-.25-.29-.45-.61-.65-.92h0c-1.32-1.98-2.32-6.56-2.32-6.56,0,0,4.87-.22,7.09.6h0Z" />
+<g>
+<path class="cls-7" d="M568.56,676.55h0c1.05.43,2.41,1.31,3.26,2.32.24.29.44.6.63.9h0v.02s.01-.01,0-.02h0c.28.41.54.94.78,1.52v-11.4l.06-3.37c0-.4-.16-.75-.42-1.01l-3.55-3.43-.08-.06c-.09-.05-.13-.05-.21-.05s-.15.02-.23.06l-.04.04-3.31,3.51c-.23.25-.37.58-.38.94v.02l-.07,4.36-.02,2.99v2.09c1.29.07,2.66.23,3.58.57h0Z" />
+<path class="cls-7" d="M567.68,685.74c-.85-.35-1.88-.99-2.7-1.74v6.05c1.26.33,4.37,1.09,5.91,2.21l.26.18c.7.56,1.5,1.43,2.08,2.36v-8.43c-1.62,0-4.13-.1-5.55-.62h0Z" />
+</g>
+<path class="cls-7" d="M564.98,673.7l.02-2.99.07-4.36v-.02c0-.36.15-.7.38-.94l.8-.85c-2.16-.92-4.89-1.56-4.89-1.56,0,0-.29,4.68.44,6.95.1.35.21.72.37,1.07.54,1.2,1.6,2.39,2.5,3.1.09.07.2.14.31.2v-.6h0Z" />
+<g>
+<path class="cls-7" d="M580.24,715.77l-.02.02h0l.02-.02Z" />
+<path class="cls-7" d="M572.34,679.87h0s0,.01.01.02v-.02h-.01Z" />
+<path class="cls-7" d="M598.37,679h-12.93c.55-2.24.74-4.96.74-4.96,0,0-4.85.48-6.94,1.61-.55.33-1.17.81-1.73,1.36l-4.38-7.59v11.97c-.24-.57-.5-1.1-.78-1.52h0c-.19-.31-.39-.62-.63-.9-.85-1-1.79-1.75-2.84-2.18l-.73-.29c-.92-.34-1.98-.34-3.27-.41l-.02-1.59-2.01-2.13-3.48,5.93c-.26.44-.72.7-1.23.7h-18.89l9.43,16.34c.26.45.26,1.01,0,1.47l-9.43,16.34h18.89c.51,0,.98.27,1.23.71l4.23,7.33v3.61c0,.73.59,1.33,1.33,1.33h1.52l2.36,4.09,2.36-4.09h2.39c.73,0,1.33-.59,1.33-1.33v-5.12l.74-1.28c.08-.01.17-.02.24-.04h0c1.11-.26,2.59-.92,3.59-1.77.29-.25.53-.52.77-.79h0c.46-.49.92-1.19,1.35-1.94.25-.44.72-.72,1.23-.72h15.57l-8.84-16.34c-.23-.42-.23-.93,0-1.35l8.84-16.44h0Z" />
+</g>
+<path class="cls-7" d="M605.78,675.05h-19.38c.08-.7.11-1.16.11-1.16,0,0-2.94.29-5.24.95l-12.08-20.92-5.48,9.49c-1.32-.41-2.39-.66-2.39-.66,0,0-.15,2.49.04,4.72l-3.98,6.89c-.25.43-.7.69-1.19.69h-23.6l11.75,20.36c.28.48.28,1.06,0,1.54l-11.75,20.36h23.49c.56,0,1.08.3,1.37.79l11.74,20.34,11.8-20.44c.25-.43.7-.69,1.19-.69h23.6l-11.8-20.44c-.25-.43-.25-.95,0-1.37l11.8-20.44h0Z" />
+</g>
+
+<g>
+<g>
+<line class="cls-7" x1="949.39" y1="706.78" x2="944.44" y2="714.61" />
+<line class="cls-7" x1="943.04" y1="708.16" x2="950.79" y2="713.23" />
+</g>
+<path class="cls-7" d="M992.07,709.49c0-2.4-1.95-4.34-4.34-4.34s-4.34,1.95-4.34,4.34c0,.8.26,1.55.6,2.2h0l3.76,7.39,3.78-7.47h0c.35-.63.55-1.35.55-2.12h0ZM987.75,712.04c-1.43,0-2.59-1.16-2.59-2.59s1.16-2.59,2.59-2.59,2.59,1.16,2.59,2.59-1.16,2.59-2.59,2.59Z" />
+<g>
+<polygon class="cls-7" points="936.37 689.67 936.07 732.63 957.59 738.72 957.59 697.75 936.37 689.67" />
+<polygon class="cls-7" points="957.83 697.84 957.59 697.75 957.59 738.72 957.97 738.82 977.87 731.23 977.87 689.63 957.83 697.84" />
+<polygon class="cls-7" points="998.79 740.31 998.57 698.08 977.96 689.59 977.87 689.63 977.87 731.23 978.09 731.14 998.79 740.31" />
+</g>
+<path class="cls-7" d="M946.76,711.22c2.29,6.04,2.78,11.43,8.65,11.59s6.91-7.68,13.06-7.84,8.65,6.86,14.04,6.86,5.21-2.75,5.21-2.75" />
+</g>
+
+<g>
+<path class="cls-7" d="M402.38,302.06c0-16.23-13.16-29.39-29.39-29.39s-29.39,13.16-29.39,29.39c0,10.4,5.41,19.53,13.56,24.75-.27-1.44-.43-2.92-.46-4.46-.09-4.3.81-8.32,2.42-11.71-4.51-2.99-7.38-7.4-7.38-12.33,0-9,9.52-16.3,21.26-16.3s21.26,7.3,21.26,16.3c0,4.99-2.93,9.45-7.54,12.44,1.55,3.17,2.49,6.88,2.58,10.88.04,1.76-.11,3.47-.38,5.12,8.1-5.23,13.48-14.34,13.48-24.7h-.02Z" />
+<path class="cls-7" d="M357.24,326.5c1.78,9.56,8.47,16.61,16.3,16.44,7.65-.17,13.9-7.19,15.45-16.49" />
+<g>
+<circle class="cls-7" cx="363.88" cy="297.13" r="4.4" />
+<circle class="cls-7" cx="382.1" cy="297.13" r="4.4" />
+</g>
+<g>
+<circle class="cls-8" cx="369.42" cy="318.06" r="1.42" />
+<circle class="cls-8" cx="376.57" cy="318.06" r="1.42" />
+</g>
+<path class="cls-7" d="M395.99,283.79c2.27,2.96,3.95,6.11,5.17,10.06,1.03,3.35,1.23,6.06,1.17,9.32v.98s1.69-.08,2.81-.35c4.49-1.11,6.88-7.11,5.32-13.4s-6.46-10.48-10.95-9.37c-1.32.33-2.92,1.32-3.83,2.37l.31.39h0Z" />
+<path class="cls-7" d="M350.11,283.79c-2.27,2.96-3.95,6.11-5.17,10.06-1.03,3.35-1.23,6.06-1.17,9.32v.98s-1.69-.08-2.81-.35c-4.49-1.11-6.88-7.11-5.32-13.4,1.55-6.29,6.46-10.48,10.95-9.37,1.32.33,2.92,1.32,3.83,2.37l-.31.39h0Z" />
+</g>
+
+<path class="cls-7" d="M382.02,328.73c-1.95,2.57-5.03,4.22-8.5,4.22-3.68,0-6.93-1.87-8.85-4.71" />
+
+<g>
+<g>
+<g>
+<g>
+<path class="cls-7" d="M677.56,540.46l4.43-3.37c6.07,7.99,17.73,9.34,26.03,3.03,8.3-6.31,10.1-17.9,4.03-25.89l4.04-3.07.39-.3h0c8.17,10.74,6.09,26.08-4.66,34.25s-26.08,6.09-34.25-4.66h-.01Z" />
+<path class="cls-7" d="M693.68,543.57l1.79-8.18-1.79,8.18ZM693.63,543.92c4.87.71,10.08-.5,14.38-3.78l-6.36-8.36c-1.63,1.24-3.68,1.57-5.63,1.1l-2.39,11.04h0Z" />
+<path class="cls-7" d="M693.63,543.91l1.42-6.53-1.42,6.53ZM696.02,532.87c-1.7-.41-3.32-1.43-4.52-3l-9.52,7.24c2.92,3.84,7.13,6.15,11.64,6.81l2.39-11.04h.01Z" />
+<path class="cls-7" d="M706.84,526.77l8.36.44-8.36-.44ZM704.26,526.64c-.06,2.01-.93,3.9-2.55,5.14l6.38,8.35c4.3-3.28,6.85-7.99,7.46-12.87l-11.28-.62h-.01Z" />
+<path class="cls-7" d="M684.74,510.04l13.84.29c-.09,4.23-3.26,7.59-7.08,7.51s-6.85-3.57-6.76-7.8Z" />
+<path class="cls-7" d="M677.91,522.15l6.49-5.29-6.49,5.29ZM677.66,522.39c3.37,3.58,8.2,5.87,13.61,5.99l.22-10.51c-2.04-.04-3.86-1.06-5.09-2.64l-8.74,7.16h0Z" />
+<path class="cls-7" d="M677.66,522.38l5.17-4.24-5.17,4.24ZM686.4,515.22c-1.08-1.38-1.71-3.19-1.67-5.16l-11.96-.25c-.1,4.83,1.76,9.25,4.89,12.57l8.74-7.16h0Z" />
+<path class="cls-7" d="M698.66,517.17l4.41,3.92-4.41-3.92ZM696.73,515.46c-1.3,1.53-3.15,2.48-5.19,2.44l-.2,10.51c.73.01,1.45-.01,2.16-.08" />
+<path class="cls-7" d="M700.18,518.52l9.39-2.44c.61-1.73.95-3.57.99-5.49l-11.96-.22c-.04,1.97-.74,3.75-1.87,5.09l6.35,5.64" />
+<path class="cls-7" d="M691.5,529.85l2-1.52.08-.06,8.93-6.79c2.56,3.37,2.17,7.97-.87,10.29-3.04,2.31-7.58,1.46-10.15-1.91h.01Z" />
+<path class="cls-7" d="M708.87,526.89l6.67.37-6.67-.37ZM715.54,527.26c.56-4.52-.55-9.2-3.48-13.03l-2.52,1.92-6.47,4.94-.51.39c1.2,1.57,1.75,3.4,1.7,5.15l11.28.62h0Z" />
+<path class="cls-7" d="M710.54,510.58l5.56.12h0c0,.15,0,.3-.01.45" />
+<path class="cls-7" d="M686.09,533.99c-11.01-2.57-19.11-12.55-18.86-24.31l5.56.12c-.21,10.03,8.07,18.34,18.5,18.56" />
+</g>
+<g>
+<path class="cls-7" d="M739.59,484.25c0-2.57-.78-4.17-2.15-6.34h0" />
+<path class="cls-7" d="M710.24,510.58l5.86.11s8.28,8.07,4.34,21.94" />
+</g>
+</g>
+<path class="cls-7" d="M736.77,470.71c-.52-1.12-1.54-2.55-2.66-3.41-.33-.25-.68-.46-1.03-.65h.02c-2.2-1.33-7.2-2.18-7.2-2.18,0,0,0,5.27.98,7.64h0c.52,1.12,1.51,2.53,2.64,3.4.33.25.68.46,1.03.65h0c2.2,1.34,7.2,2.19,7.2,2.19,0,0,0-5.27-.98-7.64h0Z" />
+<path class="cls-7" d="M746.57,480.65c.87-.87,1.87-2.31,2.31-3.66.13-.4.2-.8.27-1.19h0v.03h0c.51-2.53-.38-7.52-.38-7.52,0,0-4.96,1.78-6.85,3.51h0c-.87.87-1.87,2.28-2.3,3.63-.13.4-.2.8-.27,1.19h0c-.51,2.53.38,7.52.38,7.52,0,0,4.96-1.78,6.85-3.51h-.01Z" />
+</g>
+<g>
+<path class="cls-7" d="M797.75,540.35l-4.43-3.37c-6.07,7.99-17.73,9.34-26.03,3.03-8.3-6.31-10.1-17.9-4.03-25.89l-4.04-3.07-.39-.3h0c-8.17,10.74-6.09,26.08,4.66,34.25,10.74,8.17,26.08,6.09,34.25-4.66h.01Z" />
+<path class="cls-7" d="M779.83,535.29l1.79,8.18-1.79-8.18ZM779.28,532.77c-1.95.47-4,.14-5.63-1.1l-6.36,8.36c4.31,3.28,9.52,4.49,14.38,3.78l-2.39-11.04h0Z" />
+<path class="cls-7" d="M780.26,537.28l1.42,6.53-1.42-6.53ZM781.67,543.81c4.51-.66,8.72-2.97,11.64-6.81l-9.52-7.24c-1.19,1.57-2.82,2.59-4.52,3l2.39,11.04h.01Z" />
+<path class="cls-7" d="M760.11,527.11l8.36-.44-8.36.44ZM759.76,527.15c.61,4.88,3.15,9.58,7.46,12.87l6.38-8.35c-1.62-1.24-2.49-3.13-2.55-5.14l-11.28.62h-.01Z" />
+<path class="cls-7" d="M790.57,509.94l-13.84.29c.09,4.23,3.26,7.59,7.08,7.51s6.85-3.57,6.76-7.8Z" />
+<path class="cls-7" d="M790.9,516.75l6.49,5.29-6.49-5.29ZM788.91,515.12c-1.23,1.58-3.05,2.6-5.09,2.64l.22,10.51c5.41-.11,10.24-2.4,13.61-5.99l-8.74-7.16h0Z" />
+<path class="cls-7" d="M792.47,518.04l5.17,4.24-5.17-4.24ZM797.64,522.28c3.12-3.32,4.99-7.75,4.89-12.57l-11.96.25c.04,1.97-.59,3.78-1.67,5.16l8.74,7.16h0Z" />
+<path class="cls-7" d="M772.23,520.99l4.41-3.92-4.41,3.92ZM781.8,528.23c.71.06,1.43.09,2.16.08l-.2-10.51c-2.04.04-3.89-.91-5.19-2.44" />
+<path class="cls-7" d="M775.12,518.42l-2.89,2.57,6.35-5.64c-1.13-1.34-1.84-3.12-1.87-5.09l-11.96.22c.04,1.92.38,3.76.99,5.49" />
+<path class="cls-7" d="M783.8,529.75l-2-1.52-.08-.06-8.93-6.79c-2.56,3.37-2.17,7.97.87,10.29s7.58,1.46,10.15-1.91h-.01Z" />
+<path class="cls-7" d="M759.76,527.15l6.67-.37-6.67.37ZM771.05,526.53c-.05-1.75.5-3.59,1.7-5.15l-.51-.39-6.47-4.94-2.52-1.92c-2.93,3.84-4.04,8.51-3.48,13.03l11.28-.62h0Z" />
+<path class="cls-7" d="M764.77,510.48l-5.56.12h0c0,.15,0,.3.01.45" />
+<path class="cls-7" d="M789.22,533.89c11.01-2.57,19.11-12.55,18.86-24.31l-5.56.12c.21,10.03-8.07,18.34-18.5,18.56" />
+</g>
+<path class="cls-7" d="M763.1,514.24l1.65-3.75c-.43-14.62-12.41-26.17-27.13-26.17s-26.73,11.6-27.17,26.22l5.89.13s7.63,8.03,4.11,21.97c4.64,3.71,10.76,6,17.17,6s12.59-2.48,17.25-6.24c-2.26-7.44-.73-15.43,4.15-21.85l5.73-.05-1.65,3.74Z" />
+</g>
+
+<g>
+<g>
+<circle class="cls-7" cx="1176.98" cy="711.6" r="3.31" />
+<path class="cls-7" d="M1198.39,710.03c-8.36,0-15.14,6.78-15.14,15.14s6.78,15.14,15.14,15.14,15.14-6.78,15.14-15.14-6.78-15.14-15.14-15.14ZM1198.32,735.25c-5.48,0-9.92-4.44-9.92-9.92s4.44-9.92,9.92-9.92,9.92,4.44,9.92,9.92-4.44,9.92-9.92,9.92Z" />
+<path class="cls-7" d="M1156.68,710.03c-8.36,0-15.14,6.78-15.14,15.14s6.78,15.14,15.14,15.14,15.14-6.78,15.14-15.14-6.78-15.14-15.14-15.14ZM1156.6,735.25c-5.48,0-9.92-4.44-9.92-9.92s4.44-9.92,9.92-9.92,9.92,4.44,9.92,9.92-4.44,9.92-9.92,9.92Z" />
+</g>
+<path class="cls-7" d="M1193.01,710.98c-4.27,1.2-8.6,6.29-9.51,11.2l-5.69-1.71-.27-.07h0c-.1,0-.2.02-.29.05h0l-5.53,1.69c-1.23-5.82-6.26-10.58-10.99-11.63v-.5c.01-3.13,1.95-5.67,4.35-5.67h23.63c2.4,0,4.35,2.36,4.35,5.49l-.06,1.15h.01Z" />
+</g>`;
+function libSVG(vb){return`<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="52" height="52" overflow="hidden">${LIBRARY_SVG}</svg>`;}
+
+/* ─── Catalog ─── */
+const CINIT=[
+  {id:'CAT-0001',hebrew:'סבא',concept:'Grandfather',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'-8.00 12.45 225.45 174.00'},
+  {id:'CAT-0002',hebrew:'סבתא',concept:'Grandmother',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'201.45 12.45 198.84 174.00'},
+  {id:'CAT-0003',hebrew:'ילדה',concept:'Girl / Young girl',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'384.29 12.45 187.02 174.00'},
+  {id:'CAT-0004',hebrew:'ילד',concept:'Boy / Young boy',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'555.31 12.45 156.42 174.00'},
+  {id:'CAT-0005',hebrew:'לילה',concept:'Night',provisional:false,provisionalNote:'',strategy:'Established Convention',viewBox:'695.73 12.45 172.07 174.00'},
+  {id:'CAT-0006',hebrew:'נדנדה',concept:'Swing',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'851.80 12.45 211.39 174.00'},
+  {id:'CAT-0007',hebrew:'בקבוק חם',concept:'Hot bottle / Thermos',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'1047.19 12.45 185.46 174.00'},
+  {id:'CAT-0008',hebrew:'נסענו',concept:'Traveling / We traveled',provisional:true,provisionalNote:'Verb form — concept label requires confirmation: represents journey/travel',strategy:'Direct Iconic Representation',viewBox:'1216.65 12.45 151.35 174.00'},
+  {id:'CAT-0009',hebrew:'יום הולדת',concept:'Birthday',provisional:false,provisionalNote:'',strategy:'Compositional Representation',viewBox:'-8.00 197.60 187.85 174.00'},
+  {id:'CAT-0010',hebrew:'אולר',concept:'Penknife / Pocket knife',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'163.85 197.60 145.08 174.00'},
+  {id:'CAT-0011',hebrew:'קוף',concept:'Monkey',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'292.93 197.60 135.81 174.00'},
+  {id:'CAT-0012',hebrew:'מתנה',concept:'Gift / Present',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'412.75 197.60 161.11 174.00'},
+  {id:'CAT-0013',hebrew:'בוקר',concept:'Morning',provisional:false,provisionalNote:'',strategy:'Established Convention',viewBox:'557.86 197.60 168.47 174.00'},
+  {id:'CAT-0014',hebrew:'עיתון',concept:'Newspaper',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'710.33 197.60 152.38 174.00'},
+  {id:'CAT-0015',hebrew:'בית ספר',concept:'School',provisional:false,provisionalNote:'',strategy:'Metonymic Association',viewBox:'846.70 197.60 154.25 174.00'},
+  {id:'CAT-0016',hebrew:'אוטובוס',concept:'Bus',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'984.95 197.60 172.12 174.00'},
+  {id:'CAT-0017',hebrew:'שירים',concept:'Songs / Singing',provisional:true,provisionalNote:'Representational strategy requires confirmation — may use notation or gesture',strategy:'Metonymic Association',viewBox:'1141.07 197.60 220.06 174.00'},
+  {id:'CAT-0018',hebrew:'מגדת עתידות',concept:'Fortune teller',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'-8.00 415.25 219.73 174.00'},
+  {id:'CAT-0019',hebrew:'אוניה',concept:'Ship',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'195.73 415.25 184.91 174.00'},
+  {id:'CAT-0020',hebrew:'אתחתן',concept:'Wedding / Marriage',provisional:true,provisionalNote:'Verb form — concept label requires confirmation: represents the wedding event',strategy:'Direct Iconic Representation',viewBox:'364.64 415.25 148.06 174.00'},
+  {id:'CAT-0021',hebrew:'ציפור',concept:'Bird',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'496.70 415.25 149.37 174.00'},
+  {id:'CAT-0022',hebrew:'תפוזים',concept:'Oranges',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'630.07 415.25 173.21 174.00'},
+  {id:'CAT-0023',hebrew:'סלע',concept:'Rock / Boulder',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'787.28 415.25 208.99 174.00'},
+  {id:'CAT-0024',hebrew:'יער',concept:'Forest',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'980.27 415.25 197.55 174.00'},
+  {id:'CAT-0025',hebrew:'מימייה',concept:'Canteen / Water bottle',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'1161.82 415.25 206.18 174.00'},
+  {id:'CAT-0026',hebrew:'ג׳יפ',concept:'Jeep',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'-8.00 602.35 179.65 174.00'},
+  {id:'CAT-0027',hebrew:'חיילים',concept:'Soldiers',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'155.65 602.35 175.59 174.00'},
+  {id:'CAT-0028',hebrew:'משכורת',concept:'Salary / Paycheck',provisional:true,provisionalNote:'Abstract concept — representational strategy requires confirmation',strategy:'Metonymic Association',viewBox:'315.24 602.35 175.25 174.00'},
+  {id:'CAT-0029',hebrew:'צבא',concept:'Army / Military',provisional:true,provisionalNote:'Representational strategy requires confirmation',strategy:'Metonymic Association',viewBox:'474.49 602.35 184.75 174.00'},
+  {id:'CAT-0030',hebrew:'רפת',concept:'Barn / Cowshed',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'643.25 602.35 215.90 174.00'},
+  {id:'CAT-0031',hebrew:'טיול',concept:'Trip / Hike / Excursion',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'843.14 602.35 165.19 174.00'},
+  {id:'CAT-0032',hebrew:'חליבה',concept:'Milking',provisional:true,provisionalNote:'Visual form requires confirmation against the catalog entry',strategy:'Direct Iconic Representation',viewBox:'992.34 602.35 114.30 174.00'},
+  {id:'CAT-0033',hebrew:'תצפית',concept:'Lookout / Observation post',provisional:true,provisionalNote:'Visual form requires confirmation against the catalog entry',strategy:'Direct Iconic Representation',viewBox:'1090.64 602.35 119.21 174.00'},
+  {id:'CAT-0034',hebrew:'עצי זית',concept:'Olive trees',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'1193.85 602.35 174.15 174.00'}
+];
+const CAT=(()=>{
+  let m={},n=35;
+  function init(){CINIT.forEach(e=>{m[e.id]=e;});}
+  function all(){return Object.values(m).sort((a,b)=>a.id.localeCompare(b.id));}
+  function get(id){return m[id]||null;}
+  function store(entry){const id='CAT-'+String(n++).padStart(4,'0');m[id]={...entry,id};return id;}
+  function lookup(word){
+    const w=(word||'').toLowerCase().trim();
+    const hw=(word||'').trim();
+    // Also try first word of multi-word concepts
+    return Object.values(m).find(e=>
+      (e.hebrew&&e.hebrew===hw)||
+      (e.hebrew&&e.hebrew.split('/').some(h=>h.trim()===hw))||
+      (e.concept&&e.concept.toLowerCase().split('/').some(c=>c.trim()===w))||
+      (e.concept&&e.concept.toLowerCase()===w)||
+      (e.concept&&e.concept.toLowerCase().includes(w)&&w.length>3)
+    )||null;
+  }
+  return{init,all,get,store,lookup};
+})();
+
+
+/* ─── API ─── */
+function getKey(){return document.getElementById('api-key-input')?.value?.trim()||'';}
+function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function extractJSON(raw){
+  if(!raw)throw new Error('Empty response');
+  let s=raw.trim().replace(/^```(?:json)?\s*/im,'').replace(/\s*```\s*$/im,'').trim();
+  const first=s.indexOf('{'),last=s.lastIndexOf('}');
+  if(first===-1||last===-1||last<=first)throw new Error('No JSON object found');
+  return JSON.parse(s.slice(first,last+1));
+}
+
+/* ─── Global error display ─── */
+window.onerror=function(msg,src,line,col,err){
+  const el=document.getElementById('error-card');
+  if(el){el.textContent=`JS Error: ${msg} (line ${line})`;el.hidden=false;}
+  return false;
+};
+window.onunhandledrejection=function(e){
+  const el=document.getElementById('error-card');
+  if(el){el.textContent=`Async error: ${e.reason?.message||e.reason||e}`;el.hidden=false;}
+};
+
+async function callAPI(system,user,maxTokens){
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json',
+      'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTokens,
+      system:'You output only valid JSON. No markdown. No code fences. No explanation. Your response must be parseable by JSON.parse().',
+      messages:[{role:'user',content:system+'\n\n---\n\n'+user}]})
+  });
+  if(!res.ok){const body=await res.json().catch(()=>({}));throw new Error(`API ${res.status}: ${body?.error?.message||res.statusText}`);}
+  const data=await res.json();
+  return data.content.filter(c=>c.type==='text').map(c=>c.text).join('');
+}
+
+
+/* ─── Rule 3 Realization Prompt ─── */
+const R3_PROMPT=`You are the Rule 3 Pictogram Realization processor for a pictographic visual language.
+
+You receive a reference SVG and a concept label. Your task: recreate the concept as a new pictogram that belongs to this specific visual language.
+
+ILLUSTRATION GRAMMAR — STRICT:
+- viewBox="0 0 64 64" width="64" height="64"
+- fill="none" on ALL elements — no filled shapes
+- stroke="#231F20" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+- ONLY these elements: circle, ellipse, rect, line, path
+- path commands: M L A Z only — absolutely no C Q S T bezier curves
+- rect corners: rx="4" where appropriate
+- Frontal viewpoint only — no perspective, no 3/4 view
+- Represents the CATEGORY, not a specific instance
+
+PROCESS:
+1. Study the reference SVG to understand the concept's essential visual identity
+2. Identify the minimum set of geometric primitives that communicate the concept
+3. Reconstruct using only the permitted elements and commands
+4. Verify: if a machine drew ONLY circles, ellipses, rects, lines, and paths with M/L/A/Z commands, could it produce this? If not, simplify.
+
+The output must be immediately recognizable as the concept within the 64×64 space.
+
+Return ONLY this JSON — no markdown, no explanation:
+{"svg":"<svg viewBox=\\"0 0 64 64\\" xmlns=\\"http://www.w3.org/2000/svg\\" fill=\\"none\\" stroke=\\"#231F20\\" stroke-width=\\"1.5\\" stroke-linecap=\\"round\\" stroke-linejoin=\\"round\\">...</svg>","geometricDescription":"...","principle1":"category-level identity preserved because...","principle2":"recognizability: ...","principle3":"all elements use only permitted primitives","principle4":"unambiguous in isolation because..."}`;
+
+/* ─── Catalog lookup (Rule 3) ─── */
+function buildSequenceSVG(vrpResult){
+  const units=(vrpResult?.vrp||[]).filter(u=>['independent','both'].includes(u.phase2?.modeDecision?.mode));
+  const N=units.length;if(!N)return'';
+  const ps=64,gap=24,cW=856,cH=128;
+  const totW=N*ps+(N-1)*gap,x0=(cW-totW)/2,y0=(cH-ps)/2;
+  let inner='';
+  units.forEach((u,i)=>{
+    const hit=CAT.lookup(u.unit)||CAT.lookup(u.phase1?.entityNature?u.unit:u.unit);
+    if(!hit?.viewBox)return;
+    // Hebrew: right to left
+    const rtl=currentResult?.memoryLanguage==='Hebrew';
+    const x=rtl?x0+(N-1-i)*(ps+gap):x0+i*(ps+gap);
+    const innerSvg=hit.viewBox?`<svg viewBox="${hit.viewBox}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64" overflow="hidden">${LIBRARY_SVG}</svg>`:'';
+    inner+=`<g transform="translate(${x},${y0})">${innerSvg.replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'')}</g>`;
+  });
+  return inner?`<svg viewBox="0 0 ${cW} ${cH}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`:'';
+}
+
+
+/* ─── Rule 1 output validation (post-processing) ─── */
+/* Enforces methodology rules from governing documents after API response */
+function validateR1Output(data){
+  const violations=[];
+  const rws=data.representativeWords||[];
+
+  // RULE A: Habitual/recurring annotations must not be in representativeWords
+  // Source: Workflow Grammar Stage 1.2 Step 4-5
+  // "Recurring and Habitual temporal annotations do not become Semantic Field candidates."
+  const habitualPatterns=[/הרגל/,/חוזר/,/recurring/i,/habitual/i,/pattern/i,/מחזור/,/קבוע/];
+  rws.forEach((rw,i)=>{
+    const word=rw.word||'';
+    const ref=rw.canonicalReferent||'';
+    if(habitualPatterns.some(p=>p.test(word)||p.test(ref))){
+      violations.push({
+        type:'RULE_A_HABITUAL_IN_RW',
+        severity:'error',
+        element:word,
+        index:i,
+        rule:'Workflow Grammar Stage 1.2 Steps 4-5',
+        message:`"${word}" appears to be a habitual/recurring temporal annotation and must not appear in representativeWords. Record temporalContext in memoryFrame only.`
+      });
+    }
+  });
+
+  // RULE B: Temporal referents must have passed D1 strictly
+  // Source: Workflow Grammar Stage 1.3 Reducibility Clarification + Semantic Methodology D1
+  // "D1 remains responsible for determining whether any specific instance survives as a Representative Word."
+  const temporalCategories=['temporal-pattern','temporal-referent','temporal'];
+  rws.forEach((rw,i)=>{
+    if(temporalCategories.includes(rw.category)){
+      // Find the consideration record entry for this RW
+      const cr=(data.considerationRecord||[]).find(c=>c.fieldId===rw.id||c.field===rw.word);
+      if(!cr){
+        violations.push({
+          type:'RULE_B_TEMPORAL_NO_D1_RECORD',
+          severity:'warning',
+          element:rw.word,
+          index:i,
+          rule:'Semantic Methodology D1; Workflow Grammar Stage 1.3',
+          message:`Temporal referent "${rw.word}" is in representativeWords but has no consideration record entry documenting D1 application.`
+        });
+      } else if(cr.identityGate==='reduces-detail'&&cr.decision==='representative'){
+        violations.push({
+          type:'RULE_B_TEMPORAL_D1_FAILED',
+          severity:'error',
+          element:rw.word,
+          index:i,
+          rule:'Semantic Methodology D1, D2',
+          message:`Temporal referent "${rw.word}" was classified as reduces-detail by identityGate but promoted to representative. D1 requires it be classified as a Detail (D2). It should not be in representativeWords.`
+        });
+      }
+    }
+  });
+
+  // RULE C: No element in RW without a direct textual anchor
+  // Source: Semantic Methodology P1, P3
+  rws.forEach((rw,i)=>{
+    if(!rw.sourceText||rw.sourceText.trim()===''){
+      violations.push({
+        type:'RULE_C_NO_TEXTUAL_ANCHOR',
+        severity:'warning',
+        element:rw.word||'unknown',
+        index:i,
+        rule:'Semantic Methodology P1, P3',
+        message:`"${rw.word}" has no sourceText — cannot verify it has a direct textual anchor in the written memory.`
+      });
+    }
+  });
+
+  // RULE D: Word label must be derived from written memory — not normalized or substituted
+  // Source: Semantic Methodology P1 Clarification — Lexical Form Fidelity (newly added)
+  const memoryText=data.coreNarrative||'';
+  // Check each RW: if word differs from sourceText substantially, flag for review
+  rws.forEach((rw,i)=>{
+    const word=(rw.word||'').trim();
+    const source=(rw.sourceText||'').trim();
+    if(!source||!word) return;
+    // If the word is not found anywhere in the source text fragment or original memory, flag it
+    // This catches cases where the processor substituted a different form (e.g. "אנחנו" for "אותנו")
+    if(source.length>0&&!source.includes(word)&&!word.includes(source)&&word!==source){
+      // Only flag if the divergence is substantial (not just punctuation)
+      const wordCore=word.replace(/[""״]/g,'').trim();
+      const sourceCore=source.replace(/[""״]/g,'').trim();
+      if(wordCore!==sourceCore&&!sourceCore.includes(wordCore)&&!wordCore.includes(sourceCore)){
+        violations.push({
+          type:'RULE_D_LEXICAL_SUBSTITUTION',
+          severity:'warning',
+          element:word,
+          index:i,
+          rule:'Semantic Methodology P1 Clarification — Lexical Form Fidelity',
+          message:`Word label "${word}" differs from sourceText "${source}". The word label must be derived from what the narrator wrote — not substituted with a normalized or restructured form.`
+        });
+      }
+    }
+  });
+
+  return violations;
+}
+
+function renderValidationViolations(violations,container){
+  if(!violations.length)return;
+  const html=`<div style="border:1px solid #C09060;background:#FDF5E8;border-radius:var(--r);padding:14px 16px;margin-bottom:16px">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#7A4900;margin-bottom:10px">Methodology Validation — ${violations.length} issue${violations.length>1?'s':''} detected</div>
+    ${violations.map(v=>`<div style="padding:8px 0;border-bottom:1px solid rgba(122,73,0,.12);font-size:12px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+        <span style="font-size:10px;padding:1px 7px;border-radius:8px;font-weight:600;background:${v.severity==='error'?'#FAECE7':'#FDF5E8'};color:${v.severity==='error'?'#9B3010':'#7A4900'}">${v.severity==='error'?'▲ violation':'◑ warning'}</span>
+        <span style="font-weight:500;color:#231F20;direction:rtl">${v.element}</span>
+        <span style="font-size:10px;color:#8A8685;margin-right:auto">${v.type}</span>
+      </div>
+      <div style="color:#4a4845;margin-bottom:2px;direction:rtl;text-align:right">${v.message}</div>
+      <div style="font-size:10px;color:#8A8685">Source: ${v.rule}</div>
+    </div>`).join('')}
+  </div>`;
+  container.insertAdjacentHTML('afterbegin',html);
+}
+
+
+function createFileInput(conceptLabel, gapEl){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='.svg,image/svg+xml';
+  inp.style.display='none';
+  document.body.appendChild(inp);
+  inp.addEventListener('change',async ()=>{
+    const file=inp.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=async (e)=>{
+      const svgContent=e.target.result;
+      await realizeFromReference(conceptLabel,svgContent,gapEl);
+    };
+    reader.readAsText(file);
+    document.body.removeChild(inp);
+  });
+  inp.click();
+}
+
+async function realizeFromReference(conceptLabel,referenceSvg,gapEl){
+  // Show loading state in the gap element
+  const statusEl=gapEl.querySelector('.realize-status');
+  if(statusEl){statusEl.textContent='Realizing…';statusEl.style.color='var(--t3)';}
+
+  try{
+    const userMsg=`Concept: ${conceptLabel}\n\nReference SVG:\n${referenceSvg}`;
+    const raw=await callAPI(R3_PROMPT,userMsg,3000);
+    const parsed=extractJSON(raw);
+    if(!parsed?.svg)throw new Error('No SVG in response');
+
+    // Store in catalog
+    const catId=CAT.store({
+      concept:conceptLabel,
+      hebrew:conceptLabel,
+      svg:parsed.svg,
+      viewBox:null, // realized SVGs use direct svg field
+      strategy:'Direct Iconic Representation',
+      provisional:false,
+      provenance:'processor-realized'
+    });
+
+    // Re-render the gap element as a hit
+    gapEl.className='cat-hit';
+    gapEl.innerHTML=`
+      <div class="cat-svg-wrap">${parsed.svg}</div>
+      <div class="cat-hit-info">
+        <div class="cat-hit-word">${esc(conceptLabel)}</div>
+        <div class="cat-hit-meta">✓ Realized → ${catId}</div>
+        <div class="cat-hit-meta" style="margin-top:2px;font-size:10px;color:var(--t3)">${esc(parsed.geometricDescription||'')}</div>
+      </div>`;
+
+    // Rebuild sequence if present
+    if(currentVrpResult) rebuildSequence();
+
+  }catch(err){
+    if(statusEl){statusEl.textContent=`Error: ${err.message}`;statusEl.style.color='#C0392B';}
+  }
+}
+
+function getRealSvg(entry){
+  // Entries have either .svg (direct) or .viewBox (library crop)
+  if(entry.svg)return entry.svg;
+  if(entry.viewBox)return libSVG(entry.viewBox);
+  return '';
+}
+
+function rebuildSequence(){
+  const seqEl=document.querySelector('.seq-display');if(!seqEl||!currentVrpResult)return;
+  const units=(currentVrpResult?.vrp||[]).filter(u=>['independent','both'].includes(u.phase2?.modeDecision?.mode));
+  const N=units.length;if(!N)return;
+  const ps=64,gap=24,cW=856,cH=128,totW=N*ps+(N-1)*gap,x0=(cW-totW)/2,y0=(cH-ps)/2;
+  let inner='';
+  const rtl=currentResult?.memoryLanguage==='Hebrew';
+  units.forEach((u,i)=>{
+    const cr=(currentResult?.considerationRecord||[]).find(c=>c.fieldId===u.unitId);
+    const hit=CAT.lookup(u.unit)||(cr?.canonicalReferent?CAT.lookup(cr.canonicalReferent):null);
+    if(!hit)return;
+    const x=rtl?x0+(N-1-i)*(ps+gap):x0+i*(ps+gap);
+    const svgHtml=getRealSvg(hit);
+    const inner_svg=svgHtml.replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'');
+    inner+=`<g transform="translate(${x},${y0})">${inner_svg}</g>`;
+  });
+  if(inner)seqEl.innerHTML=`<svg viewBox="0 0 ${cW} ${cH}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+}
+
+function renderCatalogSection(vrpResult){
+  const container=document.getElementById('catalog-section');if(!container)return;
+  const units=(vrpResult?.vrp||[]).filter(u=>['independent','both'].includes(u.phase2?.modeDecision?.mode));
+  let hits=0,gaps=0;
+  const rows=units.map(u=>{
+    const word=u.unit||'';
+    const canonical=u.phase2?.modeDecision?.independent?.visualConcept||word;
+    // Try lookup by Hebrew word, then by canonical referent from consideration record
+    const cr=(currentResult?.considerationRecord||[]).find(c=>c.fieldId===u.unitId);
+    const hit=CAT.lookup(word)||(cr?.canonicalReferent?CAT.lookup(cr.canonicalReferent):null);
+    if(hit){
+      hits++;
+      const svgHtml=hit.viewBox?libSVG(hit.viewBox):'';
+      const provNote=hit.provisional?`<div class="prov-note">⚑ ${esc(hit.provisionalNote||'provisional label — requires confirmation')}</div>`:'';
+      return`<div class="cat-hit"><div class="cat-svg-wrap">${svgHtml}</div><div class="cat-hit-info"><div class="cat-hit-word">${esc(word)}</div><div class="cat-hit-meta">✓ ${esc(hit.id)} — ${esc(hit.concept)}${hit.hebrew&&hit.hebrew!==word?' / '+esc(hit.hebrew):''}${hit.provisional?' ⚑ provisional':''}</div>${provNote}</div></div>`;
+    } else {
+      gaps++;
+      const gapId='gap-'+u.unitId;
+      return`<div class="cat-miss" id="${gapId}"><div class="cat-miss-info"><div class="cat-miss-word">${esc(word)}</div><div class="cat-miss-meta">VISUAL GAP — אין צורה מבוססת בספרייה עבור "${esc(word)}"</div>${cr?.canonicalReferent?`<div style="font-size:10px;color:#9B4D2C;margin-top:2px">canonical: ${esc(cr.canonicalReferent)}</div>`:''}<div style="margin-top:8px;display:flex;align-items:center;gap:10px"><button onclick="createFileInput(${JSON.stringify(word)},document.getElementById(${JSON.stringify(gapId)}))" style="padding:4px 11px;font-size:11px;font-family:var(--f);border:1px solid #C0846A;border-radius:5px;background:transparent;color:#9B4D2C;cursor:pointer">↑ Upload reference SVG</button><span class="realize-status" style="font-size:10.5px;color:var(--t3)"></span></div></div></div>`;
+    }
+  });
+
+  const seqSvg=buildSequenceSVG(vrpResult);
+  const hasSeq=seqSvg&&hits>0;
+
+  container.innerHTML=`
+    <div class="divider"></div>
+    <div class="sec-label">Library Lookup <span>${hits} hit${hits!==1?'s':''}, ${gaps} gap${gaps!==1?'s':''}</span></div>
+    ${rows.join('')}
+    ${hasSeq?`<div style="margin-top:20px"><div class="sec-label">Pictographic Sequence</div><div class="seq-display">${seqSvg}</div>${gaps>0?`<div style="font-size:11px;color:#D85A30;margin-top:6px">${gaps} word${gaps!==1?'s':''} could not be realized — VISUAL GAP events recorded. The sequence is incomplete.</div>`:''}</div>`:''}
+  `;
+}
+
+/* ─── Analyze ─── */
+async function analyze(){
+  const typedText=document.getElementById('memory-input').value.trim();
+  const text=typedText||MOCK_MEMORY;
+  if(!text)return;
+  const btn=document.getElementById('analyze-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Analyzing';
+  document.getElementById('error-card').hidden=true;
+  document.getElementById('results').innerHTML='';
+  currentResult=null;currentVrpResult=null;currentAraResult=null;currentFilter='all';
+  // Mock scripted data only for the built-in example when explicitly in mock mode
+  const useMockData=processorMode==='mock'&&text===MOCK_MEMORY;
+  let raw='';
+  try{
+    if(useMockData){
+      await new Promise(r=>setTimeout(r,700));
+      renderResults(MOCK_R1);
+    }else{
+      raw=await callAPI(PROMPT,'Memory:\n\n'+text,8000);
+      const parsed=extractJSON(raw);
+      const violations=validateR1Output(parsed);
+      renderResults(parsed);
+      if(violations.length){
+        const container=document.getElementById('results');
+        if(container) renderValidationViolations(violations,container);
+      }
+    }
+  }catch(e){
+    const el=document.getElementById('error-card');
+    el.textContent=e.message;
+    el.hidden=false;
+  }finally{
+    btn.disabled=false;btn.innerHTML='Analyze memory';updateWordCount();
+  }
+}
+
+async function generateVrp(){
+  const vrpInner=document.getElementById('vrp-inner');if(!vrpInner)return;
+  vrpInner.innerHTML=`<div class="vrp-loading"><span class="vrp-dark-spinner"></span><span class="vrp-loading-txt">Generating Visual Representation Plan…</span></div>`;
+  const useMock=processorMode==='mock'&&currentResult===MOCK_R1;
+  try{
+    if(useMock){
+      await new Promise(r=>setTimeout(r,600));
+      renderVrp(MOCK_VRP);
+    }else{
+      const ctx={memoryLanguage:currentResult.memoryLanguage,coreNarrative:currentResult.coreNarrative,semanticSummary:currentResult.semanticStructure?.summary,mustPreserve:currentResult.semanticStructure?.mustPreserve,representativeWords:currentResult.representativeWords};
+      const raw=await callAPI(VRP_PROMPT,'Input:\n\n'+JSON.stringify(ctx,null,2),8000);
+      renderVrp(extractJSON(raw));
+    }
+  }catch(e){
+    if(vrpInner)vrpInner.innerHTML=`<div class="error-card" style="margin-bottom:12px">${esc(e.message)}</div><button class="generate-vrp-btn" id="generate-vrp-btn">Retry</button>`;
+    document.getElementById('generate-vrp-btn')?.addEventListener('click',generateVrp);
+  }
+}
+
+async function generateAra(){
+  const araInner=document.getElementById('ara-inner');if(!araInner)return;
+  araInner.innerHTML=`<div class="vrp-loading"><span class="vrp-dark-spinner"></span><span class="vrp-loading-txt">Analyzing action representation…</span></div>`;
+  if(processorMode==='mock'){
+    await new Promise(r=>setTimeout(r,400));
+    araInner.innerHTML=`<div class="sec-label">Action Representation Analysis</div><div class="card" style="font-size:12px;color:var(--t3);padding:12px 14px">Action Representation Analysis is available in Real Processor mode only.</div>`;
+    return;
+  }
+  let raw='';
+  try{
+    const ctx={memoryLanguage:currentResult.memoryLanguage,coreNarrative:currentResult.coreNarrative,representativeWords:currentResult.representativeWords,vrp:currentVrpResult?.vrp};
+    raw=await callAPI(ARA_PROMPT,'Input:\n\n'+JSON.stringify(ctx,null,2),8000);
+    renderAra(extractJSON(raw));
+  }catch(e){
+    if(araInner)araInner.innerHTML=`<div class="error-card">${esc(e.message)}</div>`;
+  }
+}
+
+
+
+
+const ARA_PROMPT = `You are the Action Representation Analyst of a pictographic language engine.
+
+You receive Stage 1 RSU output and Stage 2 VRP output for a written memory.
+Your task: compare two candidate strategies for representing action-related RSUs, and expose patterns. This is comparative research — do not select a final strategy.
+
+ACTIVE LANGUAGE PRINCIPLES
+1. Individual pictograms must be independently recognizable as their referents.
+2. Referential recognition precedes sequence interpretation.
+3. The primary meaning-bearing structure is the pictographic sequence.
+4. For Hebrew memories, sequences are read right to left.
+5. Sequence order is a confirmed grammar rule of this language. Earlier positions represent the source, initiator, actor, or preceding element within the remembered event. This is not a working assumption — it is an established constraint.
+6. What sequence order encodes: directional and agentive structure — who initiates, who receives, what comes first in the event structure.
+7. What sequence order does not encode: relationship type. Teaching and showing share the same directional structure (agent initiates toward recipient). Guiding and accompanying share the same structure. Sequence order cannot distinguish between actions that have identical directionality but different relational meaning.
+8. Meaning emerges from sequence order, adjacency, relative position, and relationships between pictograms.
+
+H-001 — SEQUENCE-LEVEL IDENTITY PRESERVATION
+The sequence produced by a strategy must distinguish this memory from the most plausible alternative a viewer with no prior knowledge could read from it.
+This test applies at the FULL SEQUENCE level, not only the unit level.
+When applying this test, sequence order functions as a confirmed grammar constraint. A sequence that encodes agent→recipient directionality produces a different reading than a symmetric sequence.
+
+H-002 — SCOPE FOR THIS STAGE
+H-002 governs semantic extraction only. In this stage, visual proxies are permitted.
+A visual proxy represents an action through a strongly associated referent, even if not explicitly in the memory.
+Examples: Books may proxy "taught." A fishing rod may proxy "fished."
+Proxies must be flagged (h002Tension: true). They are representation choices, not violations. H-002 is violated only if a proxy is treated as a factual memory element rather than a strategic choice.
+
+THE TWO STRATEGIES
+
+OBJECT SUBSTITUTION: The action is encoded through a strongly associated object that enters the sequence as a pictogram.
+Substitute must be: visually constructible from geometric vocabulary (circle, ellipse, rectangle, square, line, arc, triangle), strongly and distinctively associated with this specific action, not already present as a primary RSU, and sufficiently specific.
+Failure conditions: no distinctive object exists; object already in sequence; object too generic; object distorts memory emphasis.
+
+ACTION DISAPPEARANCE: The action is not represented. The sequence contains only participants, objects, and locations. Meaning emerges from configuration of who is present, in what order, with what objects.
+Confirmed grammar applies: sequence order encodes directionality, so [Agent][Recipient][Object] reads differently from [Object][Agent][Recipient].
+Failure conditions: remaining sequence collapses with a plausible alternative memory; the specific ambiguity is relationship TYPE (not directionality) between participants with the same directional structure, and no other element resolves it.
+
+SEQUENCE-LEVEL IDENTITY PRESERVATION TEST
+Construct the proposed sequence for each strategy. Ask: what is the most plausible alternative memory a viewer with no prior knowledge would read from this sequence?
+Apply the confirmed sequence grammar: earlier positions encode agents/initiators; later positions encode recipients/targets. This is not optional — it is part of the language.
+
+PASS: original and alternative are visually distinguishable. This includes cases where confirmed sequence order resolves directional or agentive ambiguity.
+FAIL: they collapse, or the alternative is more prototypical, even when sequence order is applied correctly.
+UNDETERMINED: sequence order is confirmed and functioning correctly, but the specific ambiguity is RELATIONSHIP TYPE between participants with identical directionality (e.g. teaching vs. showing, both have agent→recipient structure; guiding vs. accompanying, both have leading→following structure). No element in the sequence resolves which type of directed relationship occurred. UNDETERMINED applies only here — not whenever sequence order is involved.
+
+ANALYSIS PROCEDURE
+Step 1: Identify which units have primarily action or relational meaning and require strategy evaluation.
+Step 3: Establish the base sequence. List non-action RSUs in narrative order. State what a viewer would most plausibly read from this base sequence alone. Apply sequence order as a confirmed grammar constraint.
+Step 4: For each non-Dispensable action RSU, evaluate both strategies fully.
+Step 5: State comparative finding per action RSU.
+Step 6: State sequence-level finding across all action RSUs.
+
+LANGUAGE RULE: All user-facing text in the memory language. canonicalReferent always English lowercase.
+OUTPUT RULE: Valid JSON only. No markdown. No preamble. Begin with {.
+
+JSON SCHEMA:
+{"araContext":{"baseSequence":"non-action RSUs in narrative order e.g. [Grandfather] [Narrator] [Stars]","baseSequenceReading":"most plausible reading of base sequence alone","actionRSUIds":["unit_01"],"nonActionRSUIds":["unit_02","unit_03"]},"actionAnalysis":[{"unitId":"unit_01","unit":"in memory language","canonicalReferent":"english lowercase","objectSubstitution":{"objectAvailable":true,"proposedObject":"string or null","proposedObjectRationale":"string","h002Tension":false,"h002Note":"string or null","proposedSequence":"e.g. [Grandfather] [Book] [Narrator] [Stars]","preserves":"string","loses":"string","ambiguity":false,"ambiguityNote":"string or null","alternativeReading":"string","sequenceIdentityPreservation":"pass|fail|undetermined","preservationNote":"string","remainsCandidate":true,"candidateNote":"string"},"actionDisappearance":{"proposedSequence":"e.g. [Grandfather] [Narrator] [Stars]","preserves":"string","loses":"string","ambiguity":false,"ambiguityNote":"string or null","alternativeReading":"string","sequenceIdentityPreservation":"pass|fail|undetermined","preservationNote":"string","remainsCandidate":true,"candidateNote":"string"},"comparativeFinding":"string","preferredStrategy":"objectSubstitution|actionDisappearance|undetermined|neither"}],"sequenceLevelFinding":"string","openQuestions":["string"]}`;
+
+
+
+
+const HYPOTHESES=[{id:'H-001',name:'Identity Criterion',status:'revised',statusBg:'#FAEEDA',statusBorder:'#EF9F27',statusText:'#412402',summary:'The identity criterion governs every transformation in the generation pipeline. At each stage, the output must be sufficient to distinguish this memory from the most plausible alternative that could produce the same output. Passing one stage does not guarantee the next.',detail:['Irrelevance principle: a distinction may only be discarded if explicitly defined as irrelevant at that stage. Default behavior is conservative - preserve, do not collapse.','Stage 1 - Semantic (RSU selection): Test A - removing this unit transforms the experience the sequence evokes. Test B (active construction required) - construct the most plausible alternative memory from remaining units; if the two memories collapse, retain the unit.','Stage 2 - Visual (VRP mode determination): Test V (active construction required) - assume this unit has no independent pictogram; construct the most plausible different memory a viewer could read from the remaining sequence; if indistinguishable, contextual expression alone fails the criterion.','The criterion is not inherited across stages - it must be re-applied independently at each stage.']},{id:'H-002',name:'No Semantic Enrichment',status:'active',statusBg:'#E1F5EE',statusBorder:'#5DCAA5',statusText:'#04342C',summary:"The engine may not add emotional, symbolic, social, or psychological meaning not explicitly present in the user's text.",detail:['Prohibited: emotional qualities, social significance, psychological dimensions, symbolic meaning - unless explicitly stated.','All reasoning must describe factual consequences only.']}];
+
+const ROLE_CFG={'agent':{bg:'#E1F5EE',b:'#5DCAA5',t:'#04342C',dot:'#1D9E75'},'co-agent':{bg:'#E1F5EE',b:'#9FE1CB',t:'#085041',dot:'#5DCAA5'},'recipient':{bg:'#FAECE7',b:'#F0997B',t:'#4A1B0C',dot:'#F0997B'},'patient':{bg:'#EEEDFE',b:'#AFA9EC',t:'#26215C',dot:'#AFA9EC'},'experiencer':{bg:'#E6F1FB',b:'#85B7EB',t:'#042C53',dot:'#85B7EB'},'beneficiary':{bg:'#FAEEDA',b:'#EF9F27',t:'#412402',dot:'#EF9F27'},'instrument':{bg:'#F1EFE8',b:'#B4B2A9',t:'#2C2C2A',dot:'#B4B2A9'}};
+const TYPE_CFG={person:{label:'Person',bg:'#EEEDFE',b:'#AFA9EC',t:'#26215C'},object:{label:'Object',bg:'#E6F1FB',b:'#85B7EB',t:'#042C53'},place:{label:'Place',bg:'#E1F5EE',b:'#5DCAA5',t:'#04342C'},symbol:{label:'Symbol',bg:'#FAEEDA',b:'#EF9F27',t:'#412402'},action:{label:'Action',bg:'#FAECE7',b:'#F0997B',t:'#4A1B0C'},atmosphere:{label:'Atmosphere',bg:'#F1EFE8',b:'#B4B2A9',t:'#2C2C2A'},other:{label:'Other',bg:'#F1EFE8',b:'#D3D1C7',t:'#444441'},relationship:{label:'Relationship',bg:'#F1EFE8',b:'#D3D1C7',t:'#444441'},quality:{label:'Quality',bg:'#F1EFE8',b:'#D3D1C7',t:'#444441'}};
+const TEMPORAL_CFG={singular:{label:'Singular',bg:'#F1EFE8',b:'#B4B2A9',t:'#2C2C2A'},recurring:{label:'Recurring',bg:'#E6F1FB',b:'#85B7EB',t:'#042C53'},habitual:{label:'Habitual',bg:'#EEEDFE',b:'#AFA9EC',t:'#26215C'}};
+const NUCLEUS_COLORS={action:'#F0997B',activity:'#5DCAA5',state:'#85B7EB',achievement:'#EF9F27'};
+const MODE_CFG={independent:{label:'Independent',bg:'#E1F5EE',b:'#5DCAA5',t:'#04342C',dot:'#1D9E75',boxBg:'#E1F5EE',boxB:'#9FE1CB'},contextual:{label:'Contextual',bg:'#E6F1FB',b:'#85B7EB',t:'#042C53',dot:'#378ADD',boxBg:'#E6F1FB',boxB:'#B5D4F4'},both:{label:'Both',bg:'#F0EEFF',b:'#A99AEC',t:'#2B1F6B',dot:'#6B5ED0',boxBg:'#F0EEFF',boxB:'#C7BFEE'},gap:{label:'Gap',bg:'#FAECE7',b:'#F0997B',t:'#4A1B0C',dot:'#D85A30',boxBg:'#FAECE7',boxB:'#F5C4B3'}};
+const VIAB_CFG={viable:{bg:'#E1F5EE',b:'#5DCAA5',t:'#04342C'},partial:{bg:'#FAEEDA',b:'#EF9F27',t:'#412402'},blocked:{bg:'#FAECE7',b:'#F0997B',t:'#4A1B0C'}};
+const CONF_COLOR={high:'#1D9E75',medium:'#EF9F27',low:'#D85A30','n/a':'#B4B2A9'};
+const H002_CFG={compliant:{bg:'#E1F5EE',b:'#5DCAA5',t:'#04342C'},risk:{bg:'#FAEEDA',b:'#EF9F27',t:'#412402'},violation:{bg:'#FAECE7',b:'#F0997B',t:'#4A1B0C'}};
+const SF_CATEGORY_CFG={person:{label:'Person',bg:'#EEEDFE',b:'#AFA9EC',t:'#26215C'},object:{label:'Object',bg:'#E6F1FB',b:'#85B7EB',t:'#042C53'},action:{label:'Action',bg:'#FAECE7',b:'#F0997B',t:'#4A1B0C'},quality:{label:'Quality',bg:'#FAEEDA',b:'#EF9F27',t:'#412402'},place:{label:'Place',bg:'#E1F5EE',b:'#5DCAA5',t:'#04342C'},'relational-state':{label:'Relational state',bg:'#F1EFE8',b:'#B4B2A9',t:'#2C2C2A'},'temporal-pattern':{label:'Temporal pattern',bg:'#F0EEFF',b:'#A99AEC',t:'#2B1F6B'},'environmental-condition':{label:'Environment',bg:'#F1EFE8',b:'#D3D1C7',t:'#444441'}};
+const CRIT_CFG={satisfied:{bg:'#E1F5EE',b:'#5DCAA5',t:'#04342C'},unsatisfied:{bg:'#F1EFE8',b:'#B4B2A9',t:'#6B6865'},ambiguous:{bg:'#FAEEDA',b:'#EF9F27',t:'#412402'}};
+const PREF_CFG={objectSubstitution:{label:'Object substitution',bg:'#E1F5EE',b:'#5DCAA5',t:'#04342C'},actionDisappearance:{label:'Action disappearance',bg:'#E6F1FB',b:'#85B7EB',t:'#042C53'},undetermined:{label:'Undetermined',bg:'#FAEEDA',b:'#EF9F27',t:'#412402'},neither:{label:'Neither strategy',bg:'#FAECE7',b:'#F0997B',t:'#4A1B0C'}};
+const PRES_CFG={pass:{label:'Pass',bg:'#E1F5EE',b:'#5DCAA5',t:'#04342C'},fail:{label:'Fail',bg:'#FAECE7',b:'#F0997B',t:'#4A1B0C'},undetermined:{label:'Undetermined',bg:'#FAEEDA',b:'#EF9F27',t:'#412402'}};
+const ACC='#1D9E75',REJ='#B4B2A9';
+
+// State already declared above
+function esc(s){if(s==null)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function badge(label,bg,b,t){return `<span class="badge" style="background:${bg};border:1px solid ${b};color:${t}">${esc(label)}</span>`}
+function typeBadge(type){const c=TYPE_CFG[type]||TYPE_CFG.other;return badge(c.label,c.bg,c.b,c.t)}
+function decBadge(d){const a=d==='accepted';return `<span class="badge" style="background:${a?'#E1F5EE':'#F4F3F1'};border:1px solid ${a?'#5DCAA5':'#C8C6C0'};color:${a?'#04342C':'#6B6A67'};font-weight:600;text-transform:uppercase;letter-spacing:.06em">${esc(d)}</span>`}
+function roleBadge(r){const c=ROLE_CFG[r]||ROLE_CFG.instrument;return badge(r,c.bg,c.b,c.t)}
+function modeBadge(m){const c=MODE_CFG[m]||MODE_CFG.gap;return badge(c.label,c.bg,c.b,c.t)}
+function idBadge(id){return `<span class="id-badge">${esc(id)}</span>`}
+function sectionLabel(text,ann){return `<div class="sec-label">${esc(text)}${ann?`<span>${esc(ann)}</span>`:''}</div>`}
+function fieldRow(label,value,rtl,hl){if(!value&&value!==false)return '';return `<div class="field-row"><span class="field-lbl${hl?' hl':''}">${esc(label)}</span><span class="field-val" dir="${rtl?'rtl':'ltr'}">${esc(value)}</span></div>`}
+function capitalize(s){return s?s.charAt(0).toUpperCase()+s.slice(1):''}
+function confBadge(conf){if(!conf||conf==='n/a')return '';const bg=conf==='high'?'#E1F5EE':conf==='medium'?'#FAEEDA':'#FAECE7';const b=conf==='high'?'#5DCAA5':conf==='medium'?'#EF9F27':'#F0997B';const t=conf==='high'?'#04342C':conf==='medium'?'#412402':'#4A1B0C';return badge(conf+' confidence',bg,b,t)}
+function depChips(ids,units){if(!ids||!ids.length)return '<span class="dep-chip">-</span>';return ids.map(uid=>{const ref=(units||[]).find(u=>u.id===uid);const lbl=ref?(ref.word||ref.unit||uid):uid;return `<span class="dep-chip">${esc(uid)}${ref?' - '+esc(lbl):''}</span>`}).join('')}
+
+function renderHypotheses(){
+  document.getElementById('hyp-count').textContent=HYPOTHESES.length;
+  document.getElementById('hyp-id-badges').innerHTML=HYPOTHESES.map(h=>idBadge(h.id)).join('');
+  document.getElementById('hyp-content').innerHTML=HYPOTHESES.map(h=>`<div class="hyp-card"><button class="hyp-card-hdr" data-hyp="${esc(h.id)}">${idBadge(h.id)}<div class="hyp-card-body"><div class="hyp-card-name">${esc(h.name)}<span class="badge" style="background:${h.statusBg};border:1px solid ${h.statusBorder};color:${h.statusText};font-size:9px;font-weight:600;letter-spacing:.05em;text-transform:uppercase">${esc(h.status)}</span></div><div class="hyp-card-sum">${esc(h.summary)}</div></div><span class="chevron" id="hyp-chev-${esc(h.id)}">&#9662;</span></button><div class="hyp-card-det" id="hyp-det-${esc(h.id)}" hidden><ul>${h.detail.map(d=>`<li>${esc(d)}</li>`).join('')}</ul></div></div>`).join('');
+}
+
+function renderResults(result){
+  currentResult=result;currentVrpResult=null;currentAraResult=null;
+  const rtl=result.memoryLanguage==='Hebrew';
+  const sf=result.semanticFields||[];
+  const consideration=result.considerationRecord||[];
+  const representative=consideration.filter(c=>c.decision==='representative');
+  const semanticOnly=consideration.filter(c=>c.decision==='semantic-only');
+  const repWords=result.representativeWords||[];
+  let html=`<div class="divider"></div><div class="lang-meta"><span class="lang-badge">${esc(result.memoryLanguage)}</span><span class="meta-counts">${sf.length} semantic fields &middot; ${representative.length} representative &middot; ${semanticOnly.length} semantic-only</span></div>`;
+  html+=`<div class="mb28">${sectionLabel('Core Narrative')}<div class="narrative-card" dir="${rtl?'rtl':'ltr'}">${esc(result.coreNarrative)}</div></div>`;
+  if(result.memoryFrame){const f=result.memoryFrame;const tc=TEMPORAL_CFG[f.temporalContext]||TEMPORAL_CFG.singular;let fi=`<div class="frame-item"><div class="frame-item-lbl">Temporal context</div><div class="frame-item-val">${badge(tc.label,tc.bg,tc.b,tc.t)}</div></div>`;if(f.location)fi+=`<div class="frame-item"><div class="frame-item-lbl">Location</div><div class="frame-item-val" dir="${rtl?'rtl':'ltr'}">${esc(f.location)}</div></div>`;if(f.recurrencePattern)fi+=`<div class="frame-item"><div class="frame-item-lbl">Recurrence</div><div class="frame-item-val" dir="${rtl?'rtl':'ltr'}">${esc(f.recurrencePattern)}</div></div>`;if(f.period)fi+=`<div class="frame-item"><div class="frame-item-lbl">Period</div><div class="frame-item-val" dir="${rtl?'rtl':'ltr'}">${esc(f.period)}</div></div>`;html+=`<div class="mb28">${sectionLabel('Memory Frame')}<div class="frame-card">${fi}</div></div>`;}
+  if(result.events&&result.events.length>0){const evH=result.events.map((ev,i)=>{const nc=NUCLEUS_COLORS[ev.nucleus?.type]||'#888780';const parts=(ev.participants||[]).map((p,pi)=>{const rc=ROLE_CFG[p.role]||ROLE_CFG.instrument;const isLast=pi===ev.participants.length-1&&!ev.purpose;return `<div class="part-row${isLast?' last':''}"><span class="role-dot" style="background:${rc.dot}"></span><span class="part-ref" dir="${rtl?'rtl':'ltr'}">${esc(p.referent)}${p.isNarrator?'<span class="narrator-tag">narrator</span>':''}</span>${roleBadge(p.role)}</div>`;}).join('');const purp=ev.purpose?`<div class="purpose-row"><span class="purpose-dot"></span><span class="purpose-lbl">purpose</span><span class="badge" style="background:#FAEEDA;border:1px solid #EF9F27;color:#412402">${esc(ev.purpose)}</span></div>`:'';return `<div class="event-card"><div class="event-hdr"><div class="event-num">${i+1}</div><span class="event-type" style="color:${nc}">${esc(ev.nucleus?.type||'')}</span><span class="event-desc" dir="${rtl?'rtl':'ltr'}">${esc(ev.nucleus?.description||'')}</span>${ev.specificLocation?`<span class="event-loc">${esc(ev.specificLocation)}</span>`:''}</div><div class="event-parts">${parts}${purp}</div></div>`;}).join('');html+=`<div class="mb28">${sectionLabel('Events',`${result.events.length} event${result.events.length>1?'s':''}`)}<div class="events-list">${evH}</div></div>`;}
+  // Semantic Fields (Part A)
+  if(sf.length>0){const sfH=sf.map(f=>{const cc=SF_CATEGORY_CFG[f.category]||{label:f.category||'',bg:'#F1EFE8',b:'#D3D1C7',t:'#444441'};return `<div class="sf-row"><span class="sf-field" dir="${rtl?'rtl':'ltr'}">${esc(f.field)}</span>${badge(cc.label,cc.bg,cc.b,cc.t)}${f.description?`<span class="sf-desc">${esc(f.description)}</span>`:''}</div>`;}).join('');html+=`<div class="mb28">${sectionLabel('Semantic Fields \u2014 Part A',`${sf.length} fields`)}<div class="sf-list">${sfH}</div></div>`;}
+  // Semantic Structure
+  if(result.semanticStructure){const s=result.semanticStructure;const pres=(s.mustPreserve||[]).map(item=>`<li class="must-item"><span class="must-dot"></span><span class="must-text" dir="${rtl?'rtl':'ltr'}">${esc(item)}</span></li>`).join('');html+=`<div class="mb28">${sectionLabel('Semantic Structure')}<div class="card"><div class="sem-summary" dir="${rtl?'rtl':'ltr'}">${esc(s.summary)}</div>${pres?`<div class="must-lbl">Must preserve</div><ul class="must-list">${pres}</ul>`:''}</div></div>`;}
+  // Consideration Record (Part B)
+  const stripDots=consideration.map(c=>`<span class="strip-dot" title="${esc(c.field)} \u2014 ${esc(c.decision)}" style="background:${c.decision==='representative'?ACC:REJ}"></span>`).join('');
+  html+=`<div class="mb36" id="decision-section">${sectionLabel('Consideration Record \u2014 Part B',`${consideration.length} fields evaluated`)}<div class="sel-strip">${stripDots}</div><div class="filter-tabs" id="filter-tabs"><button class="filter-tab active" data-filter="all">All &nbsp;${consideration.length}</button><button class="filter-tab" data-filter="representative">Representative &nbsp;${representative.length}</button><button class="filter-tab" data-filter="semantic-only">Semantic-only &nbsp;${semanticOnly.length}</button></div><div class="trace-rows" id="trace-rows"></div></div>`;
+  // Representative Words
+  const rwCards=repWords.map((rw,i)=>{const cc=SF_CATEGORY_CFG[rw.category]||{label:rw.category||'',bg:'#F1EFE8',b:'#D3D1C7',t:'#444441'};return `<div class="unit-card"><div class="unit-num">${i+1}</div><div class="unit-body"><div class="unit-name-row"><span class="unit-name" dir="${rtl?'rtl':'ltr'}">${esc(rw.word)}</span>${badge(cc.label,cc.bg,cc.b,cc.t)}</div><div class="unit-src" dir="${rtl?'rtl':'ltr'}"><em>"${esc(rw.sourceText)}"</em></div></div></div>`;}).join('');
+  html+=`<div class="mb28">${sectionLabel('Representative Words',`${repWords.length} words`)}<div class="units-list">${rwCards}</div></div>`;
+  // Consistency gate
+  if(result.consistencyGateStatus){const gPass=result.consistencyGateStatus==='pass';const gc=gPass?{bg:'#E1F5EE',b:'#5DCAA5',t:'#04342C'}:{bg:'#FAECE7',b:'#F0997B',t:'#4A1B0C'};const compRows=(result.mustPreserveCompliance||[]).map(c=>{const ok=c.satisfied;const unitBadges=(c.satisfiedBy||[]).map(uid=>`<span class="dep-chip">${esc(uid)}</span>`).join('');return `<div class="compliance-row"><div class="compliance-icon ${ok?'compliance-pass':'compliance-fail'}">${ok?'&#10003;':'&#215;'}</div><div class="compliance-body"><div class="compliance-req" dir="${rtl?'rtl':'ltr'}">${esc(c.requirement)}</div>${unitBadges?`<div class="compliance-units">${unitBadges}</div>`:''}<div class="compliance-violation">${!ok&&c.violation?esc(c.violation):''}</div></div></div>`;}).join('');html+=`<div class="gate-card" style="background:${gc.bg};border-color:${gc.b};margin-bottom:28px"><div class="gate-hdr"><span class="gate-status-lbl" style="color:${gc.t}">Consistency gate \u00b7 ${gPass?'Pass':'Fail'}</span>${!gPass?badge('Stage 1 violation','#FAECE7','#F0997B','#4A1B0C'):badge('Stage 1 \u2192 Stage 2 clear','#E1F5EE','#5DCAA5','#04342C')}</div>${result.consistencyGateNote?`<div class="gate-note" style="color:${gc.t}" dir="${rtl?'rtl':'ltr'}">${esc(result.consistencyGateNote)}</div>`:''}${compRows?`<div class="compliance-list">${compRows}</div>`:''}</div>`;}
+  const gateWarn=result.consistencyGateStatus==='fail'?`<div class="gate-warn">Consistency gate failed. The VRP will receive an incomplete representative word set. Review before proceeding.</div>`:'';
+  html+=`<div class="vrp-trigger-zone" id="vrp-trigger-zone"><div id="vrp-inner">${sectionLabel('Visual Representation Plan')}${gateWarn}<button class="generate-vrp-btn" id="generate-vrp-btn">Generate Visual Representation Plan \u2192</button></div></div>`;
+  document.getElementById('results').innerHTML=html;
+  renderConsiderationRows(consideration,repWords,rtl);
+  document.getElementById('generate-vrp-btn').addEventListener('click',generateVrp);
+}
+
+function renderConsiderationRows(consideration,repWords,rtl){
+  const filter=currentFilter;
+  const items=filter==='representative'?consideration.filter(c=>c.decision==='representative'):filter==='semantic-only'?consideration.filter(c=>c.decision==='semantic-only'):consideration;
+  const critLabels=['Memorial centrality','Fidelity consequence','Relational anchoring','Distinct contribution'];
+  const html=items.map(c=>{
+    const isRep=c.decision==='representative';const ac=isRep?ACC:REJ;
+    const cc=SF_CATEGORY_CFG[c.category]||{label:c.category||'',bg:'#F1EFE8',b:'#D3D1C7',t:'#444441'};
+    const decB=isRep?badge('Representative','#E1F5EE','#5DCAA5','#04342C'):badge('Semantic only','#F4F3F1','#C8C6C0','#3A3835');
+    const gateVal=c.identityGate||'reduces-detail';
+    const gateChanges=gateVal==='changes-identity';
+    const gateBg=gateChanges?'#FAEEDA':'#F4F3F1';
+    const gateB=gateChanges?'#EF9F27':'#C8C6C0';
+    const gateT=gateChanges?'#412402':'#3A3835';
+    const gateLabel=gateChanges?'Changes memory identity':'Reduces detail only';
+    const gateHtml=`<div class="id-gate-row" style="background:${gateBg};border-color:${gateB}"><div class="id-gate-lbl" style="color:${gateT}">Memory Identity Gate — ${gateLabel}</div>${c.identityGateReason?`<div class="id-gate-reason" style="color:${gateT}" dir="${rtl?'rtl':'ltr'}">${esc(c.identityGateReason)}</div>`:''}</div>`;
+    let criteriaHtml='';
+    if(!gateChanges){
+      criteriaHtml=`<div class="crit-list">${[1,2,3,4].map(n=>{const val=c['criterion'+n]||'ambiguous';const reason=c['criterion'+n+'Reason']||'';if(val==='not-evaluated')return '';const ccfg=CRIT_CFG[val]||CRIT_CFG.ambiguous;return `<div class="crit-row"><span class="crit-lbl-col">C${n} ${critLabels[n-1]}</span><div class="crit-content">${badge(val,ccfg.bg,ccfg.b,ccfg.t)}${reason?`<span class="crit-reason" dir="${rtl?'rtl':'ltr'}">${esc(reason)}</span>`:''}</div></div>`;}).join('')}</div>`;
+    }else{
+      criteriaHtml=`<div style="font-size:11px;color:var(--t3);font-style:italic;padding:2px 0 6px">Criteria not evaluated — retained by Memory Identity Gate.</div>`;
+    }
+    return `<div class="trace-row" style="border-left:3px solid ${ac};opacity:${isRep?1:.6}"><button class="trace-hdr" data-uid="${esc(c.fieldId)}"><span class="trace-dot" style="background:${ac}"></span><span class="trace-name" dir="${rtl?'rtl':'ltr'}">${esc(c.field)}</span>${badge(cc.label,cc.bg,cc.b,cc.t)}${decB}<span class="chevron" id="chev-${esc(c.fieldId)}">&#9662;</span></button><div class="trace-det" id="det-${esc(c.fieldId)}" hidden>${gateHtml}${criteriaHtml}${c.decisionReason?fieldRow('Decision reasoning',c.decisionReason,rtl,true):''}<div class="trace-ref">ref: ${esc(c.canonicalReferent)}</div></div></div>`;
+  }).join('');
+  const container=document.getElementById('trace-rows');if(container)container.innerHTML=html;
+  document.querySelectorAll('.filter-tab').forEach(btn=>btn.classList.toggle('active',btn.dataset.filter===filter));
+}
+
+function buildPhase2HTML(v,rtl,units){
+  const p2=v.phase2||{};const pi=p2.possibilityInventory||{};const tv=p2.testV||{};const md=p2.modeDecision||{};const mode=md.mode||'gap';const mc=MODE_CFG[mode]||MODE_CFG.gap;
+  const indCls=pi.independentPossible?'poss-yes':'poss-no';const indMk=pi.independentPossible?'&#10003;':'&#215;';
+  const ctxCls=pi.contextualPossible?'poss-yes':'poss-no';const ctxMk=pi.contextualPossible?'&#10003;':'&#215;';
+  const ctxDeps=(pi.contextualDependencies||[]).length>0?`<div class="dep-units">${depChips(pi.contextualDependencies,units)}</div>`:'';
+  const step1=`<div class="vrp-step"><div class="vrp-step-hdr"><span class="vrp-step-lbl">Step 1 - Possibility inventory</span></div><div class="vrp-step-body"><div class="poss-row"><div class="poss-icon ${indCls}">${indMk}</div><div class="poss-body"><div class="poss-label">Independent ${pi.independentPossible?'possible':'not possible'}</div>${pi.independentRationale?`<div class="poss-rationale">${esc(pi.independentRationale)}</div>`:''}</div></div><div class="poss-row"><div class="poss-icon ${ctxCls}">${ctxMk}</div><div class="poss-body"><div class="poss-label">Contextual ${pi.contextualPossible?'possible':'not possible'}</div>${pi.contextualRationale?`<div class="poss-rationale">${esc(pi.contextualRationale)}</div>`:''}${ctxDeps}</div></div></div></div>`;
+  let step2='';
+  if(!tv.applied||tv.testVConclusion==='not-applicable'){step2=`<div class="vrp-step"><div class="vrp-step-hdr"><span class="vrp-step-lbl">Step 2 - Test V &middot; Visual disambiguation</span></div><div class="vrp-step-body"><div class="testv-na">Not applicable - contextual expression not available for this unit.</div></div></div>`;}
+  else{const passes=tv.testVConclusion==='passes';const tvBg=passes?'#E1F5EE':'#FAECE7';const tvB=passes?'#5DCAA5':'#F0997B';const tvT=passes?'#04342C':'#4A1B0C';const tvMsg=passes?'Contextual expression is disambiguation-sufficient.':'Contextual expression alone does not preserve visual identity.';step2=`<div class="vrp-step"><div class="vrp-step-hdr"><span class="vrp-step-lbl">Step 2 - Test V &middot; Visual disambiguation</span></div><div class="vrp-step-body">${tv.alternativeMemory?`<div><div class="testv-alt-lbl">Alternative memory constructed</div><div class="testv-alt" dir="${rtl?'rtl':'ltr'}">${esc(tv.alternativeMemory)}</div></div>`:''}<div class="testv-conclusion">${badge(passes?'Passes':'Fails',tvBg,tvB,tvT)}<span style="font-size:12px;color:var(--t2)">${tvMsg}</span></div></div></div>`;}
+  let modeDetail='';
+  if(mode==='independent'&&md.independent){modeDetail=`<div class="vrp-mode-box" style="background:${mc.boxBg};border-color:${mc.boxB}"><div class="vrp-mode-box-lbl" style="color:${mc.t}">Visual concept</div>${md.independent.visualConcept?`<div class="field-val" dir="${rtl?'rtl':'ltr'}">${esc(md.independent.visualConcept)}</div>`:''}${fieldRow('Constructible',md.independent.constructible?'Yes':'No',false,false)}</div>`;}
+  else if(mode==='contextual'&&md.contextual){const ctx=md.contextual;modeDetail=`<div class="vrp-mode-box" style="background:${mc.boxBg};border-color:${mc.boxB}"><div class="vrp-mode-box-lbl" style="color:${mc.t}">Expressed through</div><div class="dep-units">${depChips(ctx.expressedThrough,units)}</div>${fieldRow('Mechanism',ctx.relationalMechanism,false,false)}${ctx.emergenceExplanation?`<div class="field-row"><span class="field-lbl">Emergence</span><span class="field-val" dir="${rtl?'rtl':'ltr'}">${esc(ctx.emergenceExplanation)}</span></div>`:''}</div>`;}
+  else if(mode==='both'){const ind=md.independent||{};const ctx=md.contextual||{};modeDetail=`<div class="vrp-mode-box" style="background:${mc.boxBg};border-color:${mc.boxB}"><div class="vrp-mode-box-lbl" style="color:${mc.t}">Independent component</div>${ind.visualConcept?`<div class="field-val" dir="${rtl?'rtl':'ltr'}" style="margin-bottom:4px">${esc(ind.visualConcept)}</div>`:''}<hr style="border:none;border-top:1px dashed ${mc.boxB};margin:6px 0"><div class="vrp-mode-box-lbl" style="color:${mc.t}">Contextual component</div><div class="dep-units">${depChips(ctx.expressedThrough,units)}</div>${ctx.relationalMechanism?`<div class="field-row" style="margin-top:4px"><span class="field-lbl">Mechanism</span><span class="field-val">${esc(ctx.relationalMechanism)}</span></div>`:''}${ctx.emergenceExplanation?`<div class="field-row"><span class="field-lbl">Emergence</span><span class="field-val" dir="${rtl?'rtl':'ltr'}">${esc(ctx.emergenceExplanation)}</span></div>`:''}</div>`;}
+  else if(mode==='gap'&&md.gap){const g=md.gap;modeDetail=`<div class="vrp-mode-box" style="background:${mc.boxBg};border-color:${mc.boxB}"><div class="vrp-mode-box-lbl" style="color:${mc.t}">Gap type</div><div class="field-val" style="margin-bottom:4px">${esc(g.gapType)}</div>${g.gapRationale?`<div class="field-row"><span class="field-lbl">Rationale</span><span class="field-val" dir="${rtl?'rtl':'ltr'}">${esc(g.gapRationale)}</span></div>`:''}${g.alternativeStrategy?`<div class="field-row"><span class="field-lbl">Alternative</span><span class="field-val" dir="${rtl?'rtl':'ltr'}">${esc(g.alternativeStrategy)}</span></div>`:''}</div>`;}
+  const step3=`<div class="vrp-step"><div class="vrp-step-hdr"><span class="vrp-step-lbl">Step 3 - Mode decision</span></div><div class="vrp-step-body"><div class="mode-decision-hdr">${modeBadge(mode)}${md.modeRationale?`<span style="font-size:12px;color:var(--t2)">${esc(md.modeRationale)}</span>`:''}</div>${modeDetail}</div></div>`;
+  return `<div class="vrp-phase"><div class="vrp-phase-lbl">Phase 2 - Representation mode determination</div>${step1}${step2}${step3}</div>`;
+}
+
+function buildPhase3HTML(v,rtl){
+  const p3=v.phase3;const mode=v.phase2?.modeDecision?.mode||'gap';if(!p3)return '';
+  let content='';
+  if(mode==='both'){const ri=p3.mutuallyReinforcing;content=`<div class="conf-table"><div class="conf-row"><span class="conf-lbl">Independent</span><span class="conf-dot" style="background:${CONF_COLOR[p3.independentConfidence]||'#B4B2A9'}"></span>${confBadge(p3.independentConfidence)}</div><div class="conf-row"><span class="conf-lbl">Contextual</span><span class="conf-dot" style="background:${CONF_COLOR[p3.contextualConfidence]||'#B4B2A9'}"></span>${confBadge(p3.contextualConfidence)}</div>${ri!=null?`<div class="conf-row"><span class="conf-lbl">Mutually reinforcing</span>${badge(ri?'Yes':'No',ri?'#E1F5EE':'#FAECE7',ri?'#5DCAA5':'#F0997B',ri?'#04342C':'#4A1B0C')}</div>`:''}</div>`;}
+  else if(mode==='independent'){content=`<div class="surv-row"><span class="conf-dot" style="background:${CONF_COLOR[p3.independentConfidence]||'#B4B2A9'}"></span><span class="field-val">${esc(p3.survivabilityStatus)}</span>${confBadge(p3.independentConfidence)}</div>`;}
+  else if(mode==='contextual'){content=`<div class="surv-row"><span class="conf-dot" style="background:${CONF_COLOR[p3.contextualConfidence]||'#B4B2A9'}"></span><span class="field-val">${esc(p3.survivabilityStatus)}</span>${confBadge(p3.contextualConfidence)}</div>`;}
+  else{const d=p3.survivabilityStatus==='gap-absolute'?'#D85A30':'#EF9F27';content=`<div class="surv-row"><span class="conf-dot" style="background:${d}"></span><span class="field-val">${esc(p3.survivabilityStatus)}</span></div>`;}
+  return `<div class="vrp-phase"><div class="vrp-phase-lbl">Phase 3 - Survivability assessment</div>${content}${p3.assessment?`<div class="field-row" style="margin-top:7px"><span class="field-lbl">Assessment</span><span class="field-val" dir="${rtl?'rtl':'ltr'}">${esc(p3.assessment)}</span></div>`:''}</div>`;
+}
+
+function renderVrp(vrpResult){
+  currentVrpResult=vrpResult;
+  const rtl=currentResult?.memoryLanguage==='Hebrew';
+  const units=currentResult?.representativeWords||[];
+  const sum=vrpResult.vrpSummary||{};
+  const vc=VIAB_CFG[sum.sequenceViability]||VIAB_CFG.partial;
+  const chips=['independent','contextual','both','gap'].filter(m=>(sum[m]||0)>0).map(m=>{const mc=MODE_CFG[m];return `<div class="vrp-chip" style="background:${mc.bg};border-color:${mc.b};color:${mc.t}"><span class="vrp-dot" style="background:${mc.dot}"></span>${sum[m]} ${capitalize(m)}</div>`;}).join('');
+  const viabChip=`<div class="vrp-chip" style="background:${vc.bg};border-color:${vc.b};color:${vc.t}">${capitalize(sum.sequenceViability||'unknown')}</div>`;
+  const ensemble=vrpResult.ensembleReasoning?`<div class="card vrp-ensemble"><div class="vrp-ensemble-lbl">Ensemble reasoning</div><div class="vrp-ensemble-text" dir="${rtl?'rtl':'ltr'}">${esc(vrpResult.ensembleReasoning)}</div></div>`:'';
+  const cards=(vrpResult.vrp||[]).map(v=>{
+    const mode=v.phase2?.modeDecision?.mode||'gap';const mc=MODE_CFG[mode]||MODE_CFG.gap;
+    const srcType=units.find(u=>u.id===v.unitId)?.category;
+    const p1feats=(v.phase1?.identityFeatures||[]).map(f=>`<li class="feat-item"><span class="must-dot"></span><span class="must-text">${esc(f)}</span></li>`).join('');
+    const p1=`<div class="vrp-phase"><div class="vrp-phase-lbl">Phase 1 - Semantic nature</div><div style="display:flex;flex-direction:column;gap:7px">${fieldRow('Entity nature',v.phase1?.entityNature,false,false)}${p1feats?`<div class="field-row"><span class="field-lbl">Identity features</span><ul class="feat-list">${p1feats}</ul></div>`:''}${v.phase1?.inherentlyVisual!=null?fieldRow('Inherently visual',v.phase1.inherentlyVisual?'Yes':'No',false,false):''}</div></div>`;
+    const p2=buildPhase2HTML(v,rtl,units);
+    const p3=buildPhase3HTML(v,rtl);
+    const hc=H002_CFG[v.phase4?.h002Status]||H002_CFG.compliant;
+    const p4=v.phase4?`<div class="vrp-phase"><div class="vrp-phase-lbl">Phase 4 - Expressive audit (H-002)</div>${badge(v.phase4.h002Status,hc.bg,hc.b,hc.t)}${v.phase4.auditNote&&v.phase4.auditNote!=='none'?`<div class="field-row" style="margin-top:8px"><span class="field-lbl">Note</span><span class="field-val" dir="${rtl?'rtl':'ltr'}">${esc(v.phase4.auditNote)}</span></div>`:''}</div>`:'';
+    return `<div class="vrp-card" style="border-left:3px solid ${mc.dot}"><button class="vrp-card-hdr" data-vrpid="${esc(v.unitId)}"><span class="trace-dot" style="background:${mc.dot}"></span><span class="vrp-card-name" dir="${rtl?'rtl':'ltr'}">${esc(v.unit)}</span>${modeBadge(mode)}${srcType?typeBadge(srcType):''}<span class="chevron" id="vrp-chev-${esc(v.unitId)}">&#9662;</span></button><div class="vrp-card-body" id="vrp-det-${esc(v.unitId)}" hidden>${p1}${p2}${p3}${p4}</div></div>`;
+  }).join('');
+  const viabBanner=sum.sequenceComment?`<div class="viability-banner" style="background:${vc.bg};border-color:${vc.b}"><div class="viability-lbl" style="color:${vc.t}">Sequence viability - ${capitalize(sum.sequenceViability||'')}</div><div class="viability-txt" style="color:${vc.t}" dir="${rtl?'rtl':'ltr'}">${esc(sum.sequenceComment)}</div></div>`:'';
+  const vrpInner=document.getElementById('vrp-inner');
+  if(vrpInner)vrpInner.innerHTML=`${sectionLabel('Visual Representation Plan',`${(vrpResult.vrp||[]).length} units`)}<div class="vrp-summary-bar">${chips}${viabChip}</div>${ensemble}<div class="vrp-cards">${cards}</div>${viabBanner}`;
+  // Insert ARA trigger zone after vrp-trigger-zone
+  currentAraResult=null;
+  let araZone=document.getElementById('ara-trigger-zone');
+  if(!araZone){
+    araZone=document.createElement('div');
+    araZone.id='ara-trigger-zone';
+    araZone.style.cssText='margin-top:36px;padding-top:32px;border-top:1px solid var(--b3)';
+    const vrpZone=document.getElementById('vrp-trigger-zone');
+    vrpZone?.parentNode?.insertBefore(araZone,vrpZone.nextSibling);
+  }
+  araZone.innerHTML=`<div id="ara-inner">${sectionLabel('Action Representation Analysis')}<button class="generate-vrp-btn" id="generate-ara-btn">Analyze action representation →</button></div>`;
+  document.getElementById('generate-ara-btn')?.addEventListener('click',generateAra);
+  // Catalog section (always shown after VRP)
+  let catSection=document.getElementById('catalog-section');
+  if(!catSection){catSection=document.createElement('div');catSection.id='catalog-section';araZone.parentNode.insertBefore(catSection,araZone.nextSibling);}
+  renderCatalogSection(vrpResult);
+}
+
+function renderAra(araResult){
+  currentAraResult=araResult;
+  const rtl=currentResult?.memoryLanguage==='Hebrew';
+  const ctx=araResult.araContext||{};
+  const actionCount=(araResult.actionAnalysis||[]).length;
+
+  const contextCard=`<div class="ara-context">
+    <div class="vrp-ensemble-lbl">Base sequence</div>
+    <div class="ara-base-seq" dir="${rtl?'rtl':'ltr'}">${esc(ctx.baseSequence)}</div>
+    ${ctx.baseSequenceReading?`<div class="field-row"><span class="field-lbl">Base reading</span><span class="field-val" dir="${rtl?'rtl':'ltr'}">${esc(ctx.baseSequenceReading)}</span></div>`:''}
+    <div style="margin-top:8px;display:flex;gap:5px;flex-wrap:wrap">
+      ${(ctx.actionRSUIds||[]).length?badge(`${ctx.actionRSUIds.length} action RSU${ctx.actionRSUIds.length>1?'s':''}`, '#FAECE7','#F0997B','#4A1B0C'):''}
+      ${(ctx.nonActionRSUIds||[]).length?badge(`${ctx.nonActionRSUIds.length} non-action RSU${ctx.nonActionRSUIds.length>1?'s':''}`, '#F1EFE8','#B4B2A9','#2C2C2A'):''}
+    </div>
+  </div>`;
+
+  const cards=(araResult.actionAnalysis||[]).map(a=>{
+    const pref=a.preferredStrategy||'undetermined';
+    const pc=PREF_CFG[pref]||PREF_CFG.undetermined;
+    const os=a.objectSubstitution||{};
+    const ad=a.actionDisappearance||{};
+    const osPres=PRES_CFG[os.sequenceIdentityPreservation]||PRES_CFG.undetermined;
+    const adPres=PRES_CFG[ad.sequenceIdentityPreservation]||PRES_CFG.undetermined;
+
+    const osCol=`<div class="ara-strategy-col">
+      <div class="ara-strategy-lbl">Object substitution</div>
+      ${!os.objectAvailable?`<div style="font-size:12px;color:#D85A30;font-style:italic">No distinctive object available</div>`:''}
+      ${os.proposedObject?`<div class="field-row"><span class="field-lbl">Proposed object</span><span class="field-val">${esc(os.proposedObject)}</span></div>`:''}
+      ${os.proposedObjectRationale&&os.objectAvailable?`<div class="field-row"><span class="field-lbl">Rationale</span><span class="field-val" dir="${rtl?'rtl':'ltr'}">${esc(os.proposedObjectRationale)}</span></div>`:''}
+      ${os.h002Tension?`<div>${badge('H-002 tension','#FAEEDA','#EF9F27','#412402')}${os.h002Note?`<div class="h002-flag">${esc(os.h002Note)}</div>`:''}</div>`:''}
+      ${os.proposedSequence?`<div class="ara-seq" dir="${rtl?'rtl':'ltr'}">${esc(os.proposedSequence)}</div>`:''}
+      ${os.preserves?`<div class="field-row"><span class="field-lbl">Preserves</span><span class="field-val" dir="${rtl?'rtl':'ltr'}">${esc(os.preserves)}</span></div>`:''}
+      ${os.loses?`<div class="field-row"><span class="field-lbl">Loses</span><span class="field-val" dir="${rtl?'rtl':'ltr'}">${esc(os.loses)}</span></div>`:''}
+      ${os.ambiguity&&os.ambiguityNote?`<div class="field-row"><span class="field-lbl">Ambiguity</span><span class="field-val" style="color:#D85A30">${esc(os.ambiguityNote)}</span></div>`:''}
+      ${os.alternativeReading?`<div class="field-row"><span class="field-lbl">Alt. reading</span><span class="field-val" dir="${rtl?'rtl':'ltr'}">${esc(os.alternativeReading)}</span></div>`:''}
+      <div class="ara-pres-row">${badge(osPres.label,osPres.bg,osPres.b,osPres.t)}${os.remainsCandidate!==undefined?badge(os.remainsCandidate?'Candidate':'Not candidate',os.remainsCandidate?'#E1F5EE':'#F1EFE8',os.remainsCandidate?'#5DCAA5':'#B4B2A9',os.remainsCandidate?'#04342C':'#2C2C2A'):''}</div>
+      ${os.preservationNote?`<div class="ara-pres-note">${esc(os.preservationNote)}</div>`:''}
+    </div>`;
+
+    const adCol=`<div class="ara-strategy-col">
+      <div class="ara-strategy-lbl">Action disappearance</div>
+      ${ad.proposedSequence?`<div class="ara-seq" dir="${rtl?'rtl':'ltr'}">${esc(ad.proposedSequence)}</div>`:''}
+      ${ad.preserves?`<div class="field-row"><span class="field-lbl">Preserves</span><span class="field-val" dir="${rtl?'rtl':'ltr'}">${esc(ad.preserves)}</span></div>`:''}
+      ${ad.loses?`<div class="field-row"><span class="field-lbl">Loses</span><span class="field-val" dir="${rtl?'rtl':'ltr'}">${esc(ad.loses)}</span></div>`:''}
+      ${ad.ambiguity&&ad.ambiguityNote?`<div class="field-row"><span class="field-lbl">Ambiguity</span><span class="field-val" style="color:#D85A30">${esc(ad.ambiguityNote)}</span></div>`:''}
+      ${ad.alternativeReading?`<div class="field-row"><span class="field-lbl">Alt. reading</span><span class="field-val" dir="${rtl?'rtl':'ltr'}">${esc(ad.alternativeReading)}</span></div>`:''}
+      <div class="ara-pres-row">${badge(adPres.label,adPres.bg,adPres.b,adPres.t)}${ad.remainsCandidate!==undefined?badge(ad.remainsCandidate?'Candidate':'Not candidate',ad.remainsCandidate?'#E1F5EE':'#F1EFE8',ad.remainsCandidate?'#5DCAA5':'#B4B2A9',ad.remainsCandidate?'#04342C':'#2C2C2A'):''}</div>
+      ${ad.preservationNote?`<div class="ara-pres-note">${esc(ad.preservationNote)}</div>`:''}
+    </div>`;
+
+    return `<div class="ara-card" style="border-left:3px solid ${pc.b}">
+      <button class="ara-card-hdr" data-araid="${esc(a.unitId)}">
+        <span class="trace-dot" style="background:${pc.b}"></span>
+        <span class="vrp-card-name" dir="${rtl?'rtl':'ltr'}">${esc(a.unit)}</span>
+        ${badge(pc.label,pc.bg,pc.b,pc.t)}
+        <span class="chevron" id="ara-chev-${esc(a.unitId)}">&#9662;</span>
+      </button>
+      <div class="ara-card-body" id="ara-det-${esc(a.unitId)}" hidden>
+        <div class="ara-strategy-grid">${osCol}${adCol}</div>
+        <div class="ara-finding">
+          <div class="ara-finding-lbl">Comparative finding</div>
+          <div class="ara-finding-text" dir="${rtl?'rtl':'ltr'}">${esc(a.comparativeFinding)}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const seqFinding=araResult.sequenceLevelFinding?`<div class="ara-seq-finding"><div class="vrp-ensemble-lbl">Sequence-level finding</div><div class="vrp-ensemble-text" dir="${rtl?'rtl':'ltr'}">${esc(araResult.sequenceLevelFinding)}</div></div>`:'';
+  const openQs=(araResult.openQuestions||[]).length?`<div class="ara-open-q"><div class="ara-open-q-lbl">Open questions</div>${araResult.openQuestions.map(q=>`<div class="ara-q-item"><span class="ara-q-dot"></span><span class="ara-q-text" dir="${rtl?'rtl':'ltr'}">${esc(q)}</span></div>`).join('')}</div>`:'';
+
+  const araInner=document.getElementById('ara-inner');
+  if(araInner)araInner.innerHTML=`${sectionLabel('Action Representation Analysis',`${actionCount} action RSU${actionCount!==1?'s':''}`)}<div class="vrp-cards">${contextCard}${cards}</div>${seqFinding}${openQs}`;
+}
+
+async function generateAra(){
+  if(!currentVrpResult)return;
+  const araInner=document.getElementById('ara-inner');if(!araInner)return;
+  araInner.innerHTML=`<div class="vrp-loading"><span class="vrp-dark-spinner"></span><span class="vrp-loading-txt">Analyzing action representation strategies...</span></div>`;
+  let lastRaw='';
+  try{
+    const ctx={
+      memoryLanguage:currentResult.memoryLanguage,
+      coreNarrative:currentResult.coreNarrative,
+      mustPreserve:currentResult.semanticStructure?.mustPreserve,
+      representativeWords:currentResult.representativeWords,
+      vrpUnits:(currentVrpResult.vrp||[]).map(v=>({
+        unitId:v.unitId,unit:v.unit,canonicalReferent:v.canonicalReferent,
+        entityNature:v.phase1?.entityNature,identityFeatures:v.phase1?.identityFeatures,
+        vrpMode:v.phase2?.modeDecision?.mode
+      }))
+    };
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:8000,system:'You output only valid JSON. No markdown. No code fences. No explanation. No preamble. Your entire response must be parseable by JSON.parse().',messages:[{role:'user',content:ARA_PROMPT+'\n\n---\n\nInput:\n\n'+JSON.stringify(ctx,null,2)}]})});
+    if(!res.ok){const body=await res.text().catch(()=>'');throw new Error('api_'+res.status+(body?': '+body.slice(0,120):''));}
+    const data=await res.json();
+    lastRaw=data.content.filter(c=>c.type==='text').map(c=>c.text).join('');
+    if(data.stop_reason==='max_tokens')console.warn('[ARA] Response hit max_tokens limit');
+    renderAra(extractJSON(lastRaw));
+  }catch(e){
+    let msg;
+    if(e.message.startsWith('api_'))msg=`API error: ${e.message.replace('api_','')}`;
+    else if(e instanceof SyntaxError||e.message.includes('JSON')||e.message.includes('object found')){const snippet=lastRaw?lastRaw.slice(0,140).replace(/\n/g,' '):'(empty)';msg=`ARA format error — response starts: "${snippet}..."`;}
+    else msg='ARA generation failed. Check your connection.';
+    if(araInner){araInner.innerHTML=`${sectionLabel('Action Representation Analysis')}<div class="error-card" style="margin-bottom:16px;word-break:break-all">${esc(msg)}</div><button class="generate-vrp-btn" id="generate-ara-btn">Retry \u2192</button>`;document.getElementById('generate-ara-btn')?.addEventListener('click',generateAra);}
+  }
+}
+
+
+/* ─── Init ─── */
+CAT.init();
+
+function updateWordCount(){
+  const text=document.getElementById('memory-input').value.trim();
+  document.getElementById('word-count').textContent=text?text.split(/\s+/).length+' words':'';
+  document.getElementById('analyze-btn').disabled=!text;
+}
+
+/* ─── Settings panel ─── */
+document.getElementById('settings-toggle').addEventListener('click',()=>{
+  const c=document.getElementById('settings-content');
+  const ch=document.getElementById('settings-chevron');
+  const open=!c.hidden;c.hidden=open;ch.classList.toggle('open',!open);
+});
+
+/* ─── Mode toggle ─── */
+document.querySelectorAll('.mode-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    processorMode=btn.dataset.mode;
+    document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b===btn));
+    const desc=document.getElementById('mode-desc');
+    const isMock=processorMode==='mock';
+    desc.textContent=isMock?
+      'Mock: pre-scripted pipeline on a sample memory. Catalog lookup is real — tests library coverage.':
+      'Real: full API pipeline on any memory. Requires API key.';
+    if(isMock){
+      const ta=document.getElementById('memory-input');
+      ta.value=MOCK_MEMORY;
+      ta.dir='rtl';
+      updateWordCount();
+    }
+    document.getElementById('analyze-btn').disabled=!isMock&&!document.getElementById('memory-input').value.trim();
+  });
+});
+
+/* ─── API key no longer needed — handled by artifact viewer ─── */
+function getKey(){return '';} // kept for compatibility, unused
+
+/* ─── Textarea ─── */
+document.getElementById('memory-input').addEventListener('input',e=>{
+  updateWordCount();
+  e.target.dir=e.target.value.match(/[\u0590-\u05FF]/)?'rtl':'auto';
+});
+document.getElementById('analyze-btn').addEventListener('click',analyze);
+document.getElementById('memory-input').addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==='Enter')analyze();
+});
+
+/* ─── Click delegation (v5 pattern) ─── */
+document.addEventListener('click',function(e){
+  const traceHdr=e.target.closest('.trace-hdr');
+  if(traceHdr){const uid=traceHdr.dataset.uid;const det=document.getElementById('det-'+uid);const chev=document.getElementById('chev-'+uid);if(det){const open=!det.hidden;det.hidden=open;chev?.classList.toggle('open',!open);}return;}
+  const vrpHdr=e.target.closest('.vrp-card-hdr');
+  if(vrpHdr){const vid=vrpHdr.dataset.vrpid;const det=document.getElementById('vrp-det-'+vid);const chev=document.getElementById('vrp-chev-'+vid);if(det){const open=!det.hidden;det.hidden=open;chev?.classList.toggle('open',!open);}return;}
+  const araHdr=e.target.closest('.ara-card-hdr');
+  if(araHdr){const aid=araHdr.dataset.araid;const det=document.getElementById('ara-det-'+aid);const chev=document.getElementById('ara-chev-'+aid);if(det){const open=!det.hidden;det.hidden=open;chev?.classList.toggle('open',!open);}return;}
+  const filterTab=e.target.closest('.filter-tab');
+  if(filterTab&&currentResult){currentFilter=filterTab.dataset.filter;const cr=currentResult.considerationRecord||[];const rw=currentResult.representativeWords||[];renderConsiderationRows(cr,rw,currentResult.memoryLanguage==='Hebrew');return;}
+});
+
+/* ─── Pre-fill mock memory ─── */
+(()=>{
+  const ta=document.getElementById('memory-input');
+  ta.value=MOCK_MEMORY;ta.dir='rtl';
+  updateWordCount();
+})();
+</script>
+</body>
+</html>

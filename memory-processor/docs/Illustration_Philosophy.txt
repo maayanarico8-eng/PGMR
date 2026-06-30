@@ -1,0 +1,48 @@
+Illustration Philosophy
+
+Principle 1
+The language represents the identity of a referent rather than the appearance of a particular observed instance.
+
+A referent, as used in this principle, is a concept capable of functioning as an independent center of meaning. A concept functions as an independent center of meaning when it can constitute the semantic identity of a memory without requiring another concept to serve as its primary semantic anchor — when it can be what a memory is about, rather than functioning exclusively to qualify, modify, or measure another semantic unit that the memory is about.
+
+Concepts whose semantic content depends entirely on qualifying, modifying, or measuring another element are not referents in this sense. Such concepts are communicated through the sequence mechanisms of the language rather than through independent pictographic representation.
+
+Principle 2
+The objective is maximum recognizability rather than maximum simplification. Simplification may modify form, but it must never remove or weaken any visual characteristic that contributes to the immediate recognition of the referent.
+
+
+Principle 3
+Individual pictographic representations must adapt to the language; the language must never adapt to an individual representation.
+
+
+Principle 4
+Individual pictograms should remain recognizable in isolation. However, the primary unit of meaning within the language is the pictographic sequence rather than the individual pictogram.
+Meaning is constructed through the arrangement of pictograms in a sequence, provided that each pictogram remains independently identifiable as a referent.
+
+Sequence Architecture:
+The language renders pictographic sequences as strictly linear arrangements. Pictograms are placed in a single ordered row at equal visual spacing throughout the sequence. No 2D spatial composition is employed. The sequence contains no above/below relationships, no enclosure, no overlap, no spatial hierarchy, and no variable sizing or spacing relationships between pictograms.
+For Hebrew memories, the sequence is constructed and read from right to left. For English memories, the sequence is constructed and read from left to right.
+
+Sequence-Based Meaning:
+The language does not treat individual pictograms as complete carriers of meaning.
+Individual pictograms primarily identify referents, while higher-order meaning emerges from their arrangement within a sequence.
+Referential recognition precedes sequence interpretation.
+A viewer must first be able to identify what each pictogram represents before relational meaning can emerge from the sequence.
+
+Sequence order follows the remembered structure of the event rather than an arbitrary visual arrangement.
+Earlier positions in the sequence typically emerge from the narrative, causal, or temporal structure of the remembered event rather than from a fixed categorical rule. As a result, agents and initiators often appear earlier in a sequence, but this is a consequence of the event structure rather than a grammatical requirement of the language.
+Sequence order is therefore not neutral. It is one of the primary mechanisms through which relationships, participation, transfer, causality, and event structure are communicated.
+
+Contextual Expression Mechanisms:
+The language employs two operative mechanisms through which meaning can be constructed beyond the referential content of individual pictograms.
+
+Sequence Order — the position of a pictogram in the sequence relative to other pictograms communicates its semantic role within the event structure. Participant roles, causal relationships, and event configurations are communicated through which elements appear before and after other elements in the sequence.
+
+Sequential Adjacency — two pictograms that are immediate neighbors in the sequence, with no intervening element, communicate a structurally dependent relationship between their referents. Sequential Adjacency carries contextual meanings that are structurally dependent on immediate neighboring — specifically, modification and qualification relationships in which an element's meaning is definitionally contingent on the referent of the element it directly neighbors in the sequence. Sequential Adjacency does not apply to elements whose adjacency in the sequence is incidental to chronological ordering. It applies only when the immediate neighbor relationship is the mechanism through which the element's meaning is communicated. Sequential adjacency is a positional concept: all pictograms are rendered at equal visual spacing, so adjacency refers exclusively to the absence of intervening elements in the sequence order, not to visual closeness.
+
+For the purposes of sequence rendering, only Representative Words assigned the Independent or Both representation mode occupy independent visual positions in the rendered sequence. Representative Words assigned the Contextual representation mode do not occupy an independent visual position. The independently-represented pictograms flanking a contextual element's sequence position are rendered adjacent to one another. Their adjacency is the mechanism through which the contextual element's meaning is expressed.
+
+Through the application of these two mechanisms, the arrangement of pictograms produces relational meaning — the relationships between referents that the memory represents become readable from the sequence structure. This relational meaning is an emergent result of the arrangement. It is not produced by a third independent mechanism alongside Sequence Order and Sequential Adjacency.
+
+The same pictograms arranged in different orders may communicate different memories.
+As a result, the primary meaning-bearing structure of the language is the pictographic sequence rather than the isolated pictogram.
