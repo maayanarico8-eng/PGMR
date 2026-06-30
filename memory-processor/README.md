@@ -62,6 +62,8 @@ In Real mode, the processor:
 3. Looks up each independently-represented word against the real pictogram library. A match renders the pictogram and logs `CATALOG_HIT`. No match logs `VISUAL_GAP` — the gap is surfaced, not hidden or invented (Rule 3)
 4. For `VISUAL_GAP` cases, a reference SVG (e.g. from an icon library) can be uploaded; the processor reconstructs it according to the Illustration Grammar rather than reproducing it directly — a separate "Visual Representation Plan" step, not a fallback.
 
+The Visual Representation Plan may list more units than Library Lookup processes. Units classified as **Contextual** in Rule 2 remain in the plan but are intentionally excluded from catalog lookup because their meaning is expressed through other pictograms in the sequence.
+
 ## Methodology
 
 The processor is governed by the documents in `docs/`. They are the authoritative source of truth — methodology changes are made there first, then propagated to the processor's prompts and validation logic. If you find a case where the processor's behavior conflicts with a governing document, that's a validation finding, not an implementation detail to quietly patch.

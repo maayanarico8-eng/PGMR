@@ -446,6 +446,16 @@ Output:
 Validated Representative Words
 The Validated Representative Words set produced by Stage 1.7 passes to Rule 2 with the Representation Boundary established. All elements in this set are committed to visual representation in accordance with the Visual Representation Principle. Visual representation mechanisms introduced in Rule 2 are explicitly classified as representation decisions rather than factual claims about the memory.
 
+Representative Word Retention vs. Catalog Eligibility
+
+A Representative Word selected in Rule 1 is not equivalent to a standalone pictogram candidate.
+
+Rule 1 determines which semantic elements must survive into the representation pipeline in order to preserve Memory Identity. Rule 2 determines, for each surviving Representative Word, whether that survival occurs through Independent representation, Contextual expression, Both, or Gap.
+
+A Representative Word assigned the Contextual representation mode in Rule 2 is not removed from the memory, from the ordered Representative Words set, or from the Visual Representation Plan output. It is excluded only from catalog retrieval and standalone pictogram realization in Rule 3, because its meaning is communicated through the positional relationship of other independently realized pictograms.
+
+The processor must not treat Contextual assignment as semantic deselection. Contextual assignment is a visual strategy decision made in Rule 2, not a reversal of Rule 1 identity classification.
+
 Rule 2 — Visual Representation Planning (VRP)
 Purpose:
 Determine how each surviving semantic meaning should be carried into the visual language.
@@ -616,6 +626,20 @@ Independent — The meaning receives its own visual representation. The form sel
 Contextual — The meaning is carried through the element's Sequence Order position, its Sequential Adjacency to a neighboring element, or both, relative to other independently represented elements in the sequence. The contextually expressed element does not receive an independent visual form. Its meaning is communicated entirely through the arrangement of existing pictograms.
 Both — Contextual expression is available but insufficient for identity preservation. Independent representation is also required. The form selected by Condition B provides the independent visual representation.
 
+Catalog Realization Eligibility
+
+Phase 2.4 produces the authoritative partition of the Representative Words set into realization-eligible and realization-excluded units for Rule 3.
+
+Realization-eligible units: Independent and Both. These units receive a Realization Specification in Phase 2.6 and proceed to Rule 3 catalog lookup and/or external realization.
+
+Realization-excluded units: Contextual. These units do not receive a Realization Specification and do not proceed to Rule 3 catalog lookup. Their visual contribution is recorded exclusively through the Contextual Dependency Record in Phase 2.6.
+
+Both-mode units are realization-eligible for their independent component only. Their contextual component remains realization-excluded in the same sense as a fully Contextual unit.
+
+Gap-mode units are recorded in the Visual Representation Plan as unresolved representation cases. They do not proceed to successful catalog retrieval unless a later correction path assigns Independent or Both representation.
+
+This partition is the point at which the processor determines which words require library lookup. No earlier stage performs this partition.
+
 Phase 2.5 — Representation Validation and Fidelity Assessment
 
 Validate the selected representation and assess its representational fidelity, strengths, and limitations. Phase 2.5 does not determine the selected representation — that determination was made by Phase 2.4. Phase 2.5 validates the selected representation against the language's governing principles and produces an honest fidelity assessment. The selected representation is, by definition, the strongest available candidate under the methodology. Phase 2.5 assesses how faithfully that candidate represents the intended concept and records the result.
@@ -662,6 +686,15 @@ When a Representative Word is assigned the Independent representation mode, the 
 •Identity-preservation rationale
 •Recognition requirements
 Memorial Centrality is an assessment criterion that calibrates the recognition requirements field of each Pictogram Specification. When a Representative Word received extensive narrative attention in the written memory, the recognition requirements record calls for the most precise available visual equivalent rather than a generic proxy. It does not influence the representation mode decision, which remains governed by Test V, and does not influence sequence position, which is governed by R3.
+
+Output Scope
+
+Phase 2.6 produces one Pictogram Specification per realization-eligible Representative Word only.
+
+Representative Words assigned Contextual representation mode do not receive Pictogram Specifications. They remain present in the Visual Representation Plan as contextually expressed units, with their Contextual Dependency Record retained for audit, sequence interpretation, and processor display.
+
+The count of Representative Words in Rule 1 output may therefore exceed the count of units submitted to Rule 3 catalog lookup. This is expected behavior, not data loss.
+
 These specifications are passed to Rule 3 as its primary input for realization.
 
 Rule 3 — Pictogram Realization
@@ -674,7 +707,13 @@ The objective is visual realization, not semantic interpretation. No new meaning
 
 Execution Model:
 
-Rule 3 processes each Representative Word assigned the Independent or Both representation mode individually and in sequence. Stage 3.4 does not execute until every element has completed its own realization cycle and reached Sequence-Ready status. This element-by-element processing model is required by the correction loop architecture: each element's realization cycle may involve multiple correction attempts, and the overall sequence cannot be assembled until all individual realizations are settled.
+Input Scope
+
+Rule 3 receives Pictogram Specifications only for Representative Words that Rule 2 assigned Independent or Both representation mode.
+
+Representative Words assigned Contextual representation mode are outside Rule 3's realization scope. They were already visually accounted for in Rule 2 through sequence position and contextual dependency specification. Rule 3 must not attempt catalog lookup, external realization, or VISUAL GAP recording for these units unless Rule 2 is re-executed and changes their representation mode.
+
+Rule 3 processes each realization-eligible Representative Word individually and in sequence. Stage 3.4 does not execute until every realization-eligible element has completed its own realization cycle and reached Sequence-Ready status. This element-by-element processing model is required by the correction loop architecture: each element's realization cycle may involve multiple correction attempts, and the overall sequence cannot be assembled until all individual realizations are settled.
 
 Element Realization Cycle:
 For each element, Rule 3 executes the following cycle. Stage 3.1 reads the element's Pictogram Specification and makes the Realization Specification available. Stage 3.2 realizes the element according to its source provenance. Stage 3.3 evaluates the realized form and produces a structured validation record. The element either advances to Sequence-Ready status or enters a correction path determined by Stage 3.3's output.

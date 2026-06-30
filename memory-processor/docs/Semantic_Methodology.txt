@@ -146,6 +146,13 @@ The ability or inability to represent an element visually must not influence whe
 Representative Words are selected solely according to the semantic methodology.
 Once a Representative Word is selected, it must receive a visual representation.
 There is no category of "selected but unrepresented" Representative Words.
+
+Clarification — Representative Word ≠ Standalone Pictogram
+
+Selection as a Representative Word commits a semantic element to the representation pipeline. It does not predetermine that the element will receive its own pictogram.
+
+Whether a Representative Word receives standalone pictographic realization, contextual expression through other pictograms, or both is determined exclusively in Rule 2 (Visual Representation Planning). Rule 1 must not exclude an identity-critical element from the Representative Words set merely because Rule 2 may later classify it as Contextual.
+
 Questions regarding pictogram libraries, visual sourcing, pictogram selection, and visual transformation belong to later stages of the methodology and should not influence Stage 1.
 The word label assigned to each Representative Word when it is produced by Stage 1.6 is governed by P1 Clarification — Lexical Form Fidelity.
 
