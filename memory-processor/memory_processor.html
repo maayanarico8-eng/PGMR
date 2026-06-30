@@ -1624,27 +1624,6 @@ async function generateVrp(){
   }
 }
 
-async function generateAra(){
-  const araInner=document.getElementById('ara-inner');if(!araInner)return;
-  araInner.innerHTML=`<div class="vrp-loading"><span class="vrp-dark-spinner"></span><span class="vrp-loading-txt">Analyzing action representation…</span></div>`;
-  if(processorMode==='mock'){
-    await new Promise(r=>setTimeout(r,400));
-    araInner.innerHTML=`<div class="sec-label">Action Representation Analysis</div><div class="card" style="font-size:12px;color:var(--t3);padding:12px 14px">Action Representation Analysis is available in Real Processor mode only.</div>`;
-    return;
-  }
-  let raw='';
-  try{
-    const ctx={memoryLanguage:currentResult.memoryLanguage,coreNarrative:currentResult.coreNarrative,representativeWords:currentResult.representativeWords,vrp:currentVrpResult?.vrp};
-    raw=await callAPI(ARA_PROMPT,'Input:\n\n'+JSON.stringify(ctx,null,2),8000);
-    renderAra(extractJSON(raw));
-  }catch(e){
-    if(araInner)araInner.innerHTML=`<div class="error-card">${esc(e.message)}</div>`;
-  }
-}
-
-
-
-
 const ARA_PROMPT = `You are the Action Representation Analyst of a pictographic language engine.
 
 You receive Stage 1 RSU output and Stage 2 VRP output for a written memory.
@@ -1860,8 +1839,9 @@ function renderVrp(vrpResult){
     const vrpZone=document.getElementById('vrp-trigger-zone');
     vrpZone?.parentNode?.insertBefore(araZone,vrpZone.nextSibling);
   }
-  araZone.innerHTML=`<div id="ara-inner">${sectionLabel('Action Representation Analysis')}<button class="generate-vrp-btn" id="generate-ara-btn">Analyze action representation →</button></div>`;
-  document.getElementById('generate-ara-btn')?.addEventListener('click',generateAra);
+  const araMockOnly=processorMode==='mock';
+  araZone.innerHTML=`<div id="ara-inner">${sectionLabel('Action Representation Analysis')}${araMockOnly?`<div class="card" style="font-size:12px;color:var(--t3);padding:12px 14px;margin-top:10px">Action Representation Analysis is available in Real Processor mode only.</div>`:`<button class="generate-vrp-btn" id="generate-ara-btn">Analyze action representation →</button>`}</div>`;
+  if(!araMockOnly)document.getElementById('generate-ara-btn')?.addEventListener('click',generateAra);
   // Catalog section (always shown after VRP)
   let catSection=document.getElementById('catalog-section');
   if(!catSection){catSection=document.createElement('div');catSection.id='catalog-section';araZone.parentNode.insertBefore(catSection,araZone.nextSibling);}
@@ -1945,6 +1925,10 @@ function renderAra(araResult){
 async function generateAra(){
   if(!currentVrpResult)return;
   const araInner=document.getElementById('ara-inner');if(!araInner)return;
+  if(processorMode==='mock'){
+    araInner.innerHTML=`${sectionLabel('Action Representation Analysis')}<div class="card" style="font-size:12px;color:var(--t3);padding:12px 14px;margin-top:10px">Action Representation Analysis is available in Real Processor mode only.</div>`;
+    return;
+  }
   araInner.innerHTML=`<div class="vrp-loading"><span class="vrp-dark-spinner"></span><span class="vrp-loading-txt">Analyzing action representation strategies...</span></div>`;
   let lastRaw='';
   try{
@@ -1959,15 +1943,11 @@ async function generateAra(){
         vrpMode:v.phase2?.modeDecision?.mode
       }))
     };
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:8000,system:'You output only valid JSON. No markdown. No code fences. No explanation. No preamble. Your entire response must be parseable by JSON.parse().',messages:[{role:'user',content:ARA_PROMPT+'\n\n---\n\nInput:\n\n'+JSON.stringify(ctx,null,2)}]})});
-    if(!res.ok){const body=await res.text().catch(()=>'');throw new Error('api_'+res.status+(body?': '+body.slice(0,120):''));}
-    const data=await res.json();
-    lastRaw=data.content.filter(c=>c.type==='text').map(c=>c.text).join('');
-    if(data.stop_reason==='max_tokens')console.warn('[ARA] Response hit max_tokens limit');
+    lastRaw=await callAPI(ARA_PROMPT,'Input:\n\n'+JSON.stringify(ctx,null,2),8000);
     renderAra(extractJSON(lastRaw));
   }catch(e){
     let msg;
-    if(e.message.startsWith('api_'))msg=`API error: ${e.message.replace('api_','')}`;
+    if(e.message.startsWith('API '))msg=e.message;
     else if(e instanceof SyntaxError||e.message.includes('JSON')||e.message.includes('object found')){const snippet=lastRaw?lastRaw.slice(0,140).replace(/\n/g,' '):'(empty)';msg=`ARA format error — response starts: "${snippet}..."`;}
     else msg='ARA generation failed. Check your connection.';
     if(araInner){araInner.innerHTML=`${sectionLabel('Action Representation Analysis')}<div class="error-card" style="margin-bottom:16px;word-break:break-all">${esc(msg)}</div><button class="generate-vrp-btn" id="generate-ara-btn">Retry \u2192</button>`;document.getElementById('generate-ara-btn')?.addEventListener('click',generateAra);}
