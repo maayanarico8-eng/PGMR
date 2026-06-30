@@ -7,6 +7,8 @@ This is a graduation project in Visual Communication. It does not aim to reconst
 ## What's in this repo
 
 ```
+```
+vercel.json                  ← Vercel rewrite: / → memory_processor.html
 memory_processor.html      ← the entire processor (single-file, no build step)
 docs/                       ← governing methodology documents
   Project_Vision.txt
@@ -23,6 +25,31 @@ docs/                       ← governing methodology documents
 ## Running the processor
 
 Open `memory_processor.html` in a browser. No installation, no build step, no server.
+
+### Production deployment (Phase 1)
+
+**URL:** [https://pgmr-two.vercel.app](https://pgmr-two.vercel.app)
+
+The live deployment runs **Mock mode only**. The built-in example memory is pre-filled; click **Analyze memory** to run the full validation UI (Rule 1 output, Visual Representation Plan, pictogram catalog) without any API calls.
+
+Real mode (Anthropic API) is not enabled in production yet — it requires a server-side API proxy in a later phase.
+
+To redeploy after pushing to `main`, run from the repo root:
+
+```bash
+vercel --prod
+```
+
+### Transfer to Maayan's Vercel account
+
+The project is currently deployed under a temporary Vercel account pending Maayan's signup. To move ownership:
+
+1. Create a Vercel account at [vercel.com/signup](https://vercel.com/signup) using Maayan's email
+2. Connect the GitHub account `maayanarico8-eng` when prompted
+3. **Add New → Project** → Import `maayanarico8-eng/PGMR`
+4. Framework Preset: **Other** — leave Build Command and Output Directory empty
+5. Deploy; Vercel will pick up [`vercel.json`](../vercel.json) automatically
+6. Optionally add collaborators as Team Members for shared access
 
 The processor has two modes:
 
