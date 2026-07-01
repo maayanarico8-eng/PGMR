@@ -230,9 +230,15 @@ textarea:focus{border-color:var(--b1)}
 .cat-skip-sub{font-size:10px;color:var(--t3);margin-top:6px}
 .seq-display{background:#fff;border:1px solid rgba(26,25,24,.22);border-radius:var(--r);padding:20px;display:flex;justify-content:center;overflow-x:auto;margin:14px 0}
 .seq-display svg{display:block}
-.mode-toggle{display:flex;gap:4px;margin-bottom:20px}
+.mode-toggle{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px}
 .mode-btn{padding:5px 14px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid var(--b2);background:transparent;color:var(--t3);cursor:pointer;font-family:var(--f)}
 .mode-btn.active{border-color:var(--b1);background:var(--bg2);color:var(--t1)}
+.mode-btn-secondary{opacity:.55}
+.engine-trace-card{margin-top:20px;border:1px solid var(--b3);border-radius:8px;overflow:hidden}
+.engine-trace-hdr{width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg2);border:none;cursor:pointer;font-family:var(--f);font-size:11px;font-weight:600;color:var(--t2)}
+.engine-trace-body{padding:12px 14px;max-height:320px;overflow:auto;font-size:10.5px;line-height:1.55;color:var(--t2);font-family:ui-monospace,monospace;white-space:pre-wrap}
+.engine-trace-event{padding:4px 0;border-bottom:1px solid var(--b3)}
+.engine-trace-event:last-child{border-bottom:none}
 .settings-panel{border:1px solid var(--b3);border-radius:var(--r);overflow:hidden;margin-bottom:24px}
 .settings-toggle{width:100%;padding:10px 14px;background:none;border:none;cursor:pointer;font-family:var(--f);display:flex;align-items:center;justify-content:space-between;gap:12px}
 .settings-content{border-top:1px solid var(--b3);padding:14px;background:var(--bg2)}
@@ -261,11 +267,14 @@ textarea:focus{border-color:var(--b1)}
       <div>
         <label class="input-lbl">Processor Mode</label>
         <div class="mode-toggle">
-          <button class="mode-btn active" data-mode="mock" id="mode-mock">Mock (example memory)</button>
-          <button class="mode-btn" data-mode="real" id="mode-real">Real (any memory)</button>
+          <button class="mode-btn active" data-mode="ai-words" id="mode-ai-words">AI Words</button>
+          <button class="mode-btn" data-mode="local" id="mode-local">Local</button>
+          <button class="mode-btn" data-mode="mock" id="mode-mock">Mock</button>
+          <button class="mode-btn mode-btn-secondary" data-mode="hybrid" id="mode-hybrid" title="Local first, then minimal AI words">Hybrid</button>
+          <button class="mode-btn mode-btn-secondary" data-mode="anthropic" id="mode-anthropic" title="Full API pipeline (legacy)">Full API</button>
         </div>
         <div style="font-size:11px;color:var(--t3);line-height:1.55" id="mode-desc">
-          Mock: pre-scripted analysis of the built-in example. Real: full API analysis of any memory you write.
+          AI Words: one small API call (sentence → 3–10 words). VRP + catalog run locally — no further AI cost.
         </div>
       </div>
     </div>
@@ -291,10 +300,27 @@ textarea:focus{border-color:var(--b1)}
   <div id="results"></div>
 
 </div>
+<script src="/memory-processor/engine/logger.js"></script>
+<script src="/memory-processor/engine/config.js"></script>
+<script src="/memory-processor/engine/catalog/entries.js"></script>
+<script src="/memory-processor/engine/catalog/index.js"></script>
+<script src="/memory-processor/engine/rule1/extract-event-model.js"></script>
+<script src="/memory-processor/engine/rule1/rw-extract-prompt.js"></script>
+<script src="/memory-processor/engine/rule1/build-from-words.js"></script>
+<script src="/memory-processor/engine/rule1/stages.js"></script>
+<script src="/memory-processor/engine/rule1/index.js"></script>
+<script src="/memory-processor/engine/rule2/vrp.js"></script>
+<script src="/memory-processor/engine/rule3/lookup.js"></script>
+<script src="/memory-processor/engine/pipeline.js"></script>
+<script src="/memory-processor/engine/index.js"></script>
 <script>
 
 let currentResult=null,currentVrpResult=null,currentAraResult=null,currentFilter='all';
-let processorMode='mock';
+let processorMode='ai-words';
+let lastEngineSource=null;
+let lastEngineExtractor=null;
+let currentRule3Result=null;
+let currentPipelineTrace=null;
 const MOCK_MEMORY='בשבת בבוקר, סבא היה קורא לי עיתון ושרנו ביחד.';
 const MOCK_R1={"memoryLanguage": "Hebrew", "coreNarrative": "בשבת בבוקר, סבא קרא לנכד/ה עיתון ושרו ביחד.", "memoryFrame": {"location": null, "temporalContext": "recurring", "recurrencePattern": "כל שבת בבוקר", "period": null}, "events": [{"id": "e_01", "nucleus": {"type": "activity", "description": "קריאת עיתון לנכד/ה"}, "participants": [{"referent": "סבא", "canonicalReferent": "grandfather", "role": "agent", "isNarrator": false}, {"referent": "מספר/ת", "canonicalReferent": "narrator", "role": "recipient", "isNarrator": true}], "specificLocation": null, "purpose": null}, {"id": "e_02", "nucleus": {"type": "activity", "description": "שירה משותפת"}, "participants": [{"referent": "סבא", "canonicalReferent": "grandfather", "role": "co-agent", "isNarrator": false}, {"referent": "מספר/ת", "canonicalReferent": "narrator", "role": "co-agent", "isNarrator": true}], "specificLocation": null, "purpose": null}], "semanticFields": [{"id": "sf_01", "field": "סבא", "canonicalReferent": "grandfather", "category": "person", "sourceText": "סבא", "description": "הסוכן המרכזי"}, {"id": "sf_02", "field": "מספר/ת", "canonicalReferent": "narrator", "category": "person", "sourceText": "לי", "description": "מקבל הקריאה, שותף לשירה"}, {"id": "sf_03", "field": "קריאת עיתון", "canonicalReferent": "reading newspaper", "category": "action", "sourceText": "קורא לי עיתון", "description": "הפעולה המרכזית"}, {"id": "sf_04", "field": "עיתון", "canonicalReferent": "newspaper", "category": "object", "sourceText": "עיתון", "description": "מושא הקריאה הספציפי"}, {"id": "sf_05", "field": "שירה ביחד", "canonicalReferent": "singing together", "category": "action", "sourceText": "שרנו ביחד", "description": "הפעולה השנייה"}, {"id": "sf_06", "field": "שבת בבוקר", "canonicalReferent": "saturday morning", "category": "temporal-pattern", "sourceText": "בשבת בבוקר", "description": "הקשר זמני חוזר"}], "semanticStructure": {"summary": "כל שבת, סבא קרא לנכד/ה עיתון ואחר כך שרו ביחד — פעילות קבועה של קשר בין-דורי.", "mustPreserve": ["הקשר סבא-נכד/ה חייב להישמר — שני המשתתפים נחוצים", "העיתון נחוץ להבחין בין קריאה זו לכל פעילות קריאה אחרת"]}, "considerationRecord": [{"fieldId": "sf_01", "field": "סבא", "canonicalReferent": "grandfather", "category": "person", "identityGate": "changes-identity", "identityGateReason": "הסרת סבא מבטלת את כל מבנה הזיכרון — אין קורא, אין שר. הזיכרון הופך לאחר לחלוטין.", "decision": "representative", "criterion1": "not-evaluated", "criterion1Reason": "", "criterion2": "not-evaluated", "criterion2Reason": "", "criterion3": "not-evaluated", "criterion3Reason": "", "criterion4": "not-evaluated", "criterion4Reason": "", "decisionReason": "נשמר על ידי שער זהות הזיכרון."}, {"fieldId": "sf_02", "field": "מספר/ת", "canonicalReferent": "narrator", "category": "person", "identityGate": "changes-identity", "identityGateReason": "הסרת הנכד/ה מבטלת את הרלציה 'קרא לי' ואת השירה המשותפת. ללא מקבל, הזיכרון מאבד את תצורתו.", "decision": "representative", "criterion1": "not-evaluated", "criterion1Reason": "", "criterion2": "not-evaluated", "criterion2Reason": "", "criterion3": "not-evaluated", "criterion3Reason": "", "criterion4": "not-evaluated", "criterion4Reason": "", "decisionReason": "נשמר על ידי שער זהות הזיכרון."}, {"fieldId": "sf_03", "field": "קריאת עיתון", "canonicalReferent": "reading newspaper", "category": "action", "identityGate": "reduces-detail", "identityGateReason": "הסרת הקריאה משאירה זיכרון של שירה בלבד עם סבא ונכד/ה.", "decision": "representative", "criterion1": "satisfied", "criterion1Reason": "'קורא לי עיתון' מצוין במפורש כמרכז הנרטיב הראשון", "criterion2": "satisfied", "criterion2Reason": "ייצוג ללא קריאה לא יתאר את שתי הפעולות הספציפיות", "criterion3": "satisfied", "criterion3Reason": "הקריאה מגדירה את תפקידי סבא (קורא) ומספר/ת (מקשיב/ה)", "criterion4": "satisfied", "criterion4Reason": "אין אלמנט אחר שנושא את ממד הקריאה", "decisionReason": "ארבעת הקריטריונים מסופקים."}, {"fieldId": "sf_04", "field": "עיתון", "canonicalReferent": "newspaper", "category": "object", "identityGate": "reduces-detail", "identityGateReason": "הסרת העיתון מותירה 'קריאה כלשהי' — פחות ספציפי.", "decision": "representative", "criterion1": "satisfied", "criterion1Reason": "'עיתון' מצוין במפורש ולא בצורה כללית", "criterion2": "satisfied", "criterion2Reason": "ללא עיתון הייצוג לא מבחין בין קריאת עיתון לכל קריאה אחרת", "criterion3": "unsatisfied", "criterion3Reason": "הסרת העיתון אינה משנה מבנה תפקידים", "criterion4": "satisfied", "criterion4Reason": "העיתון מביע ספציפיות שאין בשום אלמנט אחר", "decisionReason": "קריטריונים 1, 2, 4 מסופקים. העיתון מבחין בין זיכרון זה לאחרים."}, {"fieldId": "sf_05", "field": "שירה ביחד", "canonicalReferent": "singing together", "category": "action", "identityGate": "reduces-detail", "identityGateReason": "הסרת השירה מותירה זיכרון של קריאת עיתון בלבד.", "decision": "representative", "criterion1": "satisfied", "criterion1Reason": "'שרנו ביחד' מצוין במפורש", "criterion2": "satisfied", "criterion2Reason": "ייצוג ללא שירה לא יתאר את הממד השני של הזיכרון", "criterion3": "unsatisfied", "criterion3Reason": "מבנה סבא-נכד/ה שורד ללא שירה", "criterion4": "satisfied", "criterion4Reason": "השירה מביעה ממד שאין בקריאה", "decisionReason": "קריטריונים 1, 2, 4 מסופקים."}, {"fieldId": "sf_06", "field": "שבת בבוקר", "canonicalReferent": "saturday morning", "category": "temporal-pattern", "identityGate": "reduces-detail", "identityGateReason": "הסרת שבת בבוקר מותירה את אותו זיכרון ללא הקשר זמני.", "decision": "semantic-only", "criterion1": "satisfied", "criterion1Reason": "מצוין במפורש", "criterion2": "unsatisfied", "criterion2Reason": "הסרתו משאירה ייצוג נאמן לאירוע עצמו", "criterion3": "unsatisfied", "criterion3Reason": "לא מחזיק מבנה", "criterion4": "satisfied", "criterion4Reason": "תרומה ייחודית כהקשר זמני", "decisionReason": "קריטריון 2 אינו מסופק — הסרתו לא פוגעת בנאמנות הייצוג."}], "representativeWords": [{"id": "rw_01", "word": "סבא", "canonicalReferent": "grandfather", "category": "person", "sourceText": "סבא", "narrativePosition": 1}, {"id": "rw_02", "word": "מספר/ת", "canonicalReferent": "narrator", "category": "person", "sourceText": "לי", "narrativePosition": 2}, {"id": "rw_03", "word": "קריאת עיתון", "canonicalReferent": "reading newspaper", "category": "action", "sourceText": "קורא לי עיתון", "narrativePosition": 3}, {"id": "rw_04", "word": "עיתון", "canonicalReferent": "newspaper", "category": "object", "sourceText": "עיתון", "narrativePosition": 4}, {"id": "rw_05", "word": "שירה ביחד", "canonicalReferent": "singing together", "category": "action", "sourceText": "שרנו ביחד", "narrativePosition": 5}], "mustPreserveCompliance": [{"requirement": "הקשר סבא-נכד/ה חייב להישמר", "satisfied": true, "satisfiedBy": ["rw_01", "rw_02"], "violation": null}, {"requirement": "העיתון נחוץ להבחנה", "satisfied": true, "satisfiedBy": ["rw_04"], "violation": null}], "consistencyGateStatus": "pass", "consistencyGateNote": "כל אילוצי Must Preserve מסופקים."};
 const MOCK_VRP={"ensembleReasoning": "חמש יחידות עם נוכחות עצמאית לרוב. הקריאה תיוצג הקשרית דרך סבא-עיתון. שירה קיבלה Both — תווים מוזיקליים + קרבה לשני הסוכנים.", "vrp": [{"unitId": "rw_01", "unit": "סבא", "phase1": {"entityNature": "person", "identityFeatures": ["זקן", "נוכחות בוגרת", "מטפח"], "inherentlyVisual": true}, "phase2": {"possibilityInventory": {"independentPossible": true, "independentRationale": "דמות זקן — צלל פרונטלי עם מקל הליכה", "contextualPossible": false, "contextualRationale": "הסוכן המרכזי, לא ניתן להקשרה", "contextualDependencies": []}, "testV": {"applied": false, "alternativeMemory": null, "visuallyDistinguishable": null, "testVConclusion": "not-applicable"}, "modeDecision": {"mode": "independent", "modeRationale": "contextualPossible=false AND independentPossible=true", "independent": {"visualConcept": "זקן עם מקל הליכה", "constructible": true}}}, "phase3": {"survivabilityStatus": "recognized", "independentConfidence": "high", "contextualConfidence": "n/a", "mutuallyReinforcing": null, "assessment": "מוכר מיידית"}, "phase4": {"h002Status": "compliant", "auditNote": "none"}}, {"unitId": "rw_02", "unit": "מספר/ת", "phase1": {"entityNature": "person", "identityFeatures": ["ילד/ה", "קטן/ה", "מקבל/ת"], "inherentlyVisual": true}, "phase2": {"possibilityInventory": {"independentPossible": true, "independentRationale": "דמות ילד/ה — צלל פרונטלי קטן", "contextualPossible": true, "contextualRationale": "ניתן כמקבל בצמידות לסבא, אך Test V נדרש", "contextualDependencies": ["rw_01"]}, "testV": {"applied": true, "alternativeMemory": "סבא קורא עיתון לבדו", "visuallyDistinguishable": false, "testVConclusion": "fails"}, "modeDecision": {"mode": "independent", "modeRationale": "testV fails AND independentPossible=true", "independent": {"visualConcept": "ילד/ה — גוף קטן", "constructible": true}}}, "phase3": {"survivabilityStatus": "recognized", "independentConfidence": "medium", "contextualConfidence": "n/a", "mutuallyReinforcing": null, "assessment": "ניתן לזיהוי, עמימות מין"}, "phase4": {"h002Status": "risk", "auditNote": "מין לא מצוין — בחירה תוסיף אינפורמציה לא בטקסט"}}, {"unitId": "rw_03", "unit": "קריאת עיתון", "phase1": {"entityNature": "action", "identityFeatures": ["פעולה מכוונת", "מועברת", "קשורה לאובייקט"], "inherentlyVisual": false}, "phase2": {"possibilityInventory": {"independentPossible": false, "independentRationale": "פעולה מופשטת — לא ניתנת לבנייה עצמאית", "contextualPossible": true, "contextualRationale": "קרבת סבא-עיתון מבטאת קריאה", "contextualDependencies": ["rw_01", "rw_04"]}, "testV": {"applied": true, "alternativeMemory": "סבא מחזיק עיתון ללא קריאה", "visuallyDistinguishable": true, "testVConclusion": "passes"}, "modeDecision": {"mode": "contextual", "modeRationale": "contextualPossible=true AND testV passes", "contextual": {"expressedThrough": ["rw_01", "rw_04"], "relationalMechanism": "sequencing", "emergenceExplanation": "סבא + עיתון בצמידות = קריאה"}}}, "phase3": {"survivabilityStatus": "emergent", "independentConfidence": "n/a", "contextualConfidence": "high", "mutuallyReinforcing": null, "assessment": "צמידות סבא-עיתון תצמיח קריאה בצורה אמינה"}, "phase4": {"h002Status": "compliant", "auditNote": "none"}}, {"unitId": "rw_04", "unit": "עיתון", "phase1": {"entityNature": "object", "identityFeatures": ["מלבני", "שורות טקסט", "כותרת"], "inherentlyVisual": true}, "phase2": {"possibilityInventory": {"independentPossible": true, "independentRationale": "צורה מלבנית עם קווים — גאומטריה פשוטה", "contextualPossible": false, "contextualRationale": "האובייקט הספציפי — חייב נוכחות עצמאית", "contextualDependencies": []}, "testV": {"applied": false, "alternativeMemory": null, "visuallyDistinguishable": null, "testVConclusion": "not-applicable"}, "modeDecision": {"mode": "independent", "modeRationale": "contextualPossible=false AND independentPossible=true", "independent": {"visualConcept": "עיתון מלבני עם שורות טקסט", "constructible": true}}}, "phase3": {"survivabilityStatus": "recognized", "independentConfidence": "high", "contextualConfidence": "n/a", "mutuallyReinforcing": null, "assessment": "מוכר מיידית"}, "phase4": {"h002Status": "compliant", "auditNote": "none"}}, {"unitId": "rw_05", "unit": "שירה ביחד", "phase1": {"entityNature": "action", "identityFeatures": ["קולי", "משותף", "שמחה"], "inherentlyVisual": false}, "phase2": {"possibilityInventory": {"independentPossible": true, "independentRationale": "תווים מוזיקליים — ייצוג קונבנציונלי", "contextualPossible": true, "contextualRationale": "צמידות שני הסוכנים + תווים = שירה ביחד", "contextualDependencies": ["rw_01", "rw_02"]}, "testV": {"applied": true, "alternativeMemory": "סבא ונכד/ה יושבים ביחד ללא שירה", "visuallyDistinguishable": false, "testVConclusion": "fails"}, "modeDecision": {"mode": "both", "modeRationale": "testV fails AND independentPossible=true → both", "independent": {"visualConcept": "תווים מוזיקליים", "constructible": true}, "contextual": {"expressedThrough": ["rw_01", "rw_02"], "relationalMechanism": "co-presence", "emergenceExplanation": "שני הסוכנים + תווים = שירה ביחד"}}}, "phase3": {"survivabilityStatus": "both-reinforcing", "independentConfidence": "high", "contextualConfidence": "medium", "mutuallyReinforcing": true, "assessment": "שתי השכבות מחזקות זו את זו"}, "phase4": {"h002Status": "compliant", "auditNote": "none"}}], "vrpSummary": {"independent": 3, "contextual": 1, "both": 1, "gap": 0, "sequenceViability": "full", "sequenceComment": "כל חמשת היחידות ניתנות לייצוג. הרצף מובחן."}};
@@ -1201,67 +1227,14 @@ clip-path: url(#clippath);
 </g>`;
 function libSVG(vb){return`<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="52" height="52" overflow="hidden">${LIBRARY_SVG}</svg>`;}
 
-/* ─── Catalog ─── */
-const CINIT=[
-  {id:'CAT-0001',hebrew:'סבא',concept:'Grandfather',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'-8.00 12.45 225.45 174.00'},
-  {id:'CAT-0002',hebrew:'סבתא',concept:'Grandmother',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'201.45 12.45 198.84 174.00'},
-  {id:'CAT-0003',hebrew:'ילדה',concept:'Girl / Young girl',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'384.29 12.45 187.02 174.00'},
-  {id:'CAT-0004',hebrew:'ילד',concept:'Boy / Young boy',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'555.31 12.45 156.42 174.00'},
-  {id:'CAT-0005',hebrew:'לילה',concept:'Night',provisional:false,provisionalNote:'',strategy:'Established Convention',viewBox:'695.73 12.45 172.07 174.00'},
-  {id:'CAT-0006',hebrew:'נדנדה',concept:'Swing',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'851.80 12.45 211.39 174.00'},
-  {id:'CAT-0007',hebrew:'בקבוק חם',concept:'Hot bottle / Thermos',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'1047.19 12.45 185.46 174.00'},
-  {id:'CAT-0008',hebrew:'נסענו',concept:'Traveling / We traveled',provisional:true,provisionalNote:'Verb form — concept label requires confirmation: represents journey/travel',strategy:'Direct Iconic Representation',viewBox:'1216.65 12.45 151.35 174.00'},
-  {id:'CAT-0009',hebrew:'יום הולדת',concept:'Birthday',provisional:false,provisionalNote:'',strategy:'Compositional Representation',viewBox:'-8.00 197.60 187.85 174.00'},
-  {id:'CAT-0010',hebrew:'אולר',concept:'Penknife / Pocket knife',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'163.85 197.60 145.08 174.00'},
-  {id:'CAT-0011',hebrew:'קוף',concept:'Monkey',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'292.93 197.60 135.81 174.00'},
-  {id:'CAT-0012',hebrew:'מתנה',concept:'Gift / Present',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'412.75 197.60 161.11 174.00'},
-  {id:'CAT-0013',hebrew:'בוקר',concept:'Morning',provisional:false,provisionalNote:'',strategy:'Established Convention',viewBox:'557.86 197.60 168.47 174.00'},
-  {id:'CAT-0014',hebrew:'עיתון',concept:'Newspaper',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'710.33 197.60 152.38 174.00'},
-  {id:'CAT-0015',hebrew:'בית ספר',concept:'School',provisional:false,provisionalNote:'',strategy:'Metonymic Association',viewBox:'846.70 197.60 154.25 174.00'},
-  {id:'CAT-0016',hebrew:'אוטובוס',concept:'Bus',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'984.95 197.60 172.12 174.00'},
-  {id:'CAT-0017',hebrew:'שירים',concept:'Songs / Singing',provisional:true,provisionalNote:'Representational strategy requires confirmation — may use notation or gesture',strategy:'Metonymic Association',viewBox:'1141.07 197.60 220.06 174.00'},
-  {id:'CAT-0018',hebrew:'מגדת עתידות',concept:'Fortune teller',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'-8.00 415.25 219.73 174.00'},
-  {id:'CAT-0019',hebrew:'אוניה',concept:'Ship',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'195.73 415.25 184.91 174.00'},
-  {id:'CAT-0020',hebrew:'אתחתן',concept:'Wedding / Marriage',provisional:true,provisionalNote:'Verb form — concept label requires confirmation: represents the wedding event',strategy:'Direct Iconic Representation',viewBox:'364.64 415.25 148.06 174.00'},
-  {id:'CAT-0021',hebrew:'ציפור',concept:'Bird',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'496.70 415.25 149.37 174.00'},
-  {id:'CAT-0022',hebrew:'תפוזים',concept:'Oranges',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'630.07 415.25 173.21 174.00'},
-  {id:'CAT-0023',hebrew:'סלע',concept:'Rock / Boulder',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'787.28 415.25 208.99 174.00'},
-  {id:'CAT-0024',hebrew:'יער',concept:'Forest',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'980.27 415.25 197.55 174.00'},
-  {id:'CAT-0025',hebrew:'מימייה',concept:'Canteen / Water bottle',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'1161.82 415.25 206.18 174.00'},
-  {id:'CAT-0026',hebrew:'ג׳יפ',concept:'Jeep',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'-8.00 602.35 179.65 174.00'},
-  {id:'CAT-0027',hebrew:'חיילים',concept:'Soldiers',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'155.65 602.35 175.59 174.00'},
-  {id:'CAT-0028',hebrew:'משכורת',concept:'Salary / Paycheck',provisional:true,provisionalNote:'Abstract concept — representational strategy requires confirmation',strategy:'Metonymic Association',viewBox:'315.24 602.35 175.25 174.00'},
-  {id:'CAT-0029',hebrew:'צבא',concept:'Army / Military',provisional:true,provisionalNote:'Representational strategy requires confirmation',strategy:'Metonymic Association',viewBox:'474.49 602.35 184.75 174.00'},
-  {id:'CAT-0030',hebrew:'רפת',concept:'Barn / Cowshed',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'643.25 602.35 215.90 174.00'},
-  {id:'CAT-0031',hebrew:'טיול',concept:'Trip / Hike / Excursion',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'843.14 602.35 165.19 174.00'},
-  {id:'CAT-0032',hebrew:'חליבה',concept:'Milking',provisional:true,provisionalNote:'Visual form requires confirmation against the catalog entry',strategy:'Direct Iconic Representation',viewBox:'992.34 602.35 114.30 174.00'},
-  {id:'CAT-0033',hebrew:'תצפית',concept:'Lookout / Observation post',provisional:true,provisionalNote:'Visual form requires confirmation against the catalog entry',strategy:'Direct Iconic Representation',viewBox:'1090.64 602.35 119.21 174.00'},
-  {id:'CAT-0034',hebrew:'עצי זית',concept:'Olive trees',provisional:false,provisionalNote:'',strategy:'Direct Iconic Representation',viewBox:'1193.85 602.35 174.15 174.00'}
-];
+/* ─── Catalog (shared engine module) ─── */
 const CAT=(()=>{
-  let m={},n=35;
-  function init(){CINIT.forEach(e=>{m[e.id]=e;});}
-  function all(){return Object.values(m).sort((a,b)=>a.id.localeCompare(b.id));}
-  function get(id){return m[id]||null;}
-  function store(entry){const id='CAT-'+String(n++).padStart(4,'0');m[id]={...entry,id};return id;}
-  function lookup(word){
-    const w=(word||'').toLowerCase().trim();
-    const hw=(word||'').trim();
-    // Also try first word of multi-word concepts
-    return Object.values(m).find(e=>
-      (e.hebrew&&e.hebrew===hw)||
-      (e.hebrew&&e.hebrew.split('/').some(h=>h.trim()===hw))||
-      (e.concept&&e.concept.toLowerCase().split('/').some(c=>c.trim()===w))||
-      (e.concept&&e.concept.toLowerCase()===w)||
-      (e.concept&&e.concept.toLowerCase().includes(w)&&w.length>3)
-    )||null;
-  }
-  return{init,all,get,store,lookup};
+  const cat=MemoryEngineCatalog;
+  return{init:()=>cat.init(),all:()=>cat.all(),get:id=>cat.get(id),store:entry=>cat.store(entry),lookup:word=>cat.lookup(word)};
 })();
 
 
 /* ─── API ─── */
-function getKey(){return document.getElementById('api-key-input')?.value?.trim()||'';}
 function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 function extractJSON(raw){
@@ -1284,10 +1257,9 @@ window.onunhandledrejection=function(e){
 };
 
 async function callAPI(system,user,maxTokens){
-  const res=await fetch('https://api.anthropic.com/v1/messages',{
+  const res=await fetch('/api/anthropic',{
     method:'POST',
-    headers:{'Content-Type':'application/json',
-      'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    headers:{'Content-Type':'application/json'},
     body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTokens,
       system:'You output only valid JSON. No markdown. No code fences. No explanation. Your response must be parseable by JSON.parse().',
       messages:[{role:'user',content:system+'\n\n---\n\n'+user}]})
@@ -1295,6 +1267,103 @@ async function callAPI(system,user,maxTokens){
   if(!res.ok){const body=await res.json().catch(()=>({}));throw new Error(`API ${res.status}: ${body?.error?.message||res.statusText}`);}
   const data=await res.json();
   return data.content.filter(c=>c.type==='text').map(c=>c.text).join('');
+}
+
+function usesLocalEngine(){return processorMode==='local'||processorMode==='hybrid';}
+function usesAiWordsEngine(){return processorMode==='ai-words'||(processorMode==='hybrid'&&lastEngineSource==='ai-words');}
+function usesAnthropicEngine(){return processorMode==='anthropic'||(processorMode==='hybrid'&&lastEngineSource==='anthropic');}
+function rule3AutoRealizationEnabled(){return processorMode==='anthropic';}
+
+async function runAiWordsExtract(text){
+  const logger=MemoryEngineLogger.createLogger();
+  logger.log('1.2','AI_WORDS_REQUESTED',{memoryLength:text.length},'Workflow_Grammar:1.6');
+  const prompt=MemoryEngine.RW_EXTRACT_PROMPT||MemoryEngineRule1.RW_EXTRACT_PROMPT;
+  const raw=await callAPI(prompt,'Memory:\n\n'+text,600);
+  const aiJson=extractJSON(raw);
+  const rule1=MemoryEngine.buildRule1FromWords(text,aiJson,logger);
+  return{rule1,logger,extractor:'ai-words'};
+}
+
+async function runAiWordsPipeline(text){
+  const{rule1,logger,extractor}=await runAiWordsExtract(text);
+  const pipeline=MemoryEngine.runPipelineFromRule1(rule1,{
+    logger,
+    catalog:MemoryEngineCatalog,
+    extractor,
+    confidence:'high',
+  });
+  currentPipelineTrace=pipeline.trace||null;
+  currentRule3Result=pipeline.rule3||null;
+  lastEngineSource='ai-words';
+  lastEngineExtractor=extractor;
+  return pipeline;
+}
+
+async function runRule1Anthropic(text){
+  const raw=await callAPI(PROMPT,'Memory:\n\n'+text,8000);
+  return extractJSON(raw);
+}
+
+async function runRule1AnthropicMinimal(text){
+  const{rule1}=await runAiWordsExtract(text);
+  return rule1;
+}
+
+async function runRule1Pipeline(text){
+  if(processorMode==='ai-words'){
+    const pipeline=await runAiWordsPipeline(text);
+    return pipeline.rule1;
+  }
+  if(usesLocalEngine()){
+    const local=MemoryEngine.runRule1Local(text);
+    const localOk=local.supported&&!(processorMode==='hybrid'&&local.confidence==='low');
+    if(localOk){
+      lastEngineSource='local';
+      lastEngineExtractor=local.extractor||null;
+      return local.result;
+    }
+    if(processorMode==='local'){
+      throw new Error(local.reason||'Local engine does not support this memory.');
+    }
+    const pipeline=await runAiWordsPipeline(text);
+    return pipeline.rule1;
+  }
+  lastEngineSource='anthropic';
+  lastEngineExtractor=null;
+  return runRule1Anthropic(text);
+}
+
+function renderEngineBadge(source,extractor){
+  const container=document.getElementById('results');
+  if(!container||!source)return;
+  const label=source==='local'?`Local engine${extractor?` (${extractor})`:''}`:source==='ai-words'?'AI Words (minimal) + local VRP/catalog':source==='mock'?'Mock (scripted)':'Full Anthropic API';
+  container.insertAdjacentHTML('afterbegin',`<div style="font-size:10px;color:var(--t3);margin-bottom:12px;padding:6px 10px;border:1px solid var(--b3);border-radius:6px;display:inline-block">Engine: ${esc(label)}</div>`);
+}
+
+function renderEngineTrace(trace){
+  const container=document.getElementById('engine-trace-section');
+  if(!container||!trace?.events?.length)return;
+  const events=trace.events.map(e=>{
+    const detail=[e.word,e.field,e.mode,e.reason,e.message,e.catalogId,e.skipReason].filter(Boolean).join(' · ');
+  return `<div class="engine-trace-event">[${esc(e.stage)}] <strong>${esc(e.type)}</strong>${e.ruleRef?` <span style="color:var(--t3)">(${esc(e.ruleRef)})</span>`:''}${detail?` — ${esc(detail)}`:''}</div>`;
+  }).join('');
+  container.innerHTML=`<div class="engine-trace-card"><button type="button" class="engine-trace-hdr" id="engine-trace-toggle">Engine Trace <span style="font-weight:400;color:var(--t3)">${trace.events.length} events</span><span class="chevron" id="engine-trace-chevron">&#9662;</span></button><div class="engine-trace-body" id="engine-trace-body" hidden>${events}</div></div>`;
+  document.getElementById('engine-trace-toggle')?.addEventListener('click',()=>{
+    const body=document.getElementById('engine-trace-body');
+    const chev=document.getElementById('engine-trace-chevron');
+    if(!body)return;
+    const open=!body.hidden;body.hidden=open;chev?.classList.toggle('open',!open);
+  });
+}
+
+function runLocalPipeline(text){
+  const pipeline=MemoryEngine.runPipeline(text,{catalog:MemoryEngineCatalog});
+  currentPipelineTrace=pipeline.trace||null;
+  if(!pipeline.supported)throw new Error(pipeline.reason||'Local engine does not support this memory.');
+  currentRule3Result=pipeline.rule3||null;
+  lastEngineSource='local';
+  lastEngineExtractor=pipeline.extractor||null;
+  return pipeline;
 }
 
 
@@ -1348,6 +1417,9 @@ function buildSequenceSVG(vrpResult){
 /* Enforces methodology rules from governing documents after API response */
 function validateR1Output(data){
   const violations=[];
+  if(data?._engine?.stages==='ai-words'){
+    return violations;
+  }
   const rws=data.representativeWords||[];
 
   // RULE A: Habitual/recurring annotations must not be in representativeWords
@@ -1481,8 +1553,14 @@ function createFileInput(conceptLabel, gapEl){
 }
 
 async function realizeFromReference(conceptLabel,referenceSvg,gapEl){
-  // Show loading state in the gap element
   const statusEl=gapEl.querySelector('.realize-status');
+  if(!rule3AutoRealizationEnabled()){
+    if(statusEl){
+      statusEl.textContent=MemoryEngine.rule3LocalMode.message;
+      statusEl.style.color='#7A4900';
+    }
+    return;
+  }
   if(statusEl){statusEl.textContent='Realizing…';statusEl.style.color='var(--t3)';}
 
   try{
@@ -1616,19 +1694,68 @@ async function analyze(){
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Analyzing';
   document.getElementById('error-card').hidden=true;
   document.getElementById('results').innerHTML='';
-  currentResult=null;currentVrpResult=null;currentAraResult=null;currentFilter='all';
+  currentResult=null;currentVrpResult=null;currentAraResult=null;currentRule3Result=null;currentPipelineTrace=null;currentFilter='all';
   // Mock scripted data only for the built-in example when explicitly in mock mode
   const useMockData=processorMode==='mock'&&text===MOCK_MEMORY;
-  let raw='';
   try{
     if(useMockData){
       await new Promise(r=>setTimeout(r,700));
+      lastEngineSource='mock';
       renderResults(MOCK_R1);
+    }else if(processorMode==='local'){
+      const pipeline=runLocalPipeline(text);
+      const violations=validateR1Output(pipeline.rule1);
+      renderResults(pipeline.rule1);
+      renderEngineBadge(lastEngineSource,lastEngineExtractor);
+      if(violations.length){
+        const container=document.getElementById('results');
+        if(container) renderValidationViolations(violations,container);
+      }
+      renderVrp(pipeline.rule2);
+      const traceEl=document.createElement('div');
+      traceEl.id='engine-trace-section';
+      document.getElementById('results')?.appendChild(traceEl);
+      renderEngineTrace(currentPipelineTrace);
+    }else if(processorMode==='ai-words'){
+      const pipeline=await runAiWordsPipeline(text);
+      renderResults(pipeline.rule1);
+      renderEngineBadge(lastEngineSource,lastEngineExtractor);
+      renderVrp(pipeline.rule2);
+      const traceEl=document.createElement('div');
+      traceEl.id='engine-trace-section';
+      document.getElementById('results')?.appendChild(traceEl);
+      renderEngineTrace(currentPipelineTrace);
+    }else if(processorMode==='hybrid'){
+      const local=MemoryEngine.runRule1Local(text);
+      if(local.supported&&local.confidence!=='low'){
+        const pipeline=runLocalPipeline(text);
+        const violations=validateR1Output(pipeline.rule1);
+        renderResults(pipeline.rule1);
+        renderEngineBadge(lastEngineSource,lastEngineExtractor);
+        if(violations.length){
+          const container=document.getElementById('results');
+          if(container) renderValidationViolations(violations,container);
+        }
+        renderVrp(pipeline.rule2);
+        const traceEl=document.createElement('div');
+        traceEl.id='engine-trace-section';
+        document.getElementById('results')?.appendChild(traceEl);
+        renderEngineTrace(currentPipelineTrace);
+      }else{
+        const pipeline=await runAiWordsPipeline(text);
+        renderResults(pipeline.rule1);
+        renderEngineBadge(lastEngineSource,lastEngineExtractor);
+        renderVrp(pipeline.rule2);
+        const traceEl=document.createElement('div');
+        traceEl.id='engine-trace-section';
+        document.getElementById('results')?.appendChild(traceEl);
+        renderEngineTrace(currentPipelineTrace);
+      }
     }else{
-      raw=await callAPI(PROMPT,'Memory:\n\n'+text,8000);
-      const parsed=extractJSON(raw);
+      const parsed=await runRule1Pipeline(text);
       const violations=validateR1Output(parsed);
       renderResults(parsed);
+      renderEngineBadge(lastEngineSource,lastEngineExtractor);
       if(violations.length){
         const container=document.getElementById('results');
         if(container) renderValidationViolations(violations,container);
@@ -1651,6 +1778,13 @@ async function generateVrp(){
     if(useMock){
       await new Promise(r=>setTimeout(r,600));
       renderVrp(MOCK_VRP);
+    }else if(lastEngineSource==='local'||lastEngineSource==='ai-words'){
+      if(currentVrpResult){
+        renderVrp(currentVrpResult);
+      }else{
+        const vrp=MemoryEngine.runVRPLocal(currentResult,(w)=>CAT.lookup(w));
+        renderVrp(vrp);
+      }
     }else{
       const ctx={memoryLanguage:currentResult.memoryLanguage,coreNarrative:currentResult.coreNarrative,semanticSummary:currentResult.semanticStructure?.summary,mustPreserve:currentResult.semanticStructure?.mustPreserve,representativeWords:currentResult.representativeWords};
       const raw=await callAPI(VRP_PROMPT,'Input:\n\n'+JSON.stringify(ctx,null,2),8000);
@@ -1877,9 +2011,9 @@ function renderVrp(vrpResult){
     const vrpZone=document.getElementById('vrp-trigger-zone');
     vrpZone?.parentNode?.insertBefore(araZone,vrpZone.nextSibling);
   }
-  const araMockOnly=processorMode==='mock';
-  araZone.innerHTML=`<div id="ara-inner">${sectionLabel('Action Representation Analysis')}${araMockOnly?`<div class="card" style="font-size:12px;color:var(--t3);padding:12px 14px;margin-top:10px">Action Representation Analysis is available in Real Processor mode only.</div>`:`<button class="generate-vrp-btn" id="generate-ara-btn">Analyze action representation →</button>`}</div>`;
-  if(!araMockOnly)document.getElementById('generate-ara-btn')?.addEventListener('click',generateAra);
+  const araAvailable=processorMode!=='mock'&&lastEngineSource==='anthropic';
+  araZone.innerHTML=`<div id="ara-inner">${sectionLabel('Action Representation Analysis')}${araAvailable?`<button class="generate-vrp-btn" id="generate-ara-btn">Analyze action representation →</button>`:`<div class="card" style="font-size:12px;color:var(--t3);padding:12px 14px;margin-top:10px">Action Representation Analysis requires Anthropic mode (or Hybrid fallback).</div>`}</div>`;
+  if(araAvailable)document.getElementById('generate-ara-btn')?.addEventListener('click',generateAra);
   // Catalog section (always shown after VRP)
   let catSection=document.getElementById('catalog-section');
   if(!catSection){catSection=document.createElement('div');catSection.id='catalog-section';araZone.parentNode.insertBefore(catSection,araZone.nextSibling);}
@@ -1963,8 +2097,8 @@ function renderAra(araResult){
 async function generateAra(){
   if(!currentVrpResult)return;
   const araInner=document.getElementById('ara-inner');if(!araInner)return;
-  if(processorMode==='mock'){
-    araInner.innerHTML=`${sectionLabel('Action Representation Analysis')}<div class="card" style="font-size:12px;color:var(--t3);padding:12px 14px;margin-top:10px">Action Representation Analysis is available in Real Processor mode only.</div>`;
+  if(processorMode==='mock'||lastEngineSource!=='anthropic'){
+    araInner.innerHTML=`${sectionLabel('Action Representation Analysis')}<div class="card" style="font-size:12px;color:var(--t3);padding:12px 14px;margin-top:10px">Action Representation Analysis requires Anthropic mode (or Hybrid fallback).</div>`;
     return;
   }
   araInner.innerHTML=`<div class="vrp-loading"><span class="vrp-dark-spinner"></span><span class="vrp-loading-txt">Analyzing action representation strategies...</span></div>`;
@@ -2016,21 +2150,23 @@ document.querySelectorAll('.mode-btn').forEach(btn=>{
     document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b===btn));
     const desc=document.getElementById('mode-desc');
     const isMock=processorMode==='mock';
-    desc.textContent=isMock?
-      'Mock: pre-scripted pipeline on a sample memory. Catalog lookup is real — tests library coverage.':
-      'Real: full API pipeline on any memory. Requires API key.';
+    const descs={
+      'ai-words':'AI Words: one small API call (sentence → 3–10 words). VRP + catalog run locally.',
+      mock:'Mock: pre-scripted pipeline on the built-in example. Catalog lookup is real.',
+      hybrid:'Hybrid: local rules when supported; otherwise minimal AI word extraction + local VRP.',
+      local:'Local: deterministic rules only — no API.',
+      anthropic:'Full API: legacy full Rule 1 + VRP + ARA via Anthropic.',
+    };
+    desc.textContent=descs[processorMode]||descs.hybrid;
     if(isMock){
       const ta=document.getElementById('memory-input');
       ta.value=MOCK_MEMORY;
       ta.dir='rtl';
       updateWordCount();
     }
-    document.getElementById('analyze-btn').disabled=!isMock&&!document.getElementById('memory-input').value.trim();
+    updateWordCount();
   });
 });
-
-/* ─── API key no longer needed — handled by artifact viewer ─── */
-function getKey(){return '';} // kept for compatibility, unused
 
 /* ─── Textarea ─── */
 document.getElementById('memory-input').addEventListener('input',e=>{
