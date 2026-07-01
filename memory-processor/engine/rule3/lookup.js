@@ -61,6 +61,7 @@
           concept: hit.concept,
           hebrew: hit.hebrew,
           provisional: hit.provisional,
+          source: 'bank',
         };
         lookups.push(entry);
         viableUnits.push({ word, catalogId: hit.id, concept: hit.concept });

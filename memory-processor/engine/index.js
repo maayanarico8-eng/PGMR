@@ -42,4 +42,8 @@
   };
 
   root.MemoryEngine.shouldUseAnthropic = shouldFallbackToAnthropic;
+
+  root.MemoryEngine.resolvePictogram = function (word, options) {
+    return root.MemoryEngineCatalogResolve.resolveForWord(word, options);
+  };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

@@ -1,5 +1,5 @@
 /**
- * Golden test — full local pipeline (Rule 1 → 2 → 3).
+ * Golden test — full local pipeline (Rule 1 → 2 → 3) + pictogram bank resolution.
  * Run: node memory-processor/engine/pipeline.test.js
  */
 const path = require('path');
@@ -13,6 +13,9 @@ function loadEngine() {
     'config.js',
     'catalog/entries.js',
     'catalog/index.js',
+    'catalog/providers/local.js',
+    'catalog/providers/external.js',
+    'catalog/resolve.js',
     'rule1/extract-event-model.js',
     'rule1/stages.js',
     'rule1/index.js',
@@ -30,7 +33,31 @@ function loadEngine() {
 
 const MOCK_MEMORY = 'בשבת בבוקר, סבא היה קורא לי עיתון ושרנו ביחד.';
 
-function main() {
+async function testBankResolution() {
+  const entry = globalThis.MemoryEngineCatalog.lookup('סבא');
+  if (!entry || entry.id !== 'CAT-0001') {
+    throw new Error('catalog lookup for סבא failed');
+  }
+
+  const svg = await globalThis.MemoryEngineCatalogLocalProvider.loadByWord('סבא');
+  if (!svg || !svg.includes('<svg')) {
+    throw new Error('bank SVG load for סבא failed');
+  }
+
+  const resolved = await globalThis.MemoryEngine.resolvePictogram('סבא');
+  if (resolved.status !== 'hit' || resolved.source !== 'bank' || !resolved.svg) {
+    throw new Error('resolvePictogram for סבא failed');
+  }
+
+  const hits = (await globalThis.MemoryEngineCatalogResolve.resolveForWord('עיתון'));
+  if (hits.status !== 'hit' || hits.assetRef !== 'עיתון.svg') {
+    throw new Error('resolveForWord assetRef mismatch for עיתון');
+  }
+
+  console.log('Bank resolution: סבא.svg OK');
+}
+
+async function main() {
   const engine = loadEngine();
   const out = engine.runPipeline(MOCK_MEMORY);
 
@@ -65,6 +92,12 @@ function main() {
     process.exit(1);
   }
 
+  const hitSources = (out.rule3?.lookups || []).filter((l) => l.outcome === 'hit').map((l) => l.source);
+  if (!hitSources.every((s) => s === 'bank')) {
+    console.error('FAIL: catalog hits should have source=bank');
+    process.exit(1);
+  }
+
   const eventTypes = (out.trace?.events || []).map((e) => e.type);
   if (!eventTypes.includes('CATALOG_HIT')) {
     console.error('FAIL: trace should include CATALOG_HIT events');
@@ -75,8 +108,13 @@ function main() {
     process.exit(1);
   }
 
+  await testBankResolution();
+
   console.log('Trace events:', out.trace?.summary?.total || 0);
   console.log('PASS: full pipeline golden test');
 }
 
-main();
+main().catch((err) => {
+  console.error('FAIL:', err.message);
+  process.exit(1);
+});

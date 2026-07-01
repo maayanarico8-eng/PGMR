@@ -1,5 +1,6 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/memory-processor/memory_processor.html" }
+    { "source": "/", "destination": "/memory-processor/memory_processor.html" },
+    { "source": "/dog-demo", "destination": "/memory-processor/external-demo.html" }
   ]
 }
