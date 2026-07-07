@@ -121,7 +121,7 @@
       result._engine = {
         source: 'processor-spec-r1',
         stages: 'decision-tree',
-        model: root.MemoryEngineAnthropic?.RULE1_MODEL || 'claude-sonnet-5',
+        model: root.MemoryEngineAnthropic?.MODEL || 'claude-sonnet-5',
         decisionPath: parsed.decisionPath || [],
       };
       result.validationStatus = parsed.validationStatus;
@@ -137,7 +137,7 @@
     result._engine = {
       source: 'processor-spec-r1',
       stages: 'full-schema',
-      model: root.MemoryEngineAnthropic?.RULE1_MODEL || 'claude-sonnet-5',
+      model: root.MemoryEngineAnthropic?.MODEL || 'claude-sonnet-5',
     };
     return result;
   }
@@ -147,7 +147,7 @@
     if (!anthropic?.callClaude) throw new Error('MemoryEngineAnthropic.callClaude is not loaded');
     const userContent = promptR1 + '\n\nWritten memory:\n\n' + memoryText + (extraUserSuffix || '');
     const raw = await anthropic.callClaude({
-      model: anthropic.RULE1_MODEL || 'claude-sonnet-5',
+      model: anthropic.MODEL || 'claude-sonnet-5',
       max_tokens: 4000,
       thinking: { type: 'disabled' },
       system: JSON_SYSTEM,

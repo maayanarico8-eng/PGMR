@@ -1606,7 +1606,7 @@ document.querySelectorAll('.mode-btn').forEach(btn=>{
       mock:'Mock: pre-scripted pipeline on the built-in example. Catalog lookup is real.',
       hybrid:'Hybrid: local rules when supported; otherwise minimal AI word extraction + local VRP.',
       local:'Local: deterministic rules only — no API.',
-      anthropic:'Full API: PROMPT_R1 Rule 1 (claude-sonnet-5) + VRP + ARA via claude-fable-5.',
+      anthropic:'Full API: PROMPT_R1 Rule 1 + VRP + ARA via claude-sonnet-5.',
     };
     desc.textContent=descs[processorMode]||descs.hybrid;
     const picker=document.getElementById('bank-test-picker');

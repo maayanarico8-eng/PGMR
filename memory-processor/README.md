@@ -14,7 +14,7 @@ engine/                      ← local Rule 1 + Rule 2 + Rule 3 + pipeline
   pipeline.js                  ← full Rule 1→2→3 orchestrator
   run.js                       ← CLI for chat tuning loop
   catalog/                     ← shared pictogram library
-  anthropic-client.js          ← claude-sonnet-5 (Rule 1) / claude-fable-5 (VRP/ARA/R3)
+  anthropic-client.js          ← claude-sonnet-5 client, 429 backoff, JSON parse
   rule1/                       ← PROMPT_R1 decision-tree pipeline
     prompt-r1.js                 ← verb decision tree prompt (verbatim)
     semantic-analysis-pipeline.js ← guard, validate, retry, assignSequence
@@ -77,9 +77,9 @@ The processor has five modes (Settings → Processor Mode):
 - **Local** — deterministic rules only (`engine/`). Zero API. Best for curated memories and rule tuning.
 - **Mock** — pre-scripted analysis on the built-in example memory. No API.
 - **Hybrid** — local Rule 1 when supported; otherwise falls back to **AI Words** (not full API).
-- **Full API** — PROMPT_R1 Rule 1 (`claude-sonnet-5`) + VRP + ARA via `claude-fable-5` (highest cost).
+- **Full API** — PROMPT_R1 Rule 1 + VRP + ARA via `claude-sonnet-5` (highest cost).
 
-**AI Words / Hybrid / Full API** require `ANTHROPIC_API_KEY` on Vercel. Rule 1 uses PROMPT_R1 with `claude-sonnet-5`; VRP/ARA/R3 use `claude-fable-5` in Full API mode.
+**AI Words / Hybrid / Full API** require `ANTHROPIC_API_KEY` on Vercel. All Anthropic calls use `claude-sonnet-5`.
 
 
 Run PROCESSOR_SPEC pipeline tests:
