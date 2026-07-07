@@ -1,15 +1,13 @@
 /**
- * External pictogram provider — stub for future API/CDN fallback on bank miss.
- * Primary search key: english (translated representative term); hebrew for display.
+ * External pictogram provider — delegates to Streamline HQ.
  */
 (function (root) {
-  async function fetchPictogram({ hebrew, english, word, englishWord, canonicalReferent }) {
-    void hebrew;
-    void english;
-    void word;
-    void englishWord;
-    void canonicalReferent;
-    return null;
+  const streamline = () => root.MemoryEngineCatalogStreamlineProvider;
+
+  async function fetchPictogram(opts) {
+    const sl = streamline();
+    if (!sl?.fetchPictogram) return null;
+    return sl.fetchPictogram(opts || {});
   }
 
   root.MemoryEngineCatalogExternalProvider = { fetchPictogram };

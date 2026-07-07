@@ -108,7 +108,7 @@ async function testVerbToNoun() {
   console.log('PASS verb to pictogram noun');
 }
 
-async function testResolveBankWords() {
+async function testResolvePictogramWords() {
   const Translate = load();
   const mockClient = {
     callClaudeJSON: async () => ({
@@ -120,12 +120,12 @@ async function testResolveBankWords() {
     english: opts.english || null,
     status: 'hit',
     svg: '<svg></svg>',
-    source: 'bank',
+    source: 'mapping',
     catalogId: hebrew === 'סבא' ? 'CAT-0001' : null,
     assetRef: `${hebrew}.svg`,
     entry: null,
   });
-  const result = await Translate.resolveBankWords(['סבא', 'חתול'], {
+  const result = await Translate.resolvePictogramWords(['סבא', 'חתול'], {
     client: mockClient,
     canonicalMap: { סבא: 'grandfather' },
     resolve: mockResolve,
@@ -133,10 +133,10 @@ async function testResolveBankWords() {
   assert(result.translations.length === 2, 'translations count');
   assert(result.slots[0].hebrew === 'סבא', 'slot hebrew');
   assert(result.slots[0].english === 'grandfather', 'slot english from semantic');
-  assert(result.slots[0].status === 'hit', 'סבא bank hit');
+  assert(result.slots[0].status === 'hit', 'סבא hit');
   assert(result.slots[1].hebrew === 'חתול', 'slot2 hebrew');
   assert(result.slots[1].english === 'cat', 'slot2 english from ai');
-  console.log('PASS resolveBankWords returns hebrew + english slots');
+  console.log('PASS resolvePictogramWords returns hebrew + english slots');
 }
 
 async function run() {
@@ -145,7 +145,7 @@ async function run() {
   await testMixed();
   await testLogger();
   await testVerbToNoun();
-  await testResolveBankWords();
+  await testResolvePictogramWords();
   console.log('\nAll translate-words tests passed.');
 }
 

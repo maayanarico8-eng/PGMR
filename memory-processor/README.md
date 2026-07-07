@@ -9,6 +9,8 @@ This is a graduation project in Visual Communication. It does not aim to reconst
 ```
 vercel.json                  ← Vercel rewrite: / → memory_processor.html
 api/anthropic.js             ← server-side Anthropic proxy (uses ANTHROPIC_API_KEY)
+api/streamline.js            ← server-side Streamline proxy (uses STREAMLINE_API_KEY)
+api/streamline-mapping.js    ← local-dev writes to pictograms/streamline-mapping.json
 engine/                      ← local Rule 1 + Rule 2 + Rule 3 + pipeline
   logger.js                    ← structured smart logging
   pipeline.js                  ← full Rule 1→2→3 orchestrator
@@ -51,7 +53,19 @@ The built-in example memory is pre-filled in Mock mode; click **Analyze memory**
 
 1. Vercel dashboard → **Project → Settings → Environment Variables**
 2. Add `ANTHROPIC_API_KEY` with your Anthropic key (`sk-ant-...`)
+2. Add `STREAMLINE_API_KEY` from [streamlinehq.com/profile?tab=api_keys](https://www.streamlinehq.com/profile?tab=api_keys) for pictogram fetch
 3. Redeploy (or run `vercel --prod` from the repo root)
+
+
+### Pictogram mapping (live on production)
+
+English → Streamline icon mappings are stored in a single JSON file via **Vercel Blob** (not a database).
+
+1. Vercel dashboard → **Storage** → **Blob** → create store and link to this project
+2. Vercel auto-adds `BLOB_READ_WRITE_TOKEN`
+3. New words are saved live via `POST /api/streamline-mapping` — no git commit per word
+
+Without Blob configured, mapping falls back to the repo file `memory-processor/pictograms/streamline-mapping.json` (local dev only).
 
 For local Real mode testing, copy `.env.example` to `.env.local`, add your key, and run `vercel dev` from the repo root (opening the HTML file directly will not reach the API proxy).
 
@@ -74,7 +88,7 @@ The project is currently deployed under a temporary Vercel account pending Maaya
 
 The processor has six modes (Settings → Processor Mode):
 
-- **Bank test** — pick a sample sentence; translates representative Hebrew words to English (Anthropic batch call), then resolves local bank SVGs. Missing words show ✕.
+- **Bank test** — pick a sample sentence; translates Hebrew words to English, then resolves pictograms via `streamline-mapping.json` → Streamline HQ. Missing words show ✕.
 - **AI Words** — one Anthropic call (`claude-sonnet-5`, PROMPT_R1 verb decision tree, max 20 words). Validation + one retry; sequence order computed in code. **VRP, catalog lookup run locally.**
 - **Local** — deterministic rules only (`engine/`). Zero API. Best for curated memories and rule tuning.
 - **Mock** — pre-scripted analysis on the built-in example memory. No API.

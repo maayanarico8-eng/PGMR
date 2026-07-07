@@ -60,8 +60,10 @@
         return;
       }
 
-      const hit = catalogLookup(hebrew) || (english ? catalogLookup(english) : null);
-      if (hit) {
+      const sl = root.MemoryEngineCatalogStreamlineProvider;
+      sl?.ensureMappingLoadedSync?.();
+      const mapped = english && sl?.hasMapping?.(english);
+      if (english) {
         hits++;
         const entry = {
           unitId: u.unitId,
@@ -70,14 +72,10 @@
           word: hebrew,
           mode,
           outcome: 'hit',
-          catalogId: hit.id,
-          concept: hit.concept,
-          catalogHebrew: hit.hebrew,
-          provisional: hit.provisional,
-          source: 'bank',
+          source: mapped ? 'mapping' : 'streamline',
         };
         lookups.push(entry);
-        viableUnits.push({ hebrew, english, catalogId: hit.id, concept: hit.concept });
+        viableUnits.push({ hebrew, english, source: entry.source });
         if (logger) {
           logger.log(STAGES.LOOKUP, 'CATALOG_HIT', entry, 'Pictogram_Catalog_Specification');
         }

@@ -177,10 +177,10 @@ Non-verbs (person, object, place): use a simple noun (grandfather, newspaper, fo
   }
 
   /**
-   * Translate Hebrew representative words and resolve pictograms.
+   * Translate Hebrew representative words and resolve pictograms via Streamline mapping.
    * @returns {{ translations, slots: Array<{hebrew, english, status, svg?, source?, catalogId?, assetRef?}> }}
    */
-  async function resolveBankWords(hebrewWords, options) {
+  async function resolvePictogramWords(hebrewWords, options) {
     const opts = options || {};
     const canonicalMap = opts.canonicalMap || {};
     const { translations } = await translateHebrewWords(hebrewWords, canonicalMap, opts);
@@ -224,7 +224,8 @@ Non-verbs (person, object, place): use a simple noun (grandfather, newspaper, fo
     buildItems,
     buildCanonicalMapFromRule1,
     wordPair,
-    resolveBankWords,
+    resolvePictogramWords,
+    resolveBankWords: resolvePictogramWords,
     isActionCategory,
     STAGE,
   };

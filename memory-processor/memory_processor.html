@@ -291,7 +291,7 @@ textarea:focus{border-color:var(--b1)}
           <button class="mode-btn mode-btn-secondary" data-mode="anthropic" id="mode-anthropic" title="Full API pipeline (legacy)">Full API</button>
         </div>
         <div style="font-size:11px;color:var(--t3);line-height:1.55" id="mode-desc">
-          Bank test: pick a sample sentence — translates words to English, then resolves local bank SVGs; missing words show ✕.
+          Bank test: pick a sample sentence — translates words to English, then fetches pictograms from Streamline (mapping first).
         </div>
       </div>
     </div>
@@ -326,6 +326,8 @@ textarea:focus{border-color:var(--b1)}
 <script src="/memory-processor/engine/catalog/entries.js"></script>
 <script src="/memory-processor/engine/catalog/index.js"></script>
 <script src="/memory-processor/engine/catalog/providers/local.js"></script>
+<script src="/memory-processor/engine/catalog/streamline-session.js"></script>
+<script src="/memory-processor/engine/catalog/providers/streamline.js"></script>
 <script src="/memory-processor/engine/catalog/providers/external.js"></script>
 <script src="/memory-processor/engine/catalog/resolve.js"></script>
 <script src="/memory-processor/engine/test-sentences.js"></script>
@@ -618,7 +620,7 @@ JSON SCHEMA:
 {"ensembleReasoning":"paragraph: holistic analysis before individual classification; identify likely Independent candidates first","vrp":[{"unitId":"rw_01","unit":"string","canonicalReferent":"string","phase1":{"entityNature":"string","identityFeatures":["string"],"inherentlyVisual":true},"phase2":{"possibilityInventory":{"independentPossible":true,"independentRationale":"string","contextualPossible":false,"contextualRationale":"string","contextualDependencies":[]},"testV":{"applied":false,"alternativeMemory":null,"visuallyDistinguishable":null,"testVConclusion":"not-applicable"},"modeDecision":{"mode":"independent|contextual|both|gap","modeRationale":"string","independent":{"visualConcept":"string","constructible":true},"contextual":{"expressedThrough":["rw_01"],"relationalMechanism":"string","emergenceExplanation":"string"},"gap":{"gapType":"string","gapRationale":"string","alternativeStrategy":"string or null"}}},"phase3":{"survivabilityStatus":"string","independentConfidence":"string","contextualConfidence":"string","mutuallyReinforcing":null,"assessment":"string"},"phase4":{"h002Status":"string","auditNote":"string"}}],"vrpSummary":{"independent":0,"contextual":0,"both":0,"gap":0,"sequenceViability":"viable|partial|blocked","sequenceComment":"string"}}`;
 
 
-/* Pictogram SVGs: memory-processor/pictograms/bank/{word}.svg */
+/* Pictograms: streamline-mapping.json → Streamline HQ API */
 
 const GAP_SVG=`<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#D85A30" stroke-width="1.5" stroke-dasharray="5 4"/><text x="32" y="40" text-anchor="middle" font-family="system-ui,sans-serif" font-size="26" font-weight="600" fill="#D85A30">✕</text></svg>`;
 
@@ -806,6 +808,13 @@ function englishRefMeta(english){
   return english?`<div class="word-en-ref">EN: ${esc(english)}</div>`:'';
 }
 
+function pictogramSourceMeta(source){
+  if(source==='mapping')return '<div class="cat-hit-meta">Streamline · mapped</div>';
+  if(source==='streamline-new')return '<div class="cat-hit-meta">Streamline · new</div>';
+  if(source==='streamline')return '<div class="cat-hit-meta">Streamline</div>';
+  return '';
+}
+
 function lookupHitForUnit(u){
   const word=u.unit||'';
   const cr=(currentResult?.considerationRecord||[]).find(c=>c.fieldId===u.unitId);
@@ -842,26 +851,25 @@ async function renderBankTest(sentence){
   if(!container)return;
   const words=sentence.words||[];
   container.innerHTML=`<div class="mem-banner"><div class="mem-banner-lbl">Test sentence</div><div dir="rtl">${esc(sentence.text)}</div></div>${translationLoadingHTML()}`;
-  const{translations,slots}=await MemoryEngineCatalogTranslate.resolveBankWords(words);
+  const{translations,slots}=await MemoryEngineCatalogTranslate.resolvePictogramWords(words);
   const hits=slots.filter(s=>s.status==='hit').length;
   const gaps=slots.length-hits;
   const seqSvg=await buildBankSequence(slots,true);
   const rows=slots.map(slot=>{
     const isGap=slot.status!=='hit';
-    const hit=slot.entry;
     const meta=isGap
-      ?`<div class="cat-hit-meta" style="color:#D85A30">✕ אין צורה בספרייה</div>${hit?`<div style="font-size:10px;color:var(--t3)">${esc(slot.catalogId)} — file missing</div>`:''}`
-      :`<div class="cat-hit-meta">✓ ${esc(slot.catalogId)}${hit?.concept?' — '+esc(hit.concept):''}</div>${slot.assetRef?`<div style="font-size:10px;color:var(--t3)">${esc(slot.assetRef)}</div>`:''}`;
+      ?`<div class="cat-hit-meta" style="color:#D85A30">✕ Streamline fetch failed</div>`
+      :`${pictogramSourceMeta(slot.source)}${slot.assetRef?`<div style="font-size:10px;color:var(--t3)">${esc(slot.assetRef)}</div>`:''}`;
     return`<div class="bank-word-row${isGap?' is-gap':''}"><div class="cat-svg-wrap${isGap?' cat-gap-wrap':''}">${isGap?GAP_SVG:slot.svg}</div><div class="cat-hit-info"><div class="cat-hit-word">${esc(slot.hebrew)}</div>${englishRefMeta(slot.english)}${meta}</div></div>`;
   }).join('');
   container.innerHTML=`
     <div class="mem-banner"><div class="mem-banner-lbl">Test sentence</div><div dir="rtl">${esc(sentence.text)}</div></div>
     ${renderTranslationSection(translations)}
-    <div class="sec-label">Pictogram bank <span>${hits} hit${hits!==1?'s':''}, ${gaps} ✕</span></div>
+    <div class="sec-label">Pictograms <span>${hits} hit${hits!==1?'s':''}, ${gaps} ✕</span></div>
     <div class="bank-word-grid">${rows}</div>
     <div class="sec-label">Sequence</div>
     <div class="seq-display">${seqSvg}</div>
-    <div style="font-size:11px;color:var(--t3);margin-top:8px">SVG files load from <code style="font-size:10px">pictograms/bank/{word}.svg</code> — served statically on Vercel.</div>
+    <div style="font-size:11px;color:var(--t3);margin-top:8px">Icons resolve from <code style="font-size:10px">streamline-mapping.json</code> first, then Streamline HQ search.</div>
   `;
 }
 
@@ -1097,7 +1105,7 @@ async function renderCatalogSection(vrpResult){
   container.innerHTML=`<div class="divider"></div>${translationLoadingHTML()}`;
   const hebrewWords=units.map(u=>u.unit||'').filter(Boolean);
   const canonicalMap=MemoryEngineCatalogTranslate.buildCanonicalMapFromRule1(currentResult);
-  const{translations,slots}=await MemoryEngineCatalogTranslate.resolveBankWords(hebrewWords,{canonicalMap});
+  const{translations,slots}=await MemoryEngineCatalogTranslate.resolvePictogramWords(hebrewWords,{canonicalMap});
   const slotByHebrew=Object.fromEntries(slots.map(s=>[s.hebrew,s]));
   container.innerHTML=`<div class="divider"></div>${renderTranslationSection(translations)}<div class="sec-label">Library Lookup <span>Loading pictograms…</span></div>`;
   let hits=0,gaps=0;
@@ -1108,18 +1116,17 @@ async function renderCatalogSection(vrpResult){
     const enMeta=englishRefMeta(english);
     if(slot.status==='hit'){
       hits++;
-      const hit=slot.entry;
       const svgHtml=slot.svg||GAP_SVG;
       const isFileGap=!slot.svg;
-      const provNote=hit?.provisional?`<div class="prov-note">⚑ ${esc(hit.provisionalNote||'provisional label — requires confirmation')}</div>`:'';
+      const provNote=slot.provisional?`<div class="prov-note">⚑ new icon — added to mapping</div>`:'';
       const assetRef=slot.assetRef?`<div class="cat-hit-meta" style="font-size:10px;color:var(--t3)">${esc(slot.assetRef)}</div>`:'';
-      const gapNote=isFileGap?`<div class="cat-hit-meta" style="color:#D85A30;font-size:10px">✕ SVG file missing</div>`:'';
-      return`<div class="cat-hit${isFileGap?' cat-miss':''}"><div class="cat-svg-wrap${isFileGap?' cat-gap-wrap':''}">${svgHtml}</div><div class="cat-hit-info"><div class="cat-hit-word">${esc(hebrew)}</div>${enMeta}<div class="cat-hit-meta">✓ ${esc(slot.catalogId)}${hit?.concept?' — '+esc(hit.concept):''}${hit?.provisional?' ⚑ provisional':''}</div>${assetRef}${gapNote}${provNote}</div></div>`;
+      const gapNote=isFileGap?`<div class="cat-hit-meta" style="color:#D85A30;font-size:10px">✕ Streamline fetch failed</div>`:'';
+      return`<div class="cat-hit${isFileGap?' cat-miss':''}"><div class="cat-svg-wrap${isFileGap?' cat-gap-wrap':''}">${svgHtml}</div><div class="cat-hit-info"><div class="cat-hit-word">${esc(hebrew)}</div>${enMeta}${pictogramSourceMeta(slot.source)}${assetRef}${gapNote}${provNote}</div></div>`;
     }
     gaps++;
     const gapId='gap-'+u.unitId;
     const uploadBtn=processorMode==='anthropic'?`<div style="margin-top:8px;display:flex;align-items:center;gap:10px"><button onclick="createFileInput(${JSON.stringify(hebrew)},document.getElementById(${JSON.stringify(gapId)}))" style="padding:4px 11px;font-size:11px;font-family:var(--f);border:1px solid #C0846A;border-radius:5px;background:transparent;color:#9B4D2C;cursor:pointer">↑ Upload reference SVG</button><span class="realize-status" style="font-size:10.5px;color:var(--t3)"></span></div>`:'';
-    return`<div class="cat-miss" id="${gapId}"><div class="cat-svg-wrap cat-gap-wrap">${GAP_SVG}</div><div class="cat-miss-info"><div class="cat-miss-word">${esc(hebrew)}</div>${enMeta}<div class="cat-miss-meta">VISUAL GAP — אין צורה מבוססת בספרייה עבור "${esc(hebrew)}"</div>${uploadBtn}</div></div>`;
+    return`<div class="cat-miss" id="${gapId}"><div class="cat-svg-wrap cat-gap-wrap">${GAP_SVG}</div><div class="cat-miss-info"><div class="cat-miss-word">${esc(hebrew)}</div>${enMeta}<div class="cat-miss-meta">VISUAL GAP — Streamline could not resolve "${esc(hebrew)}"</div>${uploadBtn}</div></div>`;
   });
 
   const skippedRows=skipped.map(u=>{
@@ -1158,6 +1165,7 @@ async function analyze(){
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Analyzing';
   document.getElementById('error-card').hidden=true;
   document.getElementById('results').innerHTML='';
+  MemoryEngineStreamlineSession?.cleanup?.();
   currentResult=null;currentVrpResult=null;currentAraResult=null;currentRule3Result=null;currentPipelineTrace=null;currentFilter='all';
   // Mock scripted data only for the built-in example when explicitly in mock mode
   const useMockData=processorMode==='mock'&&text===MOCK_MEMORY;
@@ -1624,7 +1632,7 @@ document.querySelectorAll('.mode-btn').forEach(btn=>{
     const desc=document.getElementById('mode-desc');
     const isMock=processorMode==='mock';
     const descs={
-      'bank-test':'Bank test: pick a sample sentence — translates words to English, then resolves local bank SVGs; missing words show ✕.',
+      'bank-test':'Bank test: pick a sample sentence — translates words to English, then fetches pictograms from Streamline (mapping first).',
       'ai-words':'AI Words: PROMPT_R1 verb decision tree (claude-sonnet-5). VRP + catalog run locally.',
       mock:'Mock: pre-scripted pipeline on the built-in example. Catalog lookup is real.',
       hybrid:'Hybrid: local rules when supported; otherwise minimal AI word extraction + local VRP.',
@@ -1694,6 +1702,7 @@ function initBankTestChips(){
 /* ─── Pre-fill first test sentence ─── */
 (()=>{
   initBankTestChips();
+window.addEventListener('beforeunload',()=>MemoryEngineStreamlineSession?.cleanup?.());
   const first=MemoryEngineTestSentencesApi.all()[0];
   if(first)selectTestSentence(first,false);
   const picker=document.getElementById('bank-test-picker');

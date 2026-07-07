@@ -14,6 +14,8 @@ function loadEngine() {
     'catalog/entries.js',
     'catalog/index.js',
     'catalog/providers/local.js',
+    'catalog/streamline-session.js',
+    'catalog/providers/streamline.js',
     'catalog/providers/external.js',
     'catalog/resolve.js',
     'catalog/translate-words.js',
@@ -34,31 +36,38 @@ function loadEngine() {
 
 const MOCK_MEMORY = 'בשבת בבוקר, סבא היה קורא לי עיתון ושרנו ביחד.';
 
-async function testBankResolution() {
-  const entry = globalThis.MemoryEngineCatalog.lookup('סבא');
-  if (!entry || entry.id !== 'CAT-0001') {
-    throw new Error('catalog lookup for סבא failed');
-  }
-
-  const svg = await globalThis.MemoryEngineCatalogLocalProvider.loadByWord('סבא');
-  if (!svg || !svg.includes('<svg')) {
-    throw new Error('bank SVG load for סבא failed');
-  }
+async function testStreamlineResolution() {
+  globalThis.fetch = async (url) => {
+    const u = String(url);
+    if (u.includes('/api/streamline-mapping') && !u.includes('action=')) {
+      return { ok: true, async json() { return { version: 1, icons: {} }; } };
+    }
+    if (u.includes('action=search')) {
+      return {
+        ok: true,
+        async json() {
+          return { results: [{ hash: 'ico_grandfather', name: 'grandfather' }] };
+        },
+      };
+    }
+    if (u.includes('action=download')) {
+      return { ok: true, async json() { return { svg: '<svg></svg>' }; } };
+    }
+    if (u.includes('/api/streamline-mapping')) {
+      return { ok: true, async json() { return { ok: true }; } };
+    }
+    throw new Error('unexpected fetch in pipeline test: ' + u);
+  };
 
   const resolved = await globalThis.MemoryEngine.resolvePictogram('סבא', { english: 'grandfather' });
-  if (resolved.status !== 'hit' || resolved.source !== 'bank' || !resolved.svg) {
+  if (resolved.status !== 'hit' || !resolved.svg) {
     throw new Error('resolvePictogram for סבא failed');
   }
   if (resolved.hebrew !== 'סבא' || resolved.english !== 'grandfather') {
     throw new Error('resolvePictogram should return hebrew + english pair');
   }
 
-  const hits = (await globalThis.MemoryEngineCatalogResolve.resolveForWord('עיתון'));
-  if (hits.status !== 'hit' || hits.assetRef !== 'עיתון.svg') {
-    throw new Error('resolveForWord assetRef mismatch for עיתון');
-  }
-
-  console.log('Bank resolution: סבא.svg OK');
+  console.log('Streamline resolution: grandfather OK');
 }
 
 async function main() {
@@ -103,8 +112,8 @@ async function main() {
   }
 
   const hitSources = (out.rule3?.lookups || []).filter((l) => l.outcome === 'hit').map((l) => l.source);
-  if (!hitSources.every((s) => s === 'bank')) {
-    console.error('FAIL: catalog hits should have source=bank');
+  if (!hitSources.every((s) => s === 'mapping' || s === 'streamline')) {
+    console.error('FAIL: catalog hits should have source=mapping or streamline');
     process.exit(1);
   }
 
@@ -118,7 +127,7 @@ async function main() {
     process.exit(1);
   }
 
-  await testBankResolution();
+  await testStreamlineResolution();
 
   console.log('Trace events:', out.trace?.summary?.total || 0);
   console.log('PASS: full pipeline golden test');
