@@ -62,7 +62,8 @@
   }
 
   async function callClaude(body) {
-    const payload = { model: MODEL, thinking: { type: 'disabled' }, ...body };
+    // claude-fable-5 does not support thinking.type "disabled"; omit thinking (adaptive default).
+    const payload = { model: MODEL, ...body };
     let lastError;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       const res = await fetch('/api/anthropic', {
