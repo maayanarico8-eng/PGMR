@@ -10,6 +10,7 @@
     REPRESENTATIVE: '1.6',
     COMPLIANCE: '1.7',
     VRP: '2.x',
+    TRANSLATE: '3.0',
     LOOKUP: '3.x',
   };
 

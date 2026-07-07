@@ -12,6 +12,14 @@
     return cr.find((c) => c.field === unit.unit) || null;
   }
 
+  function englishForUnit(rule1Result, unit, cr) {
+    const rw = (rule1Result.representativeWords || []).find(
+      (r) => r.id === unit.unitId || r.word === unit.unit
+    );
+    const raw = rw?.canonicalReferent || cr?.canonicalReferent || null;
+    return raw ? String(raw).toLowerCase().trim() : null;
+  }
+
   function runCatalogLookup(vrpResult, rule1Result, catalogLookup, logger) {
     const STAGES = root.MemoryEngineLogger?.STAGES || { LOOKUP: '3.x' };
     const allVrp = vrpResult?.vrp || [];
@@ -24,8 +32,9 @@
 
     allVrp.forEach((u) => {
       const mode = u.phase2?.modeDecision?.mode || 'gap';
-      const word = u.unit || '';
       const cr = findConsiderationRecord(rule1Result, u);
+      const hebrew = u.unit || '';
+      const english = englishForUnit(rule1Result, u, cr);
 
       if (!['independent', 'both'].includes(mode)) {
         skipped++;
@@ -37,7 +46,9 @@
         }
         const entry = {
           unitId: u.unitId,
-          word,
+          hebrew,
+          english,
+          word: hebrew,
           mode,
           outcome: 'skipped',
           skipReason,
@@ -49,22 +60,24 @@
         return;
       }
 
-      const hit = catalogLookup(word) || (cr?.canonicalReferent ? catalogLookup(cr.canonicalReferent) : null);
+      const hit = catalogLookup(hebrew) || (english ? catalogLookup(english) : null);
       if (hit) {
         hits++;
         const entry = {
           unitId: u.unitId,
-          word,
+          hebrew,
+          english,
+          word: hebrew,
           mode,
           outcome: 'hit',
           catalogId: hit.id,
           concept: hit.concept,
-          hebrew: hit.hebrew,
+          catalogHebrew: hit.hebrew,
           provisional: hit.provisional,
           source: 'bank',
         };
         lookups.push(entry);
-        viableUnits.push({ word, catalogId: hit.id, concept: hit.concept });
+        viableUnits.push({ hebrew, english, catalogId: hit.id, concept: hit.concept });
         if (logger) {
           logger.log(STAGES.LOOKUP, 'CATALOG_HIT', entry, 'Pictogram_Catalog_Specification');
         }
@@ -72,13 +85,15 @@
         gaps++;
         const entry = {
           unitId: u.unitId,
-          word,
+          hebrew,
+          english,
+          word: hebrew,
           mode,
           outcome: 'gap',
-          canonicalReferent: cr?.canonicalReferent || null,
+          canonicalReferent: english || cr?.canonicalReferent || null,
         };
         lookups.push(entry);
-        missingUnits.push({ word, canonicalReferent: cr?.canonicalReferent });
+        missingUnits.push({ hebrew, english, canonicalReferent: english || cr?.canonicalReferent });
         if (logger) {
           logger.log(STAGES.LOOKUP, 'VISUAL_GAP', entry, 'Workflow_Grammar:3.2');
         }

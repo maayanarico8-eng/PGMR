@@ -16,6 +16,7 @@ function loadEngine() {
     'catalog/providers/local.js',
     'catalog/providers/external.js',
     'catalog/resolve.js',
+    'catalog/translate-words.js',
     'rule1/extract-event-model.js',
     'rule1/stages.js',
     'rule1/index.js',
@@ -44,9 +45,12 @@ async function testBankResolution() {
     throw new Error('bank SVG load for סבא failed');
   }
 
-  const resolved = await globalThis.MemoryEngine.resolvePictogram('סבא');
+  const resolved = await globalThis.MemoryEngine.resolvePictogram('סבא', { english: 'grandfather' });
   if (resolved.status !== 'hit' || resolved.source !== 'bank' || !resolved.svg) {
     throw new Error('resolvePictogram for סבא failed');
+  }
+  if (resolved.hebrew !== 'סבא' || resolved.english !== 'grandfather') {
+    throw new Error('resolvePictogram should return hebrew + english pair');
   }
 
   const hits = (await globalThis.MemoryEngineCatalogResolve.resolveForWord('עיתון'));
@@ -82,12 +86,18 @@ async function main() {
   const vrpModes = (out.rule2?.vrp || []).map((u) => `${u.unit}:${u.phase2?.modeDecision?.mode}`);
   console.log('VRP modes:', vrpModes.join(', '));
 
-  const hits = (out.rule3?.lookups || []).filter((l) => l.outcome === 'hit').map((l) => l.word);
-  const gaps = (out.rule3?.lookups || []).filter((l) => l.outcome === 'gap').map((l) => l.word);
-  console.log('Catalog hits:', hits.join(', ') || '(none)');
-  console.log('Visual gaps:', gaps.join(', ') || '(none)');
+  const hits = (out.rule3?.lookups || []).filter((l) => l.outcome === 'hit');
+  const gaps = (out.rule3?.lookups || []).filter((l) => l.outcome === 'gap');
+  console.log('Catalog hits:', hits.map((l) => l.hebrew).join(', ') || '(none)');
+  console.log('Visual gaps:', gaps.map((l) => l.hebrew).join(', ') || '(none)');
 
-  if (!hits.includes('סבא') || !hits.includes('עיתון')) {
+  const sabaHit = hits.find((l) => l.hebrew === 'סבא');
+  if (!sabaHit || sabaHit.english !== 'grandfather') {
+    console.error('FAIL: סבא lookup should include english=grandfather, got', sabaHit?.english);
+    process.exit(1);
+  }
+
+  if (!hits.map((l) => l.hebrew).includes('סבא') || !hits.map((l) => l.hebrew).includes('עיתון')) {
     console.error('FAIL: expected catalog hits for סבא and עיתון');
     process.exit(1);
   }

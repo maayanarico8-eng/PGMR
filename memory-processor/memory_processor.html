@@ -237,6 +237,13 @@ textarea:focus{border-color:var(--b1)}
 .bank-word-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
 .bank-word-row{display:flex;align-items:center;gap:14px;padding:10px 12px;border:1px solid var(--b2);border-radius:var(--r);background:var(--bg2)}
 .bank-word-row.is-gap{border-color:#F0997B;background:#FAECE7}
+.translate-grid{display:flex;flex-direction:column;gap:6px;margin-bottom:20px}
+.translate-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--b2);border-radius:var(--r);background:var(--bg2)}
+.translate-he{font-size:14px;font-weight:500;direction:rtl;min-width:72px}
+.translate-arrow{font-size:12px;color:var(--t3)}
+.translate-en{font-size:13px;font-weight:500;color:var(--t1);flex:1}
+.translate-source{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);padding:2px 7px;border:1px solid var(--b3);border-radius:10px;white-space:nowrap}
+.word-en-ref{font-size:10px;color:var(--t3);margin-top:2px}
 .cat-gap-wrap{background:#FAECE7;border-color:#F0997B}
 .cat-gap-wrap svg{width:52px;height:52px}
 .mode-toggle{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px}
@@ -284,7 +291,7 @@ textarea:focus{border-color:var(--b1)}
           <button class="mode-btn mode-btn-secondary" data-mode="anthropic" id="mode-anthropic" title="Full API pipeline (legacy)">Full API</button>
         </div>
         <div style="font-size:11px;color:var(--t3);line-height:1.55" id="mode-desc">
-          Bank test: pick a sample sentence — pictograms load from the local bank; missing words show ✕. No API.
+          Bank test: pick a sample sentence — translates words to English, then resolves local bank SVGs; missing words show ✕.
         </div>
       </div>
     </div>
@@ -323,6 +330,7 @@ textarea:focus{border-color:var(--b1)}
 <script src="/memory-processor/engine/catalog/resolve.js"></script>
 <script src="/memory-processor/engine/test-sentences.js"></script>
 <script src="/memory-processor/engine/anthropic-client.js"></script>
+<script src="/memory-processor/engine/catalog/translate-words.js"></script>
 <script src="/memory-processor/engine/rule1/extract-event-model.js"></script>
 <script src="/memory-processor/engine/rule1/rw-extract-prompt.js"></script>
 <script src="/memory-processor/engine/rule1/prompt-r1.js"></script>
@@ -780,6 +788,24 @@ Return ONLY this JSON — no markdown, no explanation:
 {"svg":"<svg viewBox=\\"0 0 64 64\\" xmlns=\\"http://www.w3.org/2000/svg\\" fill=\\"none\\" stroke=\\"#231F20\\" stroke-width=\\"1.5\\" stroke-linecap=\\"round\\" stroke-linejoin=\\"round\\">...</svg>","geometricDescription":"...","principle1":"category-level identity preserved because...","principle2":"recognizability: ...","principle3":"all elements use only permitted primitives","principle4":"unambiguous in isolation because..."}`;
 
 /* ─── Catalog lookup (Rule 3) ─── */
+function translationLoadingHTML(){
+  return`<div class="sec-label">Word translation <span>Translating to English…</span></div>
+    <div class="vrp-loading"><span class="vrp-dark-spinner"></span><span class="vrp-loading-txt">Preparing English terms for pictogram search…</span></div>`;
+}
+
+function renderTranslationSection(translations){
+  if(!translations?.length)return'';
+  const rows=translations.map(t=>{
+    const srcLabel=t.source==='semantic-analysis'?'semantic analysis':'translated';
+    return`<div class="translate-row"><span class="translate-he">${esc(t.hebrew)}</span><span class="translate-arrow">→</span><span class="translate-en">${esc(t.english)}</span><span class="translate-source">${esc(srcLabel)}</span></div>`;
+  }).join('');
+  return`<div class="sec-label">Word translation <span>${translations.length} word${translations.length!==1?'s':''} · English for pictogram search</span></div><div class="translate-grid">${rows}</div>`;
+}
+
+function englishRefMeta(english){
+  return english?`<div class="word-en-ref">EN: ${esc(english)}</div>`:'';
+}
+
 function lookupHitForUnit(u){
   const word=u.unit||'';
   const cr=(currentResult?.considerationRecord||[]).find(c=>c.fieldId===u.unitId);
@@ -799,27 +825,15 @@ function sequenceSlotSvg(svgHtml,size=64){
   return`<svg width="${size}" height="${size}" viewBox="${viewBox}" overflow="hidden" xmlns="http://www.w3.org/2000/svg">${svgInnerFragment(svg)}</svg>`;
 }
 
-async function resolveWordPictogram(word){
-  const hit=CAT.lookup(word);
-  if(hit){
-    const resolved=await MemoryEngineCatalogResolve.resolveEntry(hit,word);
-    if(resolved?.svg){
-      return{word,status:'hit',hit,resolved,svg:resolved.svg,assetRef:resolved.assetRef||null};
-    }
-    return{word,status:'gap',hit,resolved:null,svg:GAP_SVG,assetRef:null,reason:'catalog entry but no SVG file'};
-  }
-  return{word,status:'gap',hit:null,resolved:null,svg:GAP_SVG,assetRef:null,reason:'no catalog match'};
-}
-
-async function buildBankSequence(words,rtl=true){
-  const N=words.length;if(!N)return'';
+async function buildBankSequence(slots,rtl=true){
+  const N=slots.length;if(!N)return'';
   const ps=64,gap=24,cW=Math.max(320,N*ps+(N-1)*gap+40),cH=128;
   const totW=N*ps+(N-1)*gap,x0=(cW-totW)/2,y0=(cH-ps)/2;
-  const parts=await Promise.all(words.map(async(word,i)=>{
-    const slot=await resolveWordPictogram(word);
+  const parts=slots.map((slot,i)=>{
+    const svg=slot.status==='hit'&&slot.svg?slot.svg:GAP_SVG;
     const x=rtl?x0+(N-1-i)*(ps+gap):x0+i*(ps+gap);
-    return`<g transform="translate(${x},${y0})">${sequenceSlotSvg(slot.svg)}</g>`;
-  }));
+    return`<g transform="translate(${x},${y0})">${sequenceSlotSvg(svg)}</g>`;
+  });
   return`<svg viewBox="0 0 ${cW} ${cH}" xmlns="http://www.w3.org/2000/svg">${parts.join('')}</svg>`;
 }
 
@@ -827,19 +841,22 @@ async function renderBankTest(sentence){
   const container=document.getElementById('results');
   if(!container)return;
   const words=sentence.words||[];
-  const slots=await Promise.all(words.map(w=>resolveWordPictogram(w)));
+  container.innerHTML=`<div class="mem-banner"><div class="mem-banner-lbl">Test sentence</div><div dir="rtl">${esc(sentence.text)}</div></div>${translationLoadingHTML()}`;
+  const{translations,slots}=await MemoryEngineCatalogTranslate.resolveBankWords(words);
   const hits=slots.filter(s=>s.status==='hit').length;
   const gaps=slots.length-hits;
-  const seqSvg=await buildBankSequence(words,true);
+  const seqSvg=await buildBankSequence(slots,true);
   const rows=slots.map(slot=>{
-    const isGap=slot.status==='gap';
+    const isGap=slot.status!=='hit';
+    const hit=slot.entry;
     const meta=isGap
-      ?`<div class="cat-hit-meta" style="color:#D85A30">✕ אין צורה בספרייה</div>${slot.hit?`<div style="font-size:10px;color:var(--t3)">${esc(slot.hit.id)} — file missing</div>`:''}`
-      :`<div class="cat-hit-meta">✓ ${esc(slot.hit.id)} — ${esc(slot.hit.concept)}</div>${slot.assetRef?`<div style="font-size:10px;color:var(--t3)">${esc(slot.assetRef)}</div>`:''}`;
-    return`<div class="bank-word-row${isGap?' is-gap':''}"><div class="cat-svg-wrap${isGap?' cat-gap-wrap':''}">${slot.svg}</div><div class="cat-hit-info"><div class="cat-hit-word">${esc(slot.word)}</div>${meta}</div></div>`;
+      ?`<div class="cat-hit-meta" style="color:#D85A30">✕ אין צורה בספרייה</div>${hit?`<div style="font-size:10px;color:var(--t3)">${esc(slot.catalogId)} — file missing</div>`:''}`
+      :`<div class="cat-hit-meta">✓ ${esc(slot.catalogId)}${hit?.concept?' — '+esc(hit.concept):''}</div>${slot.assetRef?`<div style="font-size:10px;color:var(--t3)">${esc(slot.assetRef)}</div>`:''}`;
+    return`<div class="bank-word-row${isGap?' is-gap':''}"><div class="cat-svg-wrap${isGap?' cat-gap-wrap':''}">${isGap?GAP_SVG:slot.svg}</div><div class="cat-hit-info"><div class="cat-hit-word">${esc(slot.hebrew)}</div>${englishRefMeta(slot.english)}${meta}</div></div>`;
   }).join('');
   container.innerHTML=`
     <div class="mem-banner"><div class="mem-banner-lbl">Test sentence</div><div dir="rtl">${esc(sentence.text)}</div></div>
+    ${renderTranslationSection(translations)}
     <div class="sec-label">Pictogram bank <span>${hits} hit${hits!==1?'s':''}, ${gaps} ✕</span></div>
     <div class="bank-word-grid">${rows}</div>
     <div class="sec-label">Sequence</div>
@@ -848,22 +865,19 @@ async function renderBankTest(sentence){
   `;
 }
 
-async function buildSequenceSVG(vrpResult){
+async function buildSequenceSVG(vrpResult,slots){
   const units=(vrpResult?.vrp||[]).filter(u=>['independent','both'].includes(u.phase2?.modeDecision?.mode));
+  const slotByHebrew=Object.fromEntries((slots||[]).map(s=>[s.hebrew,s]));
   const N=units.length;if(!N)return'';
   const ps=64,gap=24,cW=856,cH=128;
   const totW=N*ps+(N-1)*gap,x0=(cW-totW)/2,y0=(cH-ps)/2;
   const rtl=currentResult?.memoryLanguage==='Hebrew';
   const parts=await Promise.all(units.map(async(u,i)=>{
-    const{word,hit}=lookupHitForUnit(u);
+    const hebrew=u.unit||'';
+    const slot=slotByHebrew[hebrew];
     const x=rtl?x0+(N-1-i)*(ps+gap):x0+i*(ps+gap);
-    if(hit){
-      const resolved=await MemoryEngineCatalogResolve.resolveEntry(hit,word);
-      if(resolved?.svg){
-        return`<g transform="translate(${x},${y0})">${sequenceSlotSvg(resolved.svg)}</g>`;
-      }
-    }
-    return`<g transform="translate(${x},${y0})">${sequenceSlotSvg(GAP_SVG)}</g>`;
+    const svg=slot?.status==='hit'&&slot.svg?slot.svg:GAP_SVG;
+    return`<g transform="translate(${x},${y0})">${sequenceSlotSvg(svg)}</g>`;
   }));
   const inner=parts.join('');
   return inner?`<svg viewBox="0 0 ${cW} ${cH}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`:'';
@@ -1080,25 +1094,33 @@ async function renderCatalogSection(vrpResult){
   const allVrp=vrpResult?.vrp||[];
   const units=allVrp.filter(u=>['independent','both'].includes(u.phase2?.modeDecision?.mode));
   const skipped=allVrp.filter(u=>!['independent','both'].includes(u.phase2?.modeDecision?.mode));
-  container.innerHTML=`<div class="divider"></div><div class="sec-label">Library Lookup <span>Loading pictograms…</span></div>`;
+  container.innerHTML=`<div class="divider"></div>${translationLoadingHTML()}`;
+  const hebrewWords=units.map(u=>u.unit||'').filter(Boolean);
+  const canonicalMap=MemoryEngineCatalogTranslate.buildCanonicalMapFromRule1(currentResult);
+  const{translations,slots}=await MemoryEngineCatalogTranslate.resolveBankWords(hebrewWords,{canonicalMap});
+  const slotByHebrew=Object.fromEntries(slots.map(s=>[s.hebrew,s]));
+  container.innerHTML=`<div class="divider"></div>${renderTranslationSection(translations)}<div class="sec-label">Library Lookup <span>Loading pictograms…</span></div>`;
   let hits=0,gaps=0;
-  const rows=await Promise.all(units.map(async u=>{
-    const{word,hit,cr}=lookupHitForUnit(u);
-    if(hit){
+  const rows=units.map(u=>{
+    const hebrew=u.unit||'';
+    const slot=slotByHebrew[hebrew]||{hebrew,english:null,status:'gap'};
+    const english=slot.english;
+    const enMeta=englishRefMeta(english);
+    if(slot.status==='hit'){
       hits++;
-      const resolved=await MemoryEngineCatalogResolve.resolveEntry(hit,word);
-      const svgHtml=resolved?.svg||GAP_SVG;
-      const isFileGap=!resolved?.svg;
-      const provNote=hit.provisional?`<div class="prov-note">⚑ ${esc(hit.provisionalNote||'provisional label — requires confirmation')}</div>`:'';
-      const assetRef=resolved?.assetRef?`<div class="cat-hit-meta" style="font-size:10px;color:var(--t3)">${esc(resolved.assetRef)}</div>`:'';
+      const hit=slot.entry;
+      const svgHtml=slot.svg||GAP_SVG;
+      const isFileGap=!slot.svg;
+      const provNote=hit?.provisional?`<div class="prov-note">⚑ ${esc(hit.provisionalNote||'provisional label — requires confirmation')}</div>`:'';
+      const assetRef=slot.assetRef?`<div class="cat-hit-meta" style="font-size:10px;color:var(--t3)">${esc(slot.assetRef)}</div>`:'';
       const gapNote=isFileGap?`<div class="cat-hit-meta" style="color:#D85A30;font-size:10px">✕ SVG file missing</div>`:'';
-      return`<div class="cat-hit${isFileGap?' cat-miss':''}"><div class="cat-svg-wrap${isFileGap?' cat-gap-wrap':''}">${svgHtml}</div><div class="cat-hit-info"><div class="cat-hit-word">${esc(word)}</div><div class="cat-hit-meta">✓ ${esc(hit.id)} — ${esc(hit.concept)}${hit.hebrew&&hit.hebrew!==word?' / '+esc(hit.hebrew):''}${hit.provisional?' ⚑ provisional':''}</div>${assetRef}${gapNote}${provNote}</div></div>`;
+      return`<div class="cat-hit${isFileGap?' cat-miss':''}"><div class="cat-svg-wrap${isFileGap?' cat-gap-wrap':''}">${svgHtml}</div><div class="cat-hit-info"><div class="cat-hit-word">${esc(hebrew)}</div>${enMeta}<div class="cat-hit-meta">✓ ${esc(slot.catalogId)}${hit?.concept?' — '+esc(hit.concept):''}${hit?.provisional?' ⚑ provisional':''}</div>${assetRef}${gapNote}${provNote}</div></div>`;
     }
     gaps++;
     const gapId='gap-'+u.unitId;
-    const uploadBtn=processorMode==='anthropic'?`<div style="margin-top:8px;display:flex;align-items:center;gap:10px"><button onclick="createFileInput(${JSON.stringify(word)},document.getElementById(${JSON.stringify(gapId)}))" style="padding:4px 11px;font-size:11px;font-family:var(--f);border:1px solid #C0846A;border-radius:5px;background:transparent;color:#9B4D2C;cursor:pointer">↑ Upload reference SVG</button><span class="realize-status" style="font-size:10.5px;color:var(--t3)"></span></div>`:'';
-    return`<div class="cat-miss" id="${gapId}"><div class="cat-svg-wrap cat-gap-wrap">${GAP_SVG}</div><div class="cat-miss-info"><div class="cat-miss-word">${esc(word)}</div><div class="cat-miss-meta">VISUAL GAP — אין צורה מבוססת בספרייה עבור "${esc(word)}"</div>${cr?.canonicalReferent?`<div style="font-size:10px;color:#9B4D2C;margin-top:2px">canonical: ${esc(cr.canonicalReferent)}</div>`:''}${uploadBtn}</div></div>`;
-  }));
+    const uploadBtn=processorMode==='anthropic'?`<div style="margin-top:8px;display:flex;align-items:center;gap:10px"><button onclick="createFileInput(${JSON.stringify(hebrew)},document.getElementById(${JSON.stringify(gapId)}))" style="padding:4px 11px;font-size:11px;font-family:var(--f);border:1px solid #C0846A;border-radius:5px;background:transparent;color:#9B4D2C;cursor:pointer">↑ Upload reference SVG</button><span class="realize-status" style="font-size:10.5px;color:var(--t3)"></span></div>`:'';
+    return`<div class="cat-miss" id="${gapId}"><div class="cat-svg-wrap cat-gap-wrap">${GAP_SVG}</div><div class="cat-miss-info"><div class="cat-miss-word">${esc(hebrew)}</div>${enMeta}<div class="cat-miss-meta">VISUAL GAP — אין צורה מבוססת בספרייה עבור "${esc(hebrew)}"</div>${uploadBtn}</div></div>`;
+  });
 
   const skippedRows=skipped.map(u=>{
     const mode=u.phase2?.modeDecision?.mode||'gap';
@@ -1108,12 +1130,13 @@ async function renderCatalogSection(vrpResult){
     return`<div class="cat-skip${isGap?' cat-skip-gap':''}"><div class="cat-skip-icon" title="No catalog lookup">—</div><div class="cat-skip-info"><div class="cat-skip-word">${esc(u.unit||'')} ${modeBadge(mode)}</div><div class="cat-skip-meta">${esc(buildSkippedLookupReason(u))}</div>${anchorChips}</div></div>`;
   });
 
-  const seqSvg=await buildSequenceSVG(vrpResult);
+  const seqSvg=await buildSequenceSVG(vrpResult,slots);
   const hasSeq=!!seqSvg;
   const lookupSummary=`${units.length} of ${allVrp.length} unit${allVrp.length!==1?'s':''} looked up · ${hits} hit${hits!==1?'s':''}, ${gaps} gap${gaps!==1?'s':''}${skipped.length?`, ${skipped.length} excluded`:''}`;
 
   container.innerHTML=`
     <div class="divider"></div>
+    ${renderTranslationSection(translations)}
     <div class="sec-label">Library Lookup <span>${lookupSummary}</span></div>
     ${rows.join('')}
     ${skipped.length?`<div style="margin-top:16px"><div class="sec-label" style="margin-bottom:10px">Excluded from lookup <span>${skipped.length} unit${skipped.length!==1?'s':''}</span></div>${skippedRows.join('')}</div>`:''}
@@ -1601,7 +1624,7 @@ document.querySelectorAll('.mode-btn').forEach(btn=>{
     const desc=document.getElementById('mode-desc');
     const isMock=processorMode==='mock';
     const descs={
-      'bank-test':'Bank test: pick a sample sentence — pictograms from pictograms/bank/; missing words show ✕. No API.',
+      'bank-test':'Bank test: pick a sample sentence — translates words to English, then resolves local bank SVGs; missing words show ✕.',
       'ai-words':'AI Words: PROMPT_R1 verb decision tree (claude-sonnet-5). VRP + catalog run locally.',
       mock:'Mock: pre-scripted pipeline on the built-in example. Catalog lookup is real.',
       hybrid:'Hybrid: local rules when supported; otherwise minimal AI word extraction + local VRP.',

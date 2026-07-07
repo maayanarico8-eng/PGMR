@@ -14,6 +14,7 @@ engine/                      ← local Rule 1 + Rule 2 + Rule 3 + pipeline
   pipeline.js                  ← full Rule 1→2→3 orchestrator
   run.js                       ← CLI for chat tuning loop
   catalog/                     ← shared pictogram library
+    translate-words.js           ← Hebrew → English batch translation for pictogram search
   anthropic-client.js          ← claude-sonnet-5 client, 429 backoff, JSON parse
   rule1/                       ← PROMPT_R1 decision-tree pipeline
     prompt-r1.js                 ← verb decision tree prompt (verbatim)
@@ -71,16 +72,23 @@ The project is currently deployed under a temporary Vercel account pending Maaya
 5. Deploy; Vercel will pick up [`vercel.json`](../vercel.json) automatically
 6. Optionally add collaborators as Team Members for shared access
 
-The processor has five modes (Settings → Processor Mode):
+The processor has six modes (Settings → Processor Mode):
 
+- **Bank test** — pick a sample sentence; translates representative Hebrew words to English (Anthropic batch call), then resolves local bank SVGs. Missing words show ✕.
 - **AI Words** — one Anthropic call (`claude-sonnet-5`, PROMPT_R1 verb decision tree, max 20 words). Validation + one retry; sequence order computed in code. **VRP, catalog lookup run locally.**
 - **Local** — deterministic rules only (`engine/`). Zero API. Best for curated memories and rule tuning.
 - **Mock** — pre-scripted analysis on the built-in example memory. No API.
 - **Hybrid** — local Rule 1 when supported; otherwise falls back to **AI Words** (not full API).
 - **Full API** — PROMPT_R1 Rule 1 + VRP + ARA via `claude-sonnet-5` (highest cost).
 
-**AI Words / Hybrid / Full API** require `ANTHROPIC_API_KEY` on Vercel. All Anthropic calls use `claude-sonnet-5`.
+**Bank test / AI Words / Hybrid / Full API** require `ANTHROPIC_API_KEY` on Vercel for translation and/or semantic analysis. All Anthropic calls use `claude-sonnet-5`.
 
+
+Run translate-words tests:
+
+```bash
+node memory-processor/engine/catalog/translate-words.test.js
+```
 
 Run PROCESSOR_SPEC pipeline tests:
 
@@ -110,7 +118,7 @@ In **AI Words / Hybrid** mode, the processor:
 In **Full API** mode, the processor:
 1. Parses the written memory into semantic fields, applies the Memory Identity Gate (D1/D2), and selects Representative Words (Rule 1)
 2. Plans how each Representative Word should be visually expressed — independent pictogram, contextual (sequence-based), or both (Rule 2)
-3. Looks up each independently-represented word against the real pictogram library. A match renders the pictogram and logs `CATALOG_HIT`. No match logs `VISUAL_GAP` — the gap is surfaced, not hidden or invented (Rule 3)
+3. Looks up each independently-represented word against the real pictogram library. Before lookup, Hebrew representative words are translated to English (reusing Rule 1 `canonicalReferent` when available, otherwise a batch Anthropic call). A match renders the pictogram and logs `CATALOG_HIT`. No match logs `VISUAL_GAP` — the gap is surfaced, not hidden or invented (Rule 3)
 4. For `VISUAL_GAP` cases in **Anthropic** mode, a reference SVG can be uploaded for automatic Rule 3 realization. In **Local/Hybrid** mode, gaps remain for manual designer workflow.
 
 The Visual Representation Plan may list more units than Library Lookup processes. Units classified as **Contextual** in Rule 2 remain in the plan but are intentionally excluded from catalog lookup because their meaning is expressed through other pictograms in the sequence.
