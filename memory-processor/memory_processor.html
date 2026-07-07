@@ -822,16 +822,15 @@ function lookupHitForUnit(u){
   return{word,hit,cr};
 }
 
-function svgInnerFragment(svgHtml){
-  return(svgHtml||'').replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'');
-}
-
-/** Nest a pictogram in a sequence row — preserves viewBox crop from bank sprite files. */
+/** Resize a pictogram for the sequence row while preserving root SVG attributes (e.g. fill="none"). */
 function sequenceSlotSvg(svgHtml,size=64){
-  const svg=svgHtml||'';
-  const vbMatch=svg.match(/viewBox="([^"]+)"/);
-  const viewBox=vbMatch?vbMatch[1]:`0 0 ${size} ${size}`;
-  return`<svg width="${size}" height="${size}" viewBox="${viewBox}" overflow="hidden" xmlns="http://www.w3.org/2000/svg">${svgInnerFragment(svg)}</svg>`;
+  const svg=(svgHtml||'').trim();
+  if(!/^<svg/i.test(svg))return svg;
+  return svg.replace(/^<svg([^>]*)>/i,(match,attrs)=>{
+    let a=attrs.replace(/\s(?:width|height)="[^"]*"/gi,'');
+    if(!/\bviewBox=/i.test(a))a+=` viewBox="0 0 ${size} ${size}"`;
+    return`<svg width="${size}" height="${size}"${a} overflow="hidden">`;
+  });
 }
 
 async function buildBankSequence(slots,rtl=true){
