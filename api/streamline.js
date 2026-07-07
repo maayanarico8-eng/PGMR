@@ -18,10 +18,14 @@ module.exports = async (req, res) => {
         return;
       }
       const params = new URLSearchParams({
-        productType: 'icons',
+        productType: String(q.productType || 'icons'),
         query: String(query),
         limit: String(q.limit || '10'),
+        productTier: String(q.productTier || 'free'),
       });
+      if (q.style) params.set('style', String(q.style));
+      if (q.offset != null && q.offset !== '') params.set('offset', String(q.offset));
+
       const upstream = await fetch(`https://public-api.streamlinehq.com/v1/search/global?${params}`, {
         headers: { 'x-api-key': apiKey },
       });

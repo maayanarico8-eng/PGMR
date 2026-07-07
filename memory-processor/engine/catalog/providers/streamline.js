@@ -4,6 +4,13 @@
 (function (root) {
   const MAPPING_API_URL = '/api/streamline-mapping';
 
+  const DEFAULT_SEARCH_PARAMS = {
+    productType: 'icons',
+    productTier: 'free',
+    style: 'line',
+    limit: 10,
+  };
+
   const DEFAULT_DOWNLOAD_PARAMS = {
     size: 64,
     responsive: true,
@@ -17,6 +24,10 @@
 
   function normalizeEnglish(s) {
     return (s || '').toLowerCase().trim();
+  }
+
+  function isPremiumDownloadError(message) {
+    return /paying customers|premium|forbidden|not have access|don't have access/i.test(message || '');
   }
 
   function mappingFileCandidates() {
@@ -103,12 +114,19 @@
     }
   }
 
-  function pickIcon(results, english) {
+  function rankIconCandidates(results, english) {
     const list = results || [];
-    if (!list.length) return null;
+    if (!list.length) return [];
     const key = normalizeEnglish(english);
-    const exact = list.find((r) => normalizeEnglish(r.name) === key);
-    return exact || list[0];
+    const free = list.filter((r) => r.isFree);
+    const pool = free.length ? free : list;
+    const exact = pool.find((r) => normalizeEnglish(r.name) === key);
+    const rest = pool.filter((r) => r !== exact);
+    return exact ? [exact, ...rest] : pool;
+  }
+
+  function pickIcon(results, english) {
+    return rankIconCandidates(results, english)[0] || null;
   }
 
   async function apiCall(action, params) {
@@ -125,13 +143,58 @@
     return body;
   }
 
-  async function searchIcons(query) {
-    return apiCall('search', { query });
+  async function searchIcons(query, searchParams) {
+    return apiCall('search', {
+      query,
+      ...DEFAULT_SEARCH_PARAMS,
+      ...(searchParams || {}),
+    });
   }
 
   async function downloadSvg(hash, downloadParams) {
     const params = { hash, ...(downloadParams || DEFAULT_DOWNLOAD_PARAMS) };
     return apiCall('download', params);
+  }
+
+  async function tryDownloadCandidates(candidates, downloadParams) {
+    for (const icon of candidates) {
+      if (!icon?.hash) continue;
+      try {
+        const svg = await downloadSvg(icon.hash, downloadParams);
+        return { svg, icon };
+      } catch (err) {
+        if (isPremiumDownloadError(err.message)) continue;
+        throw err;
+      }
+    }
+    return { svg: null, icon: null };
+  }
+
+  async function resolveFromSearch(term, searchParams) {
+    const searchResult = await searchIcons(term, searchParams);
+    const candidates = rankIconCandidates(searchResult?.results, term);
+    if (!candidates.length) return null;
+
+    const downloadParams = { ...DEFAULT_DOWNLOAD_PARAMS };
+    const { svg, icon } = await tryDownloadCandidates(candidates, downloadParams);
+    if (!svg || !icon) return null;
+
+    const entry = {
+      hash: icon.hash,
+      iconName: icon.name || term,
+      downloadParams,
+      searchParams: { ...DEFAULT_SEARCH_PARAMS, ...(searchParams || {}) },
+      searchQuery: term,
+      updatedAt: new Date().toISOString(),
+    };
+    await saveMappingEntry(term, entry);
+
+    root.MemoryEngineStreamlineSession?.register(svg, {
+      english: term,
+      hash: icon.hash,
+      source: 'streamline-new',
+    });
+    return { svg, source: 'streamline-new', hash: icon.hash, english: term };
   }
 
   async function resolveIcon(english) {
@@ -142,36 +205,21 @@
     const mapped = getMappedEntry(term);
 
     if (mapped?.hash) {
-      const svg = await downloadSvg(mapped.hash, mapped.downloadParams || DEFAULT_DOWNLOAD_PARAMS);
-      root.MemoryEngineStreamlineSession?.register(svg, {
-        english: term,
-        hash: mapped.hash,
-        source: 'mapping',
-      });
-      return { svg, source: 'mapping', hash: mapped.hash, english: term };
+      try {
+        const svg = await downloadSvg(mapped.hash, mapped.downloadParams || DEFAULT_DOWNLOAD_PARAMS);
+        root.MemoryEngineStreamlineSession?.register(svg, {
+          english: term,
+          hash: mapped.hash,
+          source: 'mapping',
+        });
+        return { svg, source: 'mapping', hash: mapped.hash, english: term };
+      } catch (err) {
+        if (!isPremiumDownloadError(err.message)) throw err;
+        if (mappingCache?.icons) delete mappingCache.icons[term];
+      }
     }
 
-    const searchResult = await searchIcons(term);
-    const picked = pickIcon(searchResult?.results, term);
-    if (!picked?.hash) return null;
-
-    const downloadParams = { ...DEFAULT_DOWNLOAD_PARAMS };
-    const svg = await downloadSvg(picked.hash, downloadParams);
-    const entry = {
-      hash: picked.hash,
-      iconName: picked.name || term,
-      downloadParams,
-      searchQuery: term,
-      updatedAt: new Date().toISOString(),
-    };
-    await saveMappingEntry(term, entry);
-
-    root.MemoryEngineStreamlineSession?.register(svg, {
-      english: term,
-      hash: picked.hash,
-      source: 'streamline-new',
-    });
-    return { svg, source: 'streamline-new', hash: picked.hash, english: term };
+    return resolveFromSearch(term, mapped?.searchParams);
   }
 
   async function fetchPictogram({ english, canonicalReferent, englishWord }) {
@@ -192,12 +240,16 @@
     hasMapping,
     saveMappingEntry,
     pickIcon,
+    rankIconCandidates,
     searchIcons,
     downloadSvg,
+    tryDownloadCandidates,
     resolveIcon,
     fetchPictogram,
     clearMappingCache,
+    DEFAULT_SEARCH_PARAMS,
     DEFAULT_DOWNLOAD_PARAMS,
     normalizeEnglish,
+    isPremiumDownloadError,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
