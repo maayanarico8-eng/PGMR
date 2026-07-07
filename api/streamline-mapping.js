@@ -8,6 +8,18 @@ function emptyMapping() {
   return { version: 1, icons: {} };
 }
 
+function hasBlobConfig() {
+  return !!(process.env.BLOB_STORE_ID || process.env.BLOB_READ_WRITE_TOKEN);
+}
+
+function blobAuthHeaders() {
+  const oidc = process.env.VERCEL_OIDC_TOKEN?.trim();
+  if (oidc) return { Authorization: `Bearer ${oidc}` };
+  const rw = process.env.BLOB_READ_WRITE_TOKEN?.trim();
+  if (rw) return { Authorization: `Bearer ${rw}` };
+  return {};
+}
+
 function readMappingFromDisk() {
   if (!fs.existsSync(MAPPING_PATH)) {
     return emptyMapping();
@@ -21,17 +33,14 @@ function writeMappingToDisk(mapping) {
 }
 
 async function readMappingFromBlob() {
-  const token = process.env.BLOB_READ_WRITE_TOKEN?.trim();
-  if (!token) return null;
+  if (!hasBlobConfig()) return null;
 
   const { list } = await import('@vercel/blob');
-  const { blobs } = await list({ prefix: BLOB_PATHNAME, limit: 1, token });
+  const { blobs } = await list({ prefix: BLOB_PATHNAME, limit: 1 });
   if (!blobs.length) return null;
 
   const downloadUrl = blobs[0].downloadUrl || blobs[0].url;
-  const res = await fetch(downloadUrl, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await fetch(downloadUrl, { headers: blobAuthHeaders() });
   if (!res.ok) {
     throw new Error(`Failed to fetch blob mapping (${res.status})`);
   }
@@ -39,18 +48,12 @@ async function readMappingFromBlob() {
 }
 
 async function writeMappingToBlob(mapping) {
-  const token = process.env.BLOB_READ_WRITE_TOKEN?.trim();
-  if (!token) {
-    throw new Error('BLOB_READ_WRITE_TOKEN is not configured');
-  }
-
   const { put } = await import('@vercel/blob');
   await put(BLOB_PATHNAME, JSON.stringify(mapping, null, 2), {
     access: 'private',
     contentType: 'application/json',
     addRandomSuffix: false,
     allowOverwrite: true,
-    token,
   });
 }
 
@@ -65,10 +68,12 @@ async function readMapping() {
 }
 
 async function writeMapping(mapping) {
-  const token = process.env.BLOB_READ_WRITE_TOKEN?.trim();
-  if (token) {
+  if (hasBlobConfig()) {
     await writeMappingToBlob(mapping);
     return 'blob';
+  }
+  if (process.env.VERCEL === '1') {
+    throw new Error('Blob store not linked. Connect pgmr-blob to this project in Vercel Storage.');
   }
   writeMappingToDisk(mapping);
   return 'disk';
