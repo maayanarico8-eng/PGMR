@@ -1,8 +1,9 @@
 /**
- * Anthropic API client — claude-fable-5, 429 backoff, robust JSON parse.
+ * Anthropic API client — Rule 1 uses claude-sonnet-5; other calls default to claude-fable-5.
  */
 (function (root) {
   const MODEL = 'claude-fable-5';
+  const RULE1_MODEL = 'claude-sonnet-5';
   const MAX_ATTEMPTS = 4;
 
   function sleep(ms) {
@@ -62,8 +63,7 @@
   }
 
   async function callClaude(body) {
-    // claude-fable-5 does not support thinking.type "disabled"; omit thinking (adaptive default).
-    const payload = { model: MODEL, ...body };
+    const payload = { model: body.model || MODEL, ...body };
     let lastError;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       const res = await fetch('/api/anthropic', {
@@ -90,5 +90,11 @@
     return parseModelJSON(await callClaude(body));
   }
 
-  root.MemoryEngineAnthropic = { MODEL, callClaude, callClaudeJSON, parseModelJSON };
+  root.MemoryEngineAnthropic = {
+    MODEL,
+    RULE1_MODEL,
+    callClaude,
+    callClaudeJSON,
+    parseModelJSON,
+  };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

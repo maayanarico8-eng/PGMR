@@ -1,9 +1,9 @@
 /**
- * Build minimal Rule 1 result from AI word extraction (3–10 words).
+ * Build minimal Rule 1 result from AI word extraction (2–10 words).
  * Rule 2+3 consume representativeWords locally — no further AI.
  */
 (function (root) {
-  const MIN_WORDS = 3;
+  const MIN_WORDS = 2;
   const MAX_WORDS = 10;
 
   function id(prefix, n) {
@@ -108,7 +108,7 @@
       coreNarrative: memoryText.trim().slice(0, 200),
       memoryFrame: {
         location: null,
-        temporalContext: 'singular',
+        temporalContext: aiResponse.temporalContext || 'singular',
         recurrencePattern: null,
         period: null,
       },

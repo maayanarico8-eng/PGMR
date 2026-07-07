@@ -32,16 +32,39 @@ function testAssignSequence(rule1) {
 
 function testValidation(rule1) {
   const memory = 'סבא היה מכין לי אורז';
-  const base = { memoryLanguage: 'Hebrew', representativeWords: [{ word: 'סבא' }, { word: 'מכין' }, { word: 'לי' }] };
+  const base = {
+    representativeWords: [{ word: 'סבא' }, { word: 'מכין' }, { word: 'לי' }],
+    decisionPath: [{ verb: 'מכין', exitStep: 'V3-enters' }],
+  };
   assert(rule1.validateRule1Output(base, memory).length === 0, 'valid should pass');
   console.log('PASS T6: valid words pass');
+
   const invented = { ...base, representativeWords: [...base.representativeWords, { word: 'ממציא' }] };
   assert(rule1.validateRule1Output(invented, memory).some((e) => e.includes('ממציא')), 'invented');
   console.log('PASS T6: invented word fails');
-  const tooFew = { ...base, representativeWords: [{ word: 'סבא' }, { word: 'מכין' }] };
-  assert(rule1.validateRule1Output(tooFew, memory).some((e) => e.includes('minimum')), 'min');
-  console.log('PASS T7: 2 words fails');
-  const tooMany = { ...base, representativeWords: Array.from({ length: 11 }, (_, i) => ({ word: `w${i}` })) };
+
+  const missingVerb = {
+    representativeWords: [{ word: 'סבא' }, { word: 'לי' }],
+    decisionPath: [{ verb: 'מכין', exitStep: 'V3-enters' }],
+  };
+  assert(
+    rule1.validateRule1Output(missingVerb, memory).some((e) => e.includes('V3-enters')),
+    'decisionPath'
+  );
+  console.log('PASS T5: decisionPath V3-enters without matching word fails');
+
+  const twoWords = { representativeWords: [{ word: 'סבא' }, { word: 'מכין' }], decisionPath: [] };
+  assert(rule1.validateRule1Output(twoWords, memory).length === 0, 'two words ok');
+  console.log('PASS T7: 2 words passes');
+
+  const oneWord = { representativeWords: [{ word: 'סבא' }], decisionPath: [] };
+  assert(rule1.validateRule1Output(oneWord, memory).some((e) => e.includes('minimum')), 'min');
+  console.log('PASS T7: 1 word fails');
+
+  const tooMany = {
+    representativeWords: Array.from({ length: 11 }, (_, i) => ({ word: 'סבא' })),
+    decisionPath: [],
+  };
   assert(rule1.validateRule1Output(tooMany, memory).some((e) => e.includes('maximum')), 'max');
   console.log('PASS T7: 11 words fails');
 }

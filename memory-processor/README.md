@@ -14,9 +14,9 @@ engine/                      ← local Rule 1 + Rule 2 + Rule 3 + pipeline
   pipeline.js                  ← full Rule 1→2→3 orchestrator
   run.js                       ← CLI for chat tuning loop
   catalog/                     ← shared pictogram library
-  anthropic-client.js          ← claude-fable-5 client, 429 backoff, JSON parse
-  rule1/                       ← extract + stages 1.3–1.7 + PROMPT_R1 pipeline
-    prompt-r1.js                 ← Stages 1.1–1.7 semantic analysis prompt (verbatim)
+  anthropic-client.js          ← claude-sonnet-5 (Rule 1) / claude-fable-5 (VRP/ARA/R3)
+  rule1/                       ← PROMPT_R1 decision-tree pipeline
+    prompt-r1.js                 ← verb decision tree prompt (verbatim)
     semantic-analysis-pipeline.js ← guard, validate, retry, assignSequence
     rw-extract-prompt.js         ← legacy minimal prompt (unused in API modes)
     build-from-words.js          ← legacy AI words adapter
@@ -73,13 +73,13 @@ The project is currently deployed under a temporary Vercel account pending Maaya
 
 The processor has five modes (Settings → Processor Mode):
 
-- **AI Words** — one Anthropic call (`claude-fable-5`, PROMPT_R1 Stages 1.1–1.7, max 20 words). Validation + one retry; sequence order computed in code. **VRP, catalog lookup run locally.**
+- **AI Words** — one Anthropic call (`claude-sonnet-5`, PROMPT_R1 verb decision tree, max 20 words). Validation + one retry; sequence order computed in code. **VRP, catalog lookup run locally.**
 - **Local** — deterministic rules only (`engine/`). Zero API. Best for curated memories and rule tuning.
 - **Mock** — pre-scripted analysis on the built-in example memory. No API.
 - **Hybrid** — local Rule 1 when supported; otherwise falls back to **AI Words** (not full API).
-- **Full API** — PROMPT_R1 Rule 1 + VRP + ARA via `claude-fable-5` (highest cost).
+- **Full API** — PROMPT_R1 Rule 1 (`claude-sonnet-5`) + VRP + ARA via `claude-fable-5` (highest cost).
 
-**AI Words / Hybrid / Full API** require `ANTHROPIC_API_KEY` on Vercel. Rule 1 uses PROMPT_R1 with `claude-fable-5`; VRP and catalog lookup run locally in AI Words and Hybrid modes.
+**AI Words / Hybrid / Full API** require `ANTHROPIC_API_KEY` on Vercel. Rule 1 uses PROMPT_R1 with `claude-sonnet-5`; VRP/ARA/R3 use `claude-fable-5` in Full API mode.
 
 
 Run PROCESSOR_SPEC pipeline tests:

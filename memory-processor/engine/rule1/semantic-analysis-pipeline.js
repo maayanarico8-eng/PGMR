@@ -3,10 +3,11 @@
  */
 (function (root) {
   const PREFIXES = ['וה', 'של', 'ול', 'וב', 'ומ', 'וכ', 'וש', 'שה', 'לה', 'בה', 'מה', 'כש', 'ו', 'ה', 'ל', 'ב', 'מ', 'כ', 'ש'];
-  const MIN_WORDS = 3;
+  const MIN_WORDS = 2;
   const MAX_WORDS = 10;
   const MAX_MEMORY_WORDS = 20;
   const JSON_SYSTEM = 'You output only valid JSON. No markdown. No code fences. No explanation.';
+  const ENTER_EXITS = ['V3-enters', 'V4-creation-enters', 'V4-modification-enters'];
 
   function wordCount(text) {
     return text.trim().split(/\s+/).filter(Boolean).length;
@@ -63,12 +64,23 @@
       errors.push('parsed output is not an object');
       return errors;
     }
-    if (!parsed.memoryLanguage) errors.push('missing memoryLanguage');
     const rws = parsed.representativeWords;
     if (!Array.isArray(rws)) {
       errors.push('missing representativeWords array');
       return errors;
     }
+    const dp = parsed.decisionPath || [];
+    dp.forEach((d) => {
+      if (ENTER_EXITS.includes(d.exitStep)) {
+        const verb = d.verb || '';
+        const found = rws.some(
+          (r) => r.word === verb || (r.word && verb && (r.word.includes(verb) || verb.includes(r.word)))
+        );
+        if (!found) {
+          errors.push(`verb "${verb}" exited ${d.exitStep} but is missing from representativeWords`);
+        }
+      }
+    });
     rws.forEach((r) => {
       const w = (r.word || '').trim();
       if (w && !memoryText.includes(w)) errors.push(`word "${w}" does not appear in the written memory`);
@@ -81,37 +93,52 @@
     return errors;
   }
 
-  function normalizeConsiderationForUi(record) {
-    if (!Array.isArray(record)) return [];
-    return record.map((c) => {
-      const isConstituent =
-        c.finalClassification === 'constituent' ||
-        c.finalClassification === 'constituent-conservative-default' ||
-        c.gateOutcome === 'direct-automatic' ||
-        c.gateOutcome === 'constituent' ||
-        c.gateOutcome === 'constituent-conservative-default';
-      return {
-        ...c,
-        identityGate: c.identityGate || (c.gateOutcome === 'direct-automatic' || isConstituent ? 'changes-identity' : 'reduces-detail'),
-        identityGateReason: c.identityGateReason || c.gateReason || c.rationale || '',
-        decision: c.decision || (isConstituent ? 'representative' : 'semantic-only'),
-        criterion1: c.criterion1 || 'not-evaluated',
-        criterion2: c.criterion2 || 'not-evaluated',
-        criterion3: c.criterion3 || 'not-evaluated',
-        criterion4: c.criterion4 || 'not-evaluated',
-        decisionReason: c.decisionReason || c.rationale || c.gateReason || '',
-      };
-    });
+  function isLeanSchema(parsed) {
+    return Array.isArray(parsed.representativeWords) && !parsed.memoryLanguage;
   }
 
   function finalizeRule1(parsed, memoryText) {
+    if (isLeanSchema(parsed)) {
+      const sequenced = assignSequence(parsed.representativeWords || [], memoryText);
+      const build = root.MemoryEngineRule1.buildRule1FromWords;
+      if (!build) throw new Error('buildRule1FromWords is not loaded');
+      const result = build(
+        memoryText,
+        { representativeWords: sequenced, temporalContext: parsed.temporalContext },
+        null
+      );
+      result.representativeWords = sequenced.map((rw, i) => ({
+        ...result.representativeWords[i],
+        ...rw,
+        id: result.representativeWords[i]?.id || `rw_${String(i + 1).padStart(2, '0')}`,
+        sourceText: rw.sourceText || rw.word,
+        narrativePosition: rw.sequencePosition,
+      }));
+      if (parsed.temporalContext) {
+        result.memoryFrame = result.memoryFrame || {};
+        result.memoryFrame.temporalContext = parsed.temporalContext;
+      }
+      result._engine = {
+        source: 'processor-spec-r1',
+        stages: 'decision-tree',
+        model: root.MemoryEngineAnthropic?.RULE1_MODEL || 'claude-sonnet-5',
+        decisionPath: parsed.decisionPath || [],
+      };
+      result.validationStatus = parsed.validationStatus;
+      result.validationNote = parsed.validationNote;
+      return result;
+    }
+
     const result = { ...parsed };
     result.representativeWords = assignSequence(result.representativeWords || [], memoryText);
-    result.considerationRecord = normalizeConsiderationForUi(result.considerationRecord);
     if (result.memoryFrame && result.memoryFrame.temporalContext == null && result.temporalContext) {
       result.memoryFrame.temporalContext = result.temporalContext;
     }
-    result._engine = { source: 'processor-spec-r1', stages: '1.1-1.7' };
+    result._engine = {
+      source: 'processor-spec-r1',
+      stages: 'full-schema',
+      model: root.MemoryEngineAnthropic?.RULE1_MODEL || 'claude-sonnet-5',
+    };
     return result;
   }
 
@@ -120,7 +147,9 @@
     if (!anthropic?.callClaude) throw new Error('MemoryEngineAnthropic.callClaude is not loaded');
     const userContent = promptR1 + '\n\nWritten memory:\n\n' + memoryText + (extraUserSuffix || '');
     const raw = await anthropic.callClaude({
+      model: anthropic.RULE1_MODEL || 'claude-sonnet-5',
       max_tokens: 4000,
+      thinking: { type: 'disabled' },
       system: JSON_SYSTEM,
       messages: [{ role: 'user', content: userContent }],
     });
@@ -137,8 +166,9 @@
       const retrySuffix =
         '\n\nYOUR PREVIOUS OUTPUT FAILED VALIDATION with these errors:\n' +
         errors.map((e) => '- ' + e).join('\n') +
-        '\n\nPrevious output was:\n' + JSON.stringify(parsed) +
-        '\n\nFix ALL the errors and return the corrected JSON per the output schema.';
+        '\n\nPrevious output was:\n' +
+        JSON.stringify(parsed) +
+        '\n\nFix ALL the errors and return the corrected JSON. Remember the FINAL ASSEMBLY RULE.';
       parsed = await callRule1Anthropic(memoryText, promptR1, retrySuffix);
       errors = validateRule1Output(parsed, memoryText);
       if (errors.length) {
