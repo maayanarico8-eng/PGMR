@@ -50,7 +50,7 @@ async function readMappingFromBlob() {
 async function writeMappingToBlob(mapping) {
   const { put } = await import('@vercel/blob');
   await put(BLOB_PATHNAME, JSON.stringify(mapping, null, 2), {
-    access: 'private',
+    access: 'public',
     contentType: 'application/json',
     addRandomSuffix: false,
     allowOverwrite: true,
