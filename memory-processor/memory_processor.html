@@ -298,7 +298,7 @@ textarea:focus{border-color:var(--b1)}
 
   <!-- Input -->
   <div class="input-section" id="input-section">
-    <label class="input-lbl" for="memory-input">Written memory</label>
+    <label class="input-lbl" for="memory-input">Written memory <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--t3)">— max 20 words for API modes</span></label>
     <div id="bank-test-picker" class="mb28">
       <div class="input-lbl" style="margin-bottom:8px">Sample sentences <span style="font-weight:400;text-transform:none;letter-spacing:0">— click to load (Bank test mode)</span></div>
       <div class="bank-test-chips" id="bank-test-chips"></div>
@@ -322,8 +322,11 @@ textarea:focus{border-color:var(--b1)}
 <script src="/memory-processor/engine/catalog/providers/external.js"></script>
 <script src="/memory-processor/engine/catalog/resolve.js"></script>
 <script src="/memory-processor/engine/test-sentences.js"></script>
+<script src="/memory-processor/engine/anthropic-client.js"></script>
 <script src="/memory-processor/engine/rule1/extract-event-model.js"></script>
 <script src="/memory-processor/engine/rule1/rw-extract-prompt.js"></script>
+<script src="/memory-processor/engine/rule1/prompt-r1.js"></script>
+<script src="/memory-processor/engine/rule1/semantic-analysis-pipeline.js"></script>
 <script src="/memory-processor/engine/rule1/build-from-words.js"></script>
 <script src="/memory-processor/engine/rule1/stages.js"></script>
 <script src="/memory-processor/engine/rule1/index.js"></script>
@@ -622,6 +625,7 @@ const CAT=(()=>{
 function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 function extractJSON(raw){
+  if(MemoryEngineAnthropic?.parseModelJSON) return MemoryEngineAnthropic.parseModelJSON(raw);
   if(!raw)throw new Error('Empty response');
   let s=raw.trim().replace(/^```(?:json)?\s*/im,'').replace(/\s*```\s*$/im,'').trim();
   const first=s.indexOf('{'),last=s.lastIndexOf('}');
@@ -640,17 +644,19 @@ window.onunhandledrejection=function(e){
   if(el){el.textContent=`Async error: ${e.reason?.message||e.reason||e}`;el.hidden=false;}
 };
 
-async function callAPI(system,user,maxTokens){
-  const res=await fetch('/api/anthropic',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:maxTokens,
-      system:'You output only valid JSON. No markdown. No code fences. No explanation. Your response must be parseable by JSON.parse().',
-      messages:[{role:'user',content:system+'\n\n---\n\n'+user}]})
+function usesApiMode(){return processorMode==='ai-words'||processorMode==='hybrid'||processorMode==='anthropic';}
+
+async function callClaudeForPrompt(systemPrompt,userContent,maxTokens){
+  return MemoryEngineAnthropic.callClaude({
+    max_tokens:maxTokens,
+    system:'You output only valid JSON. No markdown. No code fences. No explanation. Your response must be parseable by JSON.parse().',
+    messages:[{role:'user',content:systemPrompt+'\n\n---\n\n'+userContent}],
   });
-  if(!res.ok){const body=await res.json().catch(()=>({}));throw new Error(`API ${res.status}: ${body?.error?.message||res.statusText}`);}
-  const data=await res.json();
-  return data.content.filter(c=>c.type==='text').map(c=>c.text).join('');
+}
+
+async function callAPI(system,user,maxTokens){
+  const raw=await callClaudeForPrompt(system,user,maxTokens);
+  return raw;
 }
 
 function usesLocalEngine(){return processorMode==='local'||processorMode==='hybrid';}
@@ -660,12 +666,9 @@ function rule3AutoRealizationEnabled(){return processorMode==='anthropic';}
 
 async function runAiWordsExtract(text){
   const logger=MemoryEngineLogger.createLogger();
-  logger.log('1.2','AI_WORDS_REQUESTED',{memoryLength:text.length},'Workflow_Grammar:1.6');
-  const prompt=MemoryEngine.RW_EXTRACT_PROMPT||MemoryEngineRule1.RW_EXTRACT_PROMPT;
-  const raw=await callAPI(prompt,'Memory:\n\n'+text,600);
-  const aiJson=extractJSON(raw);
-  const rule1=MemoryEngine.buildRule1FromWords(text,aiJson,logger);
-  return{rule1,logger,extractor:'ai-words'};
+  logger.log('1.2','SEMANTIC_ANALYSIS_REQUESTED',{memoryLength:text.length},'Workflow_Grammar:1.1');
+  const rule1=await MemoryEngineRule1.runSemanticAnalysisPipeline(text);
+  return{rule1,logger,extractor:'processor-spec-r1'};
 }
 
 async function runAiWordsPipeline(text){
@@ -684,8 +687,7 @@ async function runAiWordsPipeline(text){
 }
 
 async function runRule1Anthropic(text){
-  const raw=await callAPI(PROMPT,'Memory:\n\n'+text,8000);
-  return extractJSON(raw);
+  return MemoryEngineRule1.runSemanticAnalysisPipeline(text);
 }
 
 async function runRule1AnthropicMinimal(text){
@@ -720,7 +722,7 @@ async function runRule1Pipeline(text){
 function renderEngineBadge(source,extractor){
   const container=document.getElementById('results');
   if(!container||!source)return;
-  const label=source==='local'?`Local engine${extractor?` (${extractor})`:''}`:source==='ai-words'?'AI Words (minimal) + local VRP/catalog':source==='mock'?'Mock (scripted)':'Full Anthropic API';
+  const label=source==='local'?`Local engine${extractor?` (${extractor})`:''}`:source==='ai-words'?'PROMPT_R1 (claude-fable-5) + local VRP/catalog':source==='mock'?'Mock (scripted)':'PROMPT_R1 + Anthropic (claude-fable-5)';
   container.insertAdjacentHTML('afterbegin',`<div style="font-size:10px;color:var(--t3);margin-bottom:12px;padding:6px 10px;border:1px solid var(--b3);border-radius:6px;display:inline-block">Engine: ${esc(label)}</div>`);
 }
 
@@ -872,7 +874,7 @@ async function buildSequenceSVG(vrpResult){
 /* Enforces methodology rules from governing documents after API response */
 function validateR1Output(data){
   const violations=[];
-  if(data?._engine?.stages==='ai-words'){
+  if(data?._engine?.stages==='ai-words'||data?._engine?.source==='processor-spec-r1'){
     return violations;
   }
   const rws=data.representativeWords||[];
@@ -1126,6 +1128,9 @@ async function analyze(){
   const typedText=document.getElementById('memory-input').value.trim();
   const text=typedText||MOCK_MEMORY;
   if(!text)return;
+  if(usesApiMode()&&typedText&&typedText.split(/\s+/).filter(Boolean).length>20){
+    throw new Error('Memory must be at most 20 words.');
+  }
   const btn=document.getElementById('analyze-btn');
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Analyzing';
   document.getElementById('error-card').hidden=true;
@@ -1573,8 +1578,12 @@ CAT.init();
 
 function updateWordCount(){
   const text=document.getElementById('memory-input').value.trim();
-  document.getElementById('word-count').textContent=text?text.split(/\s+/).length+' words':'';
-  document.getElementById('analyze-btn').disabled=!text;
+  const n=text?text.split(/\s+/).filter(Boolean).length:0;
+  const wcEl=document.getElementById('word-count');
+  const overLimit=usesApiMode()&&n>20;
+  wcEl.textContent=text?(n+' word'+(n!==1?'s':'')+(overLimit?' — max 20 for API modes':'')):'';
+  wcEl.style.color=overLimit?'#9B3010':'';
+  document.getElementById('analyze-btn').disabled=!text||overLimit;
 }
 
 /* ─── Settings panel ─── */
@@ -1593,11 +1602,11 @@ document.querySelectorAll('.mode-btn').forEach(btn=>{
     const isMock=processorMode==='mock';
     const descs={
       'bank-test':'Bank test: pick a sample sentence — pictograms from pictograms/bank/; missing words show ✕. No API.',
-      'ai-words':'AI Words: one small API call (sentence → 3–10 words). VRP + catalog run locally.',
+      'ai-words':'AI Words: PROMPT_R1 semantic analysis (claude-fable-5). VRP + catalog run locally.',
       mock:'Mock: pre-scripted pipeline on the built-in example. Catalog lookup is real.',
       hybrid:'Hybrid: local rules when supported; otherwise minimal AI word extraction + local VRP.',
       local:'Local: deterministic rules only — no API.',
-      anthropic:'Full API: legacy full Rule 1 + VRP + ARA via Anthropic.',
+      anthropic:'Full API: PROMPT_R1 Rule 1 + VRP + ARA via claude-fable-5.',
     };
     desc.textContent=descs[processorMode]||descs.hybrid;
     const picker=document.getElementById('bank-test-picker');
