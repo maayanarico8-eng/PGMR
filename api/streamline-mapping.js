@@ -12,12 +12,9 @@ function hasBlobConfig() {
   return !!(process.env.BLOB_STORE_ID || process.env.BLOB_READ_WRITE_TOKEN);
 }
 
-function blobAuthHeaders() {
-  const oidc = process.env.VERCEL_OIDC_TOKEN?.trim();
-  if (oidc) return { Authorization: `Bearer ${oidc}` };
-  const rw = process.env.BLOB_READ_WRITE_TOKEN?.trim();
-  if (rw) return { Authorization: `Bearer ${rw}` };
-  return {};
+function blobOptions() {
+  const storeId = process.env.BLOB_STORE_ID?.trim();
+  return storeId ? { storeId } : {};
 }
 
 function readMappingFromDisk() {
@@ -35,25 +32,29 @@ function writeMappingToDisk(mapping) {
 async function readMappingFromBlob() {
   if (!hasBlobConfig()) return null;
 
-  const { list } = await import('@vercel/blob');
-  const { blobs } = await list({ prefix: BLOB_PATHNAME, limit: 1 });
-  if (!blobs.length) return null;
+  const { get } = await import('@vercel/blob');
+  const opts = { access: 'private', ...blobOptions() };
 
-  const downloadUrl = blobs[0].downloadUrl || blobs[0].url;
-  const res = await fetch(downloadUrl, { headers: blobAuthHeaders() });
-  if (!res.ok) {
-    throw new Error(`Failed to fetch blob mapping (${res.status})`);
+  try {
+    const result = await get(BLOB_PATHNAME, opts);
+    if (!result || result.statusCode !== 200 || !result.stream) return null;
+    const text = await new Response(result.stream).text();
+    return JSON.parse(text);
+  } catch (err) {
+    const msg = err?.message || '';
+    if (err?.name === 'BlobNotFoundError' || /not found/i.test(msg)) return null;
+    throw err;
   }
-  return res.json();
 }
 
 async function writeMappingToBlob(mapping) {
   const { put } = await import('@vercel/blob');
   await put(BLOB_PATHNAME, JSON.stringify(mapping, null, 2), {
-    access: 'public',
+    access: 'private',
     contentType: 'application/json',
     addRandomSuffix: false,
     allowOverwrite: true,
+    ...blobOptions(),
   });
 }
 
