@@ -17,6 +17,8 @@ RULES (Semantic Methodology):
 - Order words in narrative sequence (who → action → objects).
 - 3–10 words total.
 
+- canonicalReferent: English lowercase pictogram search term. For verbs/actions use the noun form (נסענו→travel, שרו→song, ראה→see) — never conjugated verbs or clauses.
+
 OUTPUT: Valid JSON only. No markdown. No explanation.
 {"words":[{"word":"string in memory language","sourceText":"exact fragment from memory","category":"person|object|action|place","canonicalReferent":"english lowercase"}]}`;
 

@@ -7,36 +7,72 @@
 
   const TRANSLATE_PROMPT = `You translate Hebrew words into short English pictogram search terms.
 
-INPUT: JSON array of Hebrew words.
+INPUT: JSON array of Hebrew words (optional "hint" per word from prior semantic analysis).
 OUTPUT: Valid JSON only. No markdown. No explanation.
 {"translations":[{"hebrew":"exact input word","english":"lowercase english term"}]}
 
 Rules:
 - english must be lowercase
-- Use simple noun or verb phrases suitable for pictogram library search (e.g. "grandfather", "newspaper", "we traveled")
+- Use single words or very short noun phrases suitable for pictogram library search
 - Preserve input order; one entry per input word
-- hebrew must match the input exactly`;
+- hebrew must match the input exactly
+
+VERB RULE (critical): If the Hebrew word is a verb or verb phrase, english MUST be the pictogram noun for that action — never a conjugated verb, gerund, past tense, or clause.
+Convert any hint that is a verb form to its noun (or base pictogram label):
+- traveled / travelling / we traveled → travel
+- saw / seen → see
+- singing / sang → song
+- cooking / cooked → cooking
+- reading / read → reading
+When a dedicated noun exists, prefer it (travel, song). When the pictogram convention uses the base infinitive, use that (see, run, eat).
+Non-verbs (person, object, place): use a simple noun (grandfather, newspaper, forest).`;
+
+  const ACTION_CATEGORIES = new Set(['action', 'activity']);
 
   function normalizeEnglish(s) {
     return (s || '').toLowerCase().trim();
+  }
+
+  function mapEntry(raw) {
+    if (!raw) return {};
+    if (typeof raw === 'string') return { english: raw };
+    return {
+      english: raw.english || raw.canonicalReferent || '',
+      category: raw.category || null,
+      hint: raw.hint || raw.english || raw.canonicalReferent || null,
+    };
+  }
+
+  function isActionCategory(category) {
+    return ACTION_CATEGORIES.has((category || '').toLowerCase());
   }
 
   function buildItems(hebrewWords, canonicalMap) {
     const map = canonicalMap || {};
     return (hebrewWords || []).map((hebrew) => {
       const h = (hebrew || '').trim();
-      const pre = map[h] || map[hebrew];
-      const english = pre ? normalizeEnglish(pre) : '';
-      return { hebrew: h, english: english || undefined };
+      const entry = mapEntry(map[h] || map[hebrew]);
+      const english = entry.english ? normalizeEnglish(entry.english) : '';
+      return {
+        hebrew: h,
+        english: english || undefined,
+        category: entry.category || undefined,
+        hint: entry.hint || english || undefined,
+      };
     });
   }
 
-  async function callBatchTranslate(hebrewWords, options) {
+  async function callBatchTranslate(items, options) {
     const client = options?.client || root.MemoryEngineAnthropic;
     if (!client?.callClaudeJSON) {
       throw new Error('MemoryEngineAnthropic.callClaudeJSON is not available');
     }
-    const userPayload = JSON.stringify({ words: hebrewWords });
+    const userPayload = JSON.stringify({
+      words: items.map((i) => ({
+        hebrew: i.hebrew,
+        hint: i.hint || null,
+      })),
+    });
     const parsed = await client.callClaudeJSON({
       max_tokens: 1024,
       messages: [
@@ -49,7 +85,7 @@ Rules:
       const h = (row.hebrew || '').trim();
       if (h && row.english) byHebrew[h] = normalizeEnglish(row.english);
     });
-    return hebrewWords.map((h) => byHebrew[h] || normalizeEnglish(h));
+    return items.map((i) => byHebrew[i.hebrew] || normalizeEnglish(i.hebrew));
   }
 
   /**
@@ -71,19 +107,20 @@ Rules:
     list.forEach((item) => {
       const hebrew = item.hebrew.trim();
       const pre = item.english ? normalizeEnglish(item.english) : '';
-      if (pre) {
+      const hint = item.hint ? normalizeEnglish(item.hint) : pre;
+      if (pre && !isActionCategory(item.category)) {
         results.push({ hebrew, english: pre, source: 'semantic-analysis' });
       } else {
-        needsAi.push(hebrew);
+        needsAi.push({ hebrew, hint: hint || null, category: item.category || null });
       }
     });
 
     if (needsAi.length) {
       const englishList = await callBatchTranslate(needsAi, opts);
-      needsAi.forEach((hebrew, i) => {
+      needsAi.forEach((item, i) => {
         results.push({
-          hebrew,
-          english: englishList[i] || hebrew,
+          hebrew: item.hebrew,
+          english: englishList[i] || item.hebrew,
           source: 'ai',
         });
       });
@@ -121,10 +158,14 @@ Rules:
   function buildCanonicalMapFromRule1(rule1) {
     const map = {};
     (rule1?.representativeWords || []).forEach((rw) => {
-      if (rw.word && rw.canonicalReferent) map[rw.word] = rw.canonicalReferent;
+      if (rw.word && rw.canonicalReferent) {
+        map[rw.word] = { english: rw.canonicalReferent, category: rw.category || null };
+      }
     });
     (rule1?.considerationRecord || []).forEach((cr) => {
-      if (cr.field && cr.canonicalReferent && !map[cr.field]) map[cr.field] = cr.canonicalReferent;
+      if (cr.field && cr.canonicalReferent && !map[cr.field]) {
+        map[cr.field] = { english: cr.canonicalReferent, category: cr.category || null };
+      }
     });
     return map;
   }
@@ -184,6 +225,7 @@ Rules:
     buildCanonicalMapFromRule1,
     wordPair,
     resolveBankWords,
+    isActionCategory,
     STAGE,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

@@ -10,7 +10,7 @@
     { id: 'CAT-0005', hebrew: 'לילה', concept: 'Night', provisional: false, provisionalNote: '', strategy: 'Established Convention' },
     { id: 'CAT-0006', hebrew: 'נדנדה', concept: 'Swing', provisional: false, provisionalNote: '', strategy: 'Direct Iconic Representation' },
     { id: 'CAT-0007', hebrew: 'בקבוק חם', concept: 'Hot bottle / Thermos', provisional: false, provisionalNote: '', strategy: 'Direct Iconic Representation' },
-    { id: 'CAT-0008', hebrew: 'נסענו', concept: 'Traveling / We traveled', provisional: true, provisionalNote: 'Verb form — concept label requires confirmation: represents journey/travel', strategy: 'Direct Iconic Representation' },
+    { id: 'CAT-0008', hebrew: 'נסענו', concept: 'Travel', provisional: true, provisionalNote: 'Verb form — pictogram search uses noun: travel', strategy: 'Direct Iconic Representation' },
     { id: 'CAT-0009', hebrew: 'יום הולדת', concept: 'Birthday', provisional: false, provisionalNote: '', strategy: 'Compositional Representation' },
     { id: 'CAT-0010', hebrew: 'אולר', concept: 'Penknife / Pocket knife', provisional: false, provisionalNote: '', strategy: 'Direct Iconic Representation' },
     { id: 'CAT-0011', hebrew: 'קוף', concept: 'Monkey', provisional: false, provisionalNote: '', strategy: 'Direct Iconic Representation' },

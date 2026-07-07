@@ -92,6 +92,22 @@ async function testLogger() {
   console.log('PASS logger events');
 }
 
+async function testVerbToNoun() {
+  const Translate = load();
+  const mockClient = {
+    callClaudeJSON: async () => ({
+      translations: [{ hebrew: 'נסענו', english: 'travel' }],
+    }),
+  };
+  const result = await Translate.translateWords(
+    [{ hebrew: 'נסענו', english: 'we traveled', category: 'action', hint: 'we traveled' }],
+    { client: mockClient }
+  );
+  assert(result.translations[0].english === 'travel', 'verb→noun');
+  assert(result.translations[0].source === 'ai', 'action verbs re-translated via AI');
+  console.log('PASS verb to pictogram noun');
+}
+
 async function testResolveBankWords() {
   const Translate = load();
   const mockClient = {
@@ -128,6 +144,7 @@ async function run() {
   await testBatchAi();
   await testMixed();
   await testLogger();
+  await testVerbToNoun();
   await testResolveBankWords();
   console.log('\nAll translate-words tests passed.');
 }
