@@ -288,7 +288,7 @@ textarea:focus{border-color:var(--b1)}
           <button class="mode-btn" data-mode="local" id="mode-local">Local</button>
           <button class="mode-btn" data-mode="mock" id="mode-mock">Mock</button>
           <button class="mode-btn mode-btn-secondary" data-mode="hybrid" id="mode-hybrid" title="Local first, then minimal AI words">Hybrid</button>
-          <button class="mode-btn mode-btn-secondary" data-mode="anthropic" id="mode-anthropic" title="Full API pipeline (legacy)">Full API</button>
+          <button class="mode-btn mode-btn-secondary" data-mode="anthropic" id="mode-anthropic" title="PROMPT_R1 Rule 1 + Streamline pictogram preview">Full API</button>
         </div>
         <div style="font-size:11px;color:var(--t3);line-height:1.55" id="mode-desc">
           Bank test: pick a sample sentence — translates words to English, then fetches pictograms from Streamline (mapping first).
@@ -729,10 +729,24 @@ async function runRule1Pipeline(text){
   return runRule1Anthropic(text);
 }
 
+async function attachTranslationsToRule1(parsed){
+  const words=(parsed.representativeWords||[]).map(rw=>rw.word).filter(Boolean);
+  if(!words.length)return parsed;
+  const canonicalMap=MemoryEngineCatalogTranslate.buildCanonicalMapFromRule1(parsed);
+  const{translations}=await MemoryEngineCatalogTranslate.translateHebrewWords(words,canonicalMap);
+  const byHebrew=Object.fromEntries(translations.map(t=>[t.hebrew,t]));
+  parsed.representativeWords=(parsed.representativeWords||[]).map(rw=>({
+    ...rw,
+    searchEnglish:byHebrew[rw.word]?.english||rw.canonicalReferent||null,
+  }));
+  parsed._translations=translations;
+  return parsed;
+}
+
 function renderEngineBadge(source,extractor){
   const container=document.getElementById('results');
   if(!container||!source)return;
-  const label=source==='local'?`Local engine${extractor?` (${extractor})`:''}`:source==='ai-words'?'PROMPT_R1 (claude-sonnet-5) + local VRP/catalog':source==='mock'?'Mock (scripted)':'PROMPT_R1 + Anthropic (claude-sonnet-5)';
+  const label=source==='local'?`Local engine${extractor?` (${extractor})`:''}`:source==='ai-words'?'PROMPT_R1 (claude-sonnet-5) + local VRP/catalog':source==='mock'?'Mock (scripted)':'PROMPT_R1 (claude-sonnet-5) → Streamline pictogram preview';
   container.insertAdjacentHTML('afterbegin',`<div style="font-size:10px;color:var(--t3);margin-bottom:12px;padding:6px 10px;border:1px solid var(--b3);border-radius:6px;display:inline-block">Engine: ${esc(label)}</div>`);
 }
 
@@ -870,6 +884,47 @@ async function renderBankTest(sentence){
     <div class="seq-display">${seqSvg}</div>
     <div style="font-size:11px;color:var(--t3);margin-top:8px">Icons resolve from <code style="font-size:10px">streamline-mapping.json</code> first, then Streamline HQ search.</div>
   `;
+}
+
+async function previewFullApiPictograms(){
+  const container=document.getElementById('pictogram-preview-section');
+  const btn=document.getElementById('preview-pictograms-btn');
+  if(!container||!currentResult)return;
+  const words=(currentResult.representativeWords||[]).map(rw=>rw.word).filter(Boolean);
+  if(!words.length)return;
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="vrp-dark-spinner"></span> Loading pictograms…';}
+  container.innerHTML=translationLoadingHTML();
+  try{
+    const canonicalMap=MemoryEngineCatalogTranslate.buildCanonicalMapFromRule1(currentResult);
+    const{translations,slots}=await MemoryEngineCatalogTranslate.resolvePictogramWords(words,{canonicalMap});
+    const rtl=currentResult.memoryLanguage==='Hebrew';
+    const hits=slots.filter(s=>s.status==='hit').length;
+    const gaps=slots.length-hits;
+    const seqSvg=await buildBankSequence(slots,rtl);
+    const rows=slots.map(slot=>{
+      const isGap=slot.status!=='hit';
+      const gapId='gap-'+slot.hebrew.replace(/\s+/g,'-');
+      const meta=isGap
+        ?`<div class="cat-hit-meta" style="color:#D85A30">✕ Streamline fetch failed</div>`
+        :`${pictogramSourceMeta(slot.source)}${slot.assetRef?`<div style="font-size:10px;color:var(--t3)">${esc(slot.assetRef)}</div>`:''}`;
+      const uploadBtn=isGap&&rule3AutoRealizationEnabled()
+        ?`<div style="margin-top:8px;display:flex;align-items:center;gap:10px"><button onclick="createFileInput(${JSON.stringify(slot.hebrew)},document.getElementById(${JSON.stringify(gapId)}))" style="padding:4px 11px;font-size:11px;font-family:var(--f);border:1px solid #C0846A;border-radius:5px;background:transparent;color:#9B4D2C;cursor:pointer">↑ Upload reference SVG</button><span class="realize-status" style="font-size:10.5px;color:var(--t3)"></span></div>`
+        :'';
+      return`<div class="bank-word-row${isGap?' is-gap':''}"${isGap?` id="${esc(gapId)}"`:''}><div class="cat-svg-wrap${isGap?' cat-gap-wrap':''}">${isGap?GAP_SVG:slot.svg}</div><div class="cat-hit-info"><div class="cat-hit-word">${esc(slot.hebrew)}</div>${englishRefMeta(slot.english)}${meta}${uploadBtn}</div></div>`;
+    }).join('');
+    container.innerHTML=`
+      ${renderTranslationSection(translations)}
+      <div class="sec-label">Pictograms <span>${hits} hit${hits!==1?'s':''}, ${gaps} ✕</span></div>
+      <div class="bank-word-grid">${rows}</div>
+      <div class="sec-label">Sequence</div>
+      <div class="seq-display">${seqSvg}</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:8px">Icons resolve from <code style="font-size:10px">streamline-mapping.json</code> first, then Streamline HQ family search (<code style="font-size:10px">core-line-free</code>).</div>
+    `;
+  }catch(e){
+    container.innerHTML=`<div class="error-card" style="margin-top:12px">${esc(e.message)}</div>`;
+  }finally{
+    if(btn){btn.disabled=false;btn.innerHTML='Preview pictograms';}
+  }
 }
 
 async function buildSequenceSVG(vrpResult,slots){
@@ -1229,6 +1284,9 @@ async function analyze(){
       }
     }else{
       const parsed=await runRule1Pipeline(text);
+      if(processorMode==='anthropic'){
+        await attachTranslationsToRule1(parsed);
+      }
       const violations=validateR1Output(parsed);
       renderResults(parsed);
       renderEngineBadge(lastEngineSource,lastEngineExtractor);
@@ -1247,6 +1305,7 @@ async function analyze(){
 }
 
 async function generateVrp(){
+  if(processorMode==='anthropic')return;
   const vrpInner=document.getElementById('vrp-inner');if(!vrpInner)return;
   vrpInner.innerHTML=`<div class="vrp-loading"><span class="vrp-dark-spinner"></span><span class="vrp-loading-txt">Generating Visual Representation Plan…</span></div>`;
   const useMock=processorMode==='mock'&&currentResult===MOCK_R1;
@@ -1371,11 +1430,13 @@ function renderHypotheses(){
 function renderResults(result){
   currentResult=result;currentVrpResult=null;currentAraResult=null;
   const rtl=result.memoryLanguage==='Hebrew';
+  const isFullApi=processorMode==='anthropic';
   const sf=result.semanticFields||[];
   const consideration=result.considerationRecord||[];
   const representative=consideration.filter(c=>c.decision==='representative');
   const semanticOnly=consideration.filter(c=>c.decision==='semantic-only');
   const repWords=result.representativeWords||[];
+  const translations=result._translations||[];
   let html=`<div class="divider"></div><div class="lang-meta"><span class="lang-badge">${esc(result.memoryLanguage)}</span><span class="meta-counts">${sf.length} semantic fields &middot; ${representative.length} representative &middot; ${semanticOnly.length} semantic-only</span></div>`;
   html+=`<div class="mb28">${sectionLabel('Core Narrative')}<div class="narrative-card" dir="${rtl?'rtl':'ltr'}">${esc(result.coreNarrative)}</div></div>`;
   if(result.memoryFrame){const f=result.memoryFrame;const tc=TEMPORAL_CFG[f.temporalContext]||TEMPORAL_CFG.singular;let fi=`<div class="frame-item"><div class="frame-item-lbl">Temporal context</div><div class="frame-item-val">${badge(tc.label,tc.bg,tc.b,tc.t)}</div></div>`;if(f.location)fi+=`<div class="frame-item"><div class="frame-item-lbl">Location</div><div class="frame-item-val" dir="${rtl?'rtl':'ltr'}">${esc(f.location)}</div></div>`;if(f.recurrencePattern)fi+=`<div class="frame-item"><div class="frame-item-lbl">Recurrence</div><div class="frame-item-val" dir="${rtl?'rtl':'ltr'}">${esc(f.recurrencePattern)}</div></div>`;if(f.period)fi+=`<div class="frame-item"><div class="frame-item-lbl">Period</div><div class="frame-item-val" dir="${rtl?'rtl':'ltr'}">${esc(f.period)}</div></div>`;html+=`<div class="mb28">${sectionLabel('Memory Frame')}<div class="frame-card">${fi}</div></div>`;}
@@ -1388,15 +1449,31 @@ function renderResults(result){
   const stripDots=consideration.map(c=>`<span class="strip-dot" title="${esc(c.field)} \u2014 ${esc(c.decision)}" style="background:${c.decision==='representative'?ACC:REJ}"></span>`).join('');
   html+=`<div class="mb36" id="decision-section">${sectionLabel('Consideration Record \u2014 Part B',`${consideration.length} fields evaluated`)}<div class="sel-strip">${stripDots}</div><div class="filter-tabs" id="filter-tabs"><button class="filter-tab active" data-filter="all">All &nbsp;${consideration.length}</button><button class="filter-tab" data-filter="representative">Representative &nbsp;${representative.length}</button><button class="filter-tab" data-filter="semantic-only">Semantic-only &nbsp;${semanticOnly.length}</button></div><div class="trace-rows" id="trace-rows"></div></div>`;
   // Representative Words
-  const rwCards=repWords.map((rw,i)=>{const cc=SF_CATEGORY_CFG[rw.category]||{label:rw.category||'',bg:'#F1EFE8',b:'#D3D1C7',t:'#444441'};return `<div class="unit-card"><div class="unit-num">${i+1}</div><div class="unit-body"><div class="unit-name-row"><span class="unit-name" dir="${rtl?'rtl':'ltr'}">${esc(rw.word)}</span>${badge(cc.label,cc.bg,cc.b,cc.t)}</div><div class="unit-src" dir="${rtl?'rtl':'ltr'}"><em>"${esc(rw.sourceText)}"</em></div></div></div>`;}).join('');
+  const rwCards=repWords.map((rw,i)=>{
+    const cc=SF_CATEGORY_CFG[rw.category]||{label:rw.category||'',bg:'#F1EFE8',b:'#D3D1C7',t:'#444441'};
+    const en=rw.searchEnglish||rw.canonicalReferent||'';
+    const enRow=isFullApi&&en?`<span class="translate-arrow" style="margin:0 8px;color:var(--t3)">→</span><span class="translate-en">${esc(en)}</span>`:'';
+    return `<div class="unit-card"><div class="unit-num">${i+1}</div><div class="unit-body"><div class="unit-name-row"><span class="unit-name" dir="${rtl?'rtl':'ltr'}">${esc(rw.word)}</span>${enRow}${badge(cc.label,cc.bg,cc.b,cc.t)}</div><div class="unit-src" dir="${rtl?'rtl':'ltr'}"><em>"${esc(rw.sourceText)}"</em></div></div></div>`;
+  }).join('');
   html+=`<div class="mb28">${sectionLabel('Representative Words',`${repWords.length} words`)}<div class="units-list">${rwCards}</div></div>`;
+  if(isFullApi&&translations.length){
+    html+=`<div class="mb28">${renderTranslationSection(translations)}</div>`;
+  }
   // Consistency gate
   if(result.consistencyGateStatus){const gPass=result.consistencyGateStatus==='pass';const gc=gPass?{bg:'#E1F5EE',b:'#5DCAA5',t:'#04342C'}:{bg:'#FAECE7',b:'#F0997B',t:'#4A1B0C'};const compRows=(result.mustPreserveCompliance||[]).map(c=>{const ok=c.satisfied;const unitBadges=(c.satisfiedBy||[]).map(uid=>`<span class="dep-chip">${esc(uid)}</span>`).join('');return `<div class="compliance-row"><div class="compliance-icon ${ok?'compliance-pass':'compliance-fail'}">${ok?'&#10003;':'&#215;'}</div><div class="compliance-body"><div class="compliance-req" dir="${rtl?'rtl':'ltr'}">${esc(c.requirement)}</div>${unitBadges?`<div class="compliance-units">${unitBadges}</div>`:''}<div class="compliance-violation">${!ok&&c.violation?esc(c.violation):''}</div></div></div>`;}).join('');html+=`<div class="gate-card" style="background:${gc.bg};border-color:${gc.b};margin-bottom:28px"><div class="gate-hdr"><span class="gate-status-lbl" style="color:${gc.t}">Consistency gate \u00b7 ${gPass?'Pass':'Fail'}</span>${!gPass?badge('Stage 1 violation','#FAECE7','#F0997B','#4A1B0C'):badge('Stage 1 \u2192 Stage 2 clear','#E1F5EE','#5DCAA5','#04342C')}</div>${result.consistencyGateNote?`<div class="gate-note" style="color:${gc.t}" dir="${rtl?'rtl':'ltr'}">${esc(result.consistencyGateNote)}</div>`:''}${compRows?`<div class="compliance-list">${compRows}</div>`:''}</div>`;}
-  const gateWarn=result.consistencyGateStatus==='fail'?`<div class="gate-warn">Consistency gate failed. The VRP will receive an incomplete representative word set. Review before proceeding.</div>`:'';
-  html+=`<div class="vrp-trigger-zone" id="vrp-trigger-zone"><div id="vrp-inner">${sectionLabel('Visual Representation Plan')}${gateWarn}<button class="generate-vrp-btn" id="generate-vrp-btn">Generate Visual Representation Plan \u2192</button></div></div>`;
+  if(isFullApi){
+    html+=`<div class="vrp-trigger-zone" id="pictogram-preview-trigger"><div id="pictogram-preview-inner">${sectionLabel('Pictogram Preview')}<button class="generate-vrp-btn" id="preview-pictograms-btn">Preview pictograms</button><div id="pictogram-preview-section"></div></div></div>`;
+  }else{
+    const gateWarn=result.consistencyGateStatus==='fail'?`<div class="gate-warn">Consistency gate failed. The VRP will receive an incomplete representative word set. Review before proceeding.</div>`:'';
+    html+=`<div class="vrp-trigger-zone" id="vrp-trigger-zone"><div id="vrp-inner">${sectionLabel('Visual Representation Plan')}${gateWarn}<button class="generate-vrp-btn" id="generate-vrp-btn">Generate Visual Representation Plan \u2192</button></div></div>`;
+  }
   document.getElementById('results').innerHTML=html;
   renderConsiderationRows(consideration,repWords,rtl);
-  document.getElementById('generate-vrp-btn').addEventListener('click',generateVrp);
+  if(isFullApi){
+    document.getElementById('preview-pictograms-btn')?.addEventListener('click',previewFullApiPictograms);
+  }else{
+    document.getElementById('generate-vrp-btn')?.addEventListener('click',generateVrp);
+  }
 }
 
 function renderConsiderationRows(consideration,repWords,rtl){
@@ -1636,7 +1713,7 @@ document.querySelectorAll('.mode-btn').forEach(btn=>{
       mock:'Mock: pre-scripted pipeline on the built-in example. Catalog lookup is real.',
       hybrid:'Hybrid: local rules when supported; otherwise minimal AI word extraction + local VRP.',
       local:'Local: deterministic rules only — no API.',
-      anthropic:'Full API: PROMPT_R1 Rule 1 + VRP + ARA via claude-sonnet-5.',
+      anthropic:'Full API: PROMPT_R1 Rule 1 → Representative Words (Hebrew + English) → Streamline pictogram preview.',
     };
     desc.textContent=descs[processorMode]||descs.hybrid;
     const picker=document.getElementById('bank-test-picker');

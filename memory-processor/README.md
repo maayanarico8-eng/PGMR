@@ -93,7 +93,7 @@ The processor has six modes (Settings → Processor Mode):
 - **Local** — deterministic rules only (`engine/`). Zero API. Best for curated memories and rule tuning.
 - **Mock** — pre-scripted analysis on the built-in example memory. No API.
 - **Hybrid** — local Rule 1 when supported; otherwise falls back to **AI Words** (not full API).
-- **Full API** — PROMPT_R1 Rule 1 + VRP + ARA via `claude-sonnet-5` (highest cost).
+- **Full API** — PROMPT_R1 Rule 1 → Representative Words (Hebrew + English, verb→noun) → Streamline pictogram preview via `claude-sonnet-5`.
 
 **Bank test / AI Words / Hybrid / Full API** require `ANTHROPIC_API_KEY` on Vercel for translation and/or semantic analysis. All Anthropic calls use `claude-sonnet-5`.
 
@@ -130,12 +130,9 @@ In **AI Words / Hybrid** mode, the processor:
 3. Looks up pictograms in the catalog locally (Rule 3)
 
 In **Full API** mode, the processor:
-1. Parses the written memory into semantic fields, applies the Memory Identity Gate (D1/D2), and selects Representative Words (Rule 1)
-2. Plans how each Representative Word should be visually expressed — independent pictogram, contextual (sequence-based), or both (Rule 2)
-3. Looks up each independently-represented word against the real pictogram library. Before lookup, Hebrew representative words are translated to English (reusing Rule 1 `canonicalReferent` when available, otherwise a batch Anthropic call). A match renders the pictogram and logs `CATALOG_HIT`. No match logs `VISUAL_GAP` — the gap is surfaced, not hidden or invented (Rule 3)
-4. For `VISUAL_GAP` cases in **Anthropic** mode, a reference SVG can be uploaded for automatic Rule 3 realization. In **Local/Hybrid** mode, gaps remain for manual designer workflow.
-
-The Visual Representation Plan may list more units than Library Lookup processes. Units classified as **Contextual** in Rule 2 remain in the plan but are intentionally excluded from catalog lookup because their meaning is expressed through other pictograms in the sequence.
+1. Calls Anthropic with PROMPT_R1 to extract Representative Words (Rule 1)
+2. Translates each word to English for pictogram search (verb→noun rule for actions)
+3. On **Preview pictograms**, resolves icons via `streamline-mapping.json` → Streamline HQ family search (`core-line-free`). Gaps can be filled by uploading a reference SVG for Rule 3 auto-realization.
 
 ## Methodology
 
