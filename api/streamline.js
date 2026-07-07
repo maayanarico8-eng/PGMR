@@ -11,6 +11,32 @@ module.exports = async (req, res) => {
   const q = { ...req.query, ...req.body };
 
   try {
+    if (action === 'family-search') {
+      const query = q.query;
+      const familySlug = q.familySlug;
+      if (!query) {
+        res.status(400).json({ error: { message: 'query is required' } });
+        return;
+      }
+      if (!familySlug) {
+        res.status(400).json({ error: { message: 'familySlug is required' } });
+        return;
+      }
+      const params = new URLSearchParams({
+        query: String(query),
+        limit: String(q.limit || '10'),
+      });
+      if (q.offset != null && q.offset !== '') params.set('offset', String(q.offset));
+
+      const upstream = await fetch(
+        `https://public-api.streamlinehq.com/v1/search/family/${encodeURIComponent(familySlug)}?${params}`,
+        { headers: { 'x-api-key': apiKey } }
+      );
+      const body = await upstream.json();
+      res.status(upstream.status).json(body);
+      return;
+    }
+
     if (action === 'search') {
       const query = q.query;
       if (!query) {
@@ -69,7 +95,7 @@ module.exports = async (req, res) => {
       return;
     }
 
-    res.status(400).json({ error: { message: 'Invalid action. Use search or download.' } });
+    res.status(400).json({ error: { message: 'Invalid action. Use family-search, search, or download.' } });
   } catch (err) {
     res.status(500).json({
       error: { message: err.message || 'Streamline proxy request failed' },

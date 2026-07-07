@@ -1,13 +1,12 @@
 /**
- * Streamline HQ pictogram provider — mapping-first, then search + download.
+ * Streamline HQ pictogram provider — mapping-first, family search, then download.
  */
 (function (root) {
   const MAPPING_API_URL = '/api/streamline-mapping';
 
   const DEFAULT_SEARCH_PARAMS = {
-    productType: 'icons',
-    productTier: 'free',
-    style: 'line',
+    mode: 'family',
+    familySlug: 'core-line-free',
     limit: 10,
   };
 
@@ -30,6 +29,14 @@
     return /paying customers|premium|forbidden|not have access|don't have access/i.test(message || '');
   }
 
+  function isMappedEntryCurrent(entry) {
+    const sp = entry?.searchParams;
+    return (
+      sp?.mode === DEFAULT_SEARCH_PARAMS.mode &&
+      sp?.familySlug === DEFAULT_SEARCH_PARAMS.familySlug
+    );
+  }
+
   function mappingFileCandidates() {
     if (typeof window !== 'undefined') return [];
     const path = require('path');
@@ -46,7 +53,7 @@
         return JSON.parse(fs.readFileSync(file, 'utf8'));
       }
     }
-    return { version: 1, icons: {} };
+    return { version: 2, meta: { searchMode: 'family', familySlug: 'core-line-free' }, icons: {} };
   }
 
   function ensureMappingLoadedSync() {
@@ -55,7 +62,7 @@
       mappingCache = readMappingFromDisk();
       return mappingCache;
     }
-    return mappingCache || { version: 1, icons: {} };
+    return mappingCache || { version: 2, icons: {} };
   }
 
   async function loadMapping(force) {
@@ -81,7 +88,9 @@
     ensureMappingLoadedSync();
     const key = normalizeEnglish(english);
     if (!key || !mappingCache?.icons) return null;
-    return mappingCache.icons[key] || null;
+    const entry = mappingCache.icons[key] || null;
+    if (entry && !isMappedEntryCurrent(entry)) return null;
+    return entry;
   }
 
   function hasMapping(english) {
@@ -144,10 +153,12 @@
   }
 
   async function searchIcons(query, searchParams) {
-    return apiCall('search', {
+    const sp = { ...DEFAULT_SEARCH_PARAMS, ...(searchParams || {}) };
+    return apiCall('family-search', {
       query,
-      ...DEFAULT_SEARCH_PARAMS,
-      ...(searchParams || {}),
+      familySlug: sp.familySlug,
+      limit: sp.limit,
+      offset: sp.offset,
     });
   }
 
@@ -176,14 +187,16 @@
     if (!candidates.length) return null;
 
     const downloadParams = { ...DEFAULT_DOWNLOAD_PARAMS };
+    const sp = { ...DEFAULT_SEARCH_PARAMS, ...(searchParams || {}) };
     const { svg, icon } = await tryDownloadCandidates(candidates, downloadParams);
     if (!svg || !icon) return null;
 
     const entry = {
       hash: icon.hash,
       iconName: icon.name || term,
+      familySlug: sp.familySlug,
       downloadParams,
-      searchParams: { ...DEFAULT_SEARCH_PARAMS, ...(searchParams || {}) },
+      searchParams: sp,
       searchQuery: term,
       updatedAt: new Date().toISOString(),
     };
@@ -219,7 +232,7 @@
       }
     }
 
-    return resolveFromSearch(term, mapped?.searchParams);
+    return resolveFromSearch(term, DEFAULT_SEARCH_PARAMS);
   }
 
   async function fetchPictogram({ english, canonicalReferent, englishWord }) {
@@ -251,5 +264,6 @@
     DEFAULT_DOWNLOAD_PARAMS,
     normalizeEnglish,
     isPremiumDownloadError,
+    isMappedEntryCurrent,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

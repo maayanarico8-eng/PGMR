@@ -5,7 +5,11 @@ const MAPPING_PATH = path.join(process.cwd(), 'memory-processor/pictograms/strea
 const BLOB_PATHNAME = 'streamline-mapping.json';
 
 function emptyMapping() {
-  return { version: 1, icons: {} };
+  return {
+    version: 2,
+    meta: { searchMode: 'family', familySlug: 'core-line-free' },
+    icons: {},
+  };
 }
 
 function hasBlobConfig() {
@@ -97,6 +101,13 @@ module.exports = async (req, res) => {
   }
 
   try {
+    if (req.body?.reset === true) {
+      const mapping = emptyMapping();
+      const storage = await writeMapping(mapping);
+      res.status(200).json({ ok: true, reset: true, mapping, storage });
+      return;
+    }
+
     const { english, entry } = req.body || {};
     if (!english || !entry?.hash) {
       res.status(400).json({ error: { message: 'english and entry.hash are required' } });

@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 /**
- * Verify Streamline free + line search returns downloadable SVGs.
+ * Verify Streamline family search (core-line-free) returns downloadable SVGs.
  * Run: BASE=https://pgmr-two.vercel.app node memory-processor/scripts/test-streamline-free.js
  */
 const BASE = process.env.BASE || 'http://localhost:3000';
+const FAMILY = 'core-line-free';
 const WORDS = ['cat', 'grandfather', 'pool', 'pool swing', 'newspaper'];
 
 async function search(word) {
   const qs = new URLSearchParams({
-    action: 'search',
+    action: 'family-search',
+    familySlug: FAMILY,
     query: word,
-    productTier: 'free',
-    style: 'line',
     limit: '5',
   });
   const res = await fetch(`${BASE}/api/streamline?${qs}`);
@@ -56,7 +56,7 @@ async function testWord(word) {
 }
 
 async function main() {
-  console.log(`Testing Streamline free+line via ${BASE}\n`);
+  console.log(`Testing Streamline family ${FAMILY} via ${BASE}\n`);
   let passed = 0;
   for (const word of WORDS) {
     if (await testWord(word)) passed++;

@@ -42,7 +42,7 @@ async function testStreamlineResolution() {
     if (u.includes('/api/streamline-mapping') && !u.includes('action=')) {
       return { ok: true, async json() { return { version: 1, icons: {} }; } };
     }
-    if (u.includes('action=search')) {
+    if (u.includes('action=family-search')) {
       return {
         ok: true,
         async json() {

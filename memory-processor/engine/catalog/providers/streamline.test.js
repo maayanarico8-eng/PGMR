@@ -17,14 +17,14 @@ function load() {
       return {
         ok: true,
         async json() {
-          return { version: 1, icons: { cat: { hash: 'ico_test', downloadParams: { size: 64, responsive: true, strokeToFill: false } } } };
+          return { version: 2, icons: { cat: { hash: 'ico_test', downloadParams: { size: 64, responsive: true, strokeToFill: false }, searchParams: { mode: 'family', familySlug: 'core-line-free', limit: 10 } } } };
         },
       };
     }
     if (u.includes('action=download')) {
       return { ok: true, async json() { return { svg: '<svg id="mapped"></svg>' }; } };
     }
-    if (u.includes('action=search')) {
+    if (u.includes('action=family-search')) {
       return {
         ok: true,
         async json() {
@@ -51,11 +51,12 @@ async function testMappingHit() {
   fs.writeFileSync(
     mappingPath,
     JSON.stringify({
-      version: 1,
+      version: 2,
       icons: {
         cat: {
           hash: 'ico_test',
           downloadParams: { size: 64, responsive: true, strokeToFill: false },
+          searchParams: { mode: 'family', familySlug: 'core-line-free', limit: 10 },
         },
       },
     }, null, 2) + '\n',
@@ -74,7 +75,7 @@ async function testMappingHit() {
   SL.clearMappingCache();
   assert(result?.svg?.includes('mapped'), 'expected mapped svg');
   assert(result.source === 'mapping', 'expected mapping source');
-  assert(!calls.some((c) => c.includes('action=search')), 'search should be skipped for mapping hit');
+  assert(!calls.some((c) => c.includes('action=family-search')), 'search should be skipped for mapping hit');
   assert(calls.some((c) => c.includes('action=download')), 'download should run');
   console.log('PASS mapping hit skips search');
 }
@@ -92,7 +93,7 @@ async function testMappingMiss() {
   const result = await SL.resolveIcon('dog');
   assert(result?.svg, 'expected svg');
   assert(result.source === 'streamline-new', 'expected new source');
-  assert(calls.some((c) => c.includes('action=search')), 'search should run on miss');
+  assert(calls.some((c) => c.includes('action=family-search')), 'search should run on miss');
   console.log('PASS mapping miss searches and saves');
 }
 
