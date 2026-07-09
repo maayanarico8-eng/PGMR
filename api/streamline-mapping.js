@@ -96,12 +96,52 @@ module.exports = async (req, res) => {
     return;
   }
 
+  if (req.method === 'DELETE') {
+    try {
+      const english = req.query?.english || req.body?.english;
+      if (!english) {
+        res.status(400).json({ error: { message: 'english is required' } });
+        return;
+      }
+      const key = String(english).toLowerCase().trim();
+      const mapping = await readMapping();
+      if (!mapping.icons?.[key]) {
+        res.status(404).json({ error: { message: `No entry for "${key}"` } });
+        return;
+      }
+      delete mapping.icons[key];
+      const storage = await writeMapping(mapping);
+      res.status(200).json({ ok: true, deleted: key, storage });
+    } catch (err) {
+      res.status(500).json({ error: { message: err.message || 'Failed to delete mapping entry' } });
+    }
+    return;
+  }
+
   if (req.method !== 'POST') {
     res.status(405).json({ error: { message: 'Method not allowed' } });
     return;
   }
 
   try {
+    if (req.body?.delete === true) {
+      const english = req.body?.english;
+      if (!english) {
+        res.status(400).json({ error: { message: 'english is required' } });
+        return;
+      }
+      const key = String(english).toLowerCase().trim();
+      const mapping = await readMapping();
+      if (!mapping.icons?.[key]) {
+        res.status(404).json({ error: { message: `No entry for "${key}"` } });
+        return;
+      }
+      delete mapping.icons[key];
+      const storage = await writeMapping(mapping);
+      res.status(200).json({ ok: true, deleted: key, storage });
+      return;
+    }
+
     if (req.body?.reset === true) {
       const mapping = emptyMapping();
       const storage = await writeMapping(mapping);

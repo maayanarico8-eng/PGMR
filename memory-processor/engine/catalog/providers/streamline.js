@@ -163,9 +163,9 @@
       for (const file of mappingFileCandidates()) {
         fs.mkdirSync(require('path').dirname(file), { recursive: true });
         fs.writeFileSync(file, `${JSON.stringify(mappingCache, null, 2)}\n`, 'utf8');
-        return;
+        return true;
       }
-      return;
+      return false;
     }
 
     try {
@@ -177,14 +177,52 @@
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         console.warn('streamline-mapping save:', body.error?.message || res.status);
-      } else {
-        const body = await res.json().catch(() => ({}));
-        if (body.entry && mappingCache?.icons) {
-          mappingCache.icons[key] = body.entry;
-        }
+        return false;
       }
+      const body = await res.json().catch(() => ({}));
+      if (body.entry && mappingCache?.icons) {
+        mappingCache.icons[key] = body.entry;
+      }
+      return true;
     } catch (err) {
       console.warn('streamline-mapping save error:', err.message);
+      return false;
+    }
+  }
+
+  async function deleteMappingEntry(english) {
+    const key = normalizeEnglish(english);
+    if (!key) return false;
+    await loadMapping();
+    if (mappingCache?.icons?.[key]) delete mappingCache.icons[key];
+
+    if (typeof window === 'undefined') {
+      const fs = require('fs');
+      const mapping = readMappingFromDisk();
+      if (!mapping.icons?.[key]) return false;
+      delete mapping.icons[key];
+      for (const file of mappingFileCandidates()) {
+        fs.mkdirSync(require('path').dirname(file), { recursive: true });
+        fs.writeFileSync(file, `${JSON.stringify(mapping, null, 2)}\n`, 'utf8');
+        return true;
+      }
+      return false;
+    }
+
+    try {
+      const res = await fetch(`${MAPPING_API_URL}?english=${encodeURIComponent(key)}`, {
+        method: 'DELETE',
+      });
+      if (res.status === 404) return true;
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        console.warn('streamline-mapping delete:', body.error?.message || res.status);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.warn('streamline-mapping delete error:', err.message);
+      return false;
     }
   }
 
@@ -214,9 +252,54 @@
     return null;
   }
 
+  async function loadCache() {
+    if (typeof window === 'undefined') {
+      return readCacheFromDisk();
+    }
+    const res = await fetch(CACHE_API_URL);
+    if (!res.ok) throw new Error(`Failed to load pictogram cache (${res.status})`);
+    return res.json();
+  }
+
+  async function deleteCacheEntry(english) {
+    const key = normalizeEnglish(english);
+    if (!key) return false;
+    delete svgCacheMemory[key];
+
+    if (typeof window === 'undefined') {
+      const fs = require('fs');
+      const path = require('path');
+      const cache = readCacheFromDisk();
+      if (!cache.icons?.[key]) return false;
+      delete cache.icons[key];
+      for (const file of cacheFileCandidates()) {
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        fs.writeFileSync(file, `${JSON.stringify(cache, null, 2)}\n`, 'utf8');
+        return true;
+      }
+      return false;
+    }
+
+    try {
+      const res = await fetch(`${CACHE_API_URL}?english=${encodeURIComponent(key)}`, {
+        method: 'DELETE',
+      });
+      if (res.status === 404) return true;
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        console.warn('pictogram-cache delete:', body.error?.message || res.status);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.warn('pictogram-cache delete error:', err.message);
+      return false;
+    }
+  }
+
   async function saveCacheEntry(english, entry) {
     const key = normalizeEnglish(english);
-    if (!key || !entry?.svg) return;
+    if (!key || !entry?.svg) return false;
     const stored = {
       svg: entry.svg,
       hash: entry.hash || null,
@@ -233,9 +316,9 @@
       for (const file of cacheFileCandidates()) {
         fs.mkdirSync(path.dirname(file), { recursive: true });
         fs.writeFileSync(file, `${JSON.stringify(cache, null, 2)}\n`, 'utf8');
-        return;
+        return true;
       }
-      return;
+      return false;
     }
 
     try {
@@ -247,12 +330,14 @@
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         console.warn('pictogram-cache save:', body.error?.message || res.status);
-      } else {
-        const body = await res.json().catch(() => ({}));
-        if (body.entry) svgCacheMemory[key] = body.entry;
+        return false;
       }
+      const body = await res.json().catch(() => ({}));
+      if (body.entry) svgCacheMemory[key] = body.entry;
+      return true;
     } catch (err) {
       console.warn('pictogram-cache save error:', err.message);
+      return false;
     }
   }
 
@@ -420,7 +505,10 @@
     hasMapping,
     hasCachedSvg,
     saveMappingEntry,
+    deleteMappingEntry,
     saveCacheEntry,
+    loadCache,
+    deleteCacheEntry,
     pickIcon,
     rankIconCandidates,
     searchIcons,

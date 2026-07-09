@@ -1,31 +1,37 @@
 /**
  * Hebrew → English translation for pictogram search terms.
- * Reuses Rule 1 canonicalReferent when present; batch-translates the rest via Anthropic.
+ * Uses Rule 1 canonicalReferent as hints; context-aware AI translation when memory text is available.
  */
 (function (root) {
   const STAGE = '3.0';
 
-  const TRANSLATE_PROMPT = `You translate Hebrew words into short English pictogram search terms.
+  const TRANSLATE_PROMPT = `You choose English pictogram search terms for a pictogram icon library — NOT general dictionary translations.
 
-INPUT: JSON array of Hebrew words (optional "hint" per word from prior semantic analysis).
+INPUT: JSON with optional "memory" (full memory sentence) and "words" array. Each word has hebrew, optional hint (prior guess), sourceText (fragment from memory), and category.
 OUTPUT: Valid JSON only. No markdown. No explanation.
 {"translations":[{"hebrew":"exact input word","english":"lowercase english term"}]}
 
 Rules:
 - english must be lowercase
-- Use single words or very short noun phrases suitable for pictogram library search
+- Use single words or very short noun phrases that retrieve the CORRECT icon in a pictogram library
 - Preserve input order; one entry per input word
 - hebrew must match the input exactly
+- hint is a starting guess only — override it when memory context demands a more specific pictogram label
 
-VERB RULE (critical): If the Hebrew word is a verb or verb phrase, english MUST be the pictogram noun for that action — never a conjugated verb, gerund, past tense, or clause.
-Convert any hint that is a verb form to its noun (or base pictogram label):
-- traveled / travelling / we traveled → travel
-- saw / seen → see
-- singing / sang → song
-- cooking / cooked → cooking
-- reading / read → reading
-When a dedicated noun exists, prefer it (travel, song). When the pictogram convention uses the base infinitive, use that (see, run, eat).
-Non-verbs (person, object, place): use a simple noun (grandfather, newspaper, forest).`;
+CONTEXT RULE (critical): Read the full memory sentence and each word's sourceText. Choose the English term that matches what the narrator meant IN THIS MEMORY, not the most common dictionary gloss.
+
+DISAMBIGUATION RULE: Prefer a slightly longer, visually specific term over a short ambiguous one when icon libraries confuse them.
+
+Examples:
+- בריכה + summer outing / swimming context → swimming pool (NOT pool — pool retrieves billiards/pool-player icons)
+- נסענו + trip to forest, no named vehicle → drive or car (NOT travel — travel retrieves suitcase/airplane icons)
+- נסענו באוטובוס → bus (vehicle explicit in memory)
+- שרו → song; ראה → see (unchanged)
+
+VERB RULE: If the Hebrew word is a verb or verb phrase, english MUST be a pictogram noun for that action in THIS context — never a conjugated verb, gerund, past tense, or clause.
+- saw / seen → see; singing / sang → song; cooking / cooked → cooking
+- traveled / travelling in a car-trip memory → drive or car, not travel
+Non-verbs (person, object, place): use a visually specific noun (grandfather, newspaper, forest, swimming pool).`;
 
   const ACTION_CATEGORIES = new Set(['action', 'activity']);
 
@@ -39,12 +45,17 @@ Non-verbs (person, object, place): use a simple noun (grandfather, newspaper, fo
     return {
       english: raw.english || raw.canonicalReferent || '',
       category: raw.category || null,
+      sourceText: raw.sourceText || null,
       hint: raw.hint || raw.english || raw.canonicalReferent || null,
     };
   }
 
   function isActionCategory(category) {
     return ACTION_CATEGORIES.has((category || '').toLowerCase());
+  }
+
+  function hasMemoryContext(memoryText) {
+    return Boolean((memoryText || '').trim());
   }
 
   function buildItems(hebrewWords, canonicalMap) {
@@ -57,6 +68,7 @@ Non-verbs (person, object, place): use a simple noun (grandfather, newspaper, fo
         hebrew: h,
         english: english || undefined,
         category: entry.category || undefined,
+        sourceText: entry.sourceText || undefined,
         hint: entry.hint || english || undefined,
       };
     });
@@ -67,12 +79,17 @@ Non-verbs (person, object, place): use a simple noun (grandfather, newspaper, fo
     if (!client?.callClaudeJSON) {
       throw new Error('MemoryEngineAnthropic.callClaudeJSON is not available');
     }
-    const userPayload = JSON.stringify({
+    const memoryText = (options?.memoryText || '').trim();
+    const payload = {
       words: items.map((i) => ({
         hebrew: i.hebrew,
         hint: i.hint || null,
+        sourceText: i.sourceText || null,
+        category: i.category || null,
       })),
-    });
+    };
+    if (memoryText) payload.memory = memoryText;
+    const userPayload = JSON.stringify(payload);
     const parsed = await client.callClaudeJSON({
       max_tokens: 1024,
       messages: [
@@ -89,16 +106,18 @@ Non-verbs (person, object, place): use a simple noun (grandfather, newspaper, fo
   }
 
   /**
-   * @param {Array<{hebrew:string, english?:string}>} items
-   * @param {{logger?, client?, canonicalMap?}} options
+   * @param {Array<{hebrew:string, english?:string, hint?:string, sourceText?:string, category?:string}>} items
+   * @param {{logger?, client?, canonicalMap?, memoryText?}} options
    */
   async function translateWords(items, options) {
     const opts = options || {};
     const logger = opts.logger;
+    const memoryText = (opts.memoryText || '').trim();
+    const useContextAi = hasMemoryContext(memoryText);
     const list = (items || []).filter((i) => i?.hebrew?.trim());
 
     if (logger) {
-      logger.log(STAGE, 'TRANSLATE_START', { count: list.length }, 'Pictogram_Catalog_Specification');
+      logger.log(STAGE, 'TRANSLATE_START', { count: list.length, contextAware: useContextAi }, 'Pictogram_Catalog_Specification');
     }
 
     const results = [];
@@ -108,10 +127,16 @@ Non-verbs (person, object, place): use a simple noun (grandfather, newspaper, fo
       const hebrew = item.hebrew.trim();
       const pre = item.english ? normalizeEnglish(item.english) : '';
       const hint = item.hint ? normalizeEnglish(item.hint) : pre;
-      if (pre && !isActionCategory(item.category)) {
+      const canPassThrough = pre && !isActionCategory(item.category) && !useContextAi;
+      if (canPassThrough) {
         results.push({ hebrew, english: pre, source: 'semantic-analysis' });
       } else {
-        needsAi.push({ hebrew, hint: hint || null, category: item.category || null });
+        needsAi.push({
+          hebrew,
+          hint: hint || null,
+          category: item.category || null,
+          sourceText: item.sourceText || null,
+        });
       }
     });
 
@@ -159,12 +184,21 @@ Non-verbs (person, object, place): use a simple noun (grandfather, newspaper, fo
     const map = {};
     (rule1?.representativeWords || []).forEach((rw) => {
       if (rw.word && rw.canonicalReferent) {
-        map[rw.word] = { english: rw.canonicalReferent, category: rw.category || null };
+        map[rw.word] = {
+          english: rw.canonicalReferent,
+          category: rw.category || null,
+          sourceText: rw.sourceText || rw.word,
+        };
       }
     });
     (rule1?.considerationRecord || []).forEach((cr) => {
       if (cr.field && cr.canonicalReferent && !map[cr.field]) {
-        map[cr.field] = { english: cr.canonicalReferent, category: cr.category || null };
+        const rw = (rule1.representativeWords || []).find((r) => r.word === cr.field);
+        map[cr.field] = {
+          english: cr.canonicalReferent,
+          category: cr.category || null,
+          sourceText: rw?.sourceText || cr.field,
+        };
       }
     });
     return map;
@@ -227,6 +261,7 @@ Non-verbs (person, object, place): use a simple noun (grandfather, newspaper, fo
     resolvePictogramWords,
     resolveBankWords: resolvePictogramWords,
     isActionCategory,
+    hasMemoryContext,
     STAGE,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

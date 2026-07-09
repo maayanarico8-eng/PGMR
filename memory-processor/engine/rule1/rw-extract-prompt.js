@@ -17,7 +17,7 @@ RULES (Semantic Methodology):
 - Order words in narrative sequence (who → action → objects).
 - 3–10 words total.
 
-- canonicalReferent: English lowercase pictogram search term. For verbs/actions use the noun form (נסענו→travel, שרו→song, ראה→see) — never conjugated verbs or clauses.
+- canonicalReferent: English lowercase pictogram search term disambiguated for icon lookup using THIS memory's context — not a generic dictionary gloss. Prefer visually specific terms when libraries confuse short words (בריכה in swimming context → swimming pool, not pool; נסענו on a car trip without named vehicle → drive or car, not travel; נסענו באוטובוס → bus). For verbs/actions use a pictogram noun (שרו→song, ראה→see) — never conjugated verbs or clauses.
 
 OUTPUT: Valid JSON only. No markdown. No explanation.
 {"words":[{"word":"string in memory language","sourceText":"exact fragment from memory","category":"person|object|action|place","canonicalReferent":"english lowercase"}]}`;

@@ -92,20 +92,103 @@ async function testLogger() {
   console.log('PASS logger events');
 }
 
-async function testVerbToNoun() {
+async function testContextAwareDrive() {
   const Translate = load();
+  const memoryText = 'נסענו לטיול ביער.';
+  const mockClient = {
+    callClaudeJSON: async (body) => {
+      const content = body.messages[0].content;
+      assert(content.includes(memoryText), 'memory sent to AI');
+      return { translations: [{ hebrew: 'נסענו', english: 'drive' }] };
+    },
+  };
+  const result = await Translate.translateWords(
+    [{
+      hebrew: 'נסענו',
+      english: 'travel',
+      category: 'action',
+      hint: 'travel',
+      sourceText: 'נסענו',
+    }],
+    { client: mockClient, memoryText }
+  );
+  assert(result.translations[0].english === 'drive', 'context-aware drive');
+  assert(result.translations[0].source === 'ai', 'action verbs re-translated via AI');
+  console.log('PASS context-aware drive for נסענו');
+}
+
+async function testContextDisambiguationPool() {
+  const Translate = load();
+  const memoryText = 'בקיץ סבא היה לוקח אותי לבריכה וקונה לי גלידה';
   const mockClient = {
     callClaudeJSON: async () => ({
-      translations: [{ hebrew: 'נסענו', english: 'travel' }],
+      translations: [{ hebrew: 'בריכה', english: 'swimming pool' }],
     }),
   };
   const result = await Translate.translateWords(
-    [{ hebrew: 'נסענו', english: 'we traveled', category: 'action', hint: 'we traveled' }],
+    [{
+      hebrew: 'בריכה',
+      english: 'pool',
+      category: 'location',
+      hint: 'pool',
+      sourceText: 'לבריכה',
+    }],
+    { client: mockClient, memoryText }
+  );
+  assert(result.translations[0].english === 'swimming pool', 'pool disambiguated');
+  assert(result.translations[0].source === 'ai', 'context routes object through AI');
+  console.log('PASS context disambiguation for בריכה');
+}
+
+async function testMemoryContextRoutesAllWordsThroughAi() {
+  const Translate = load();
+  let aiCalled = false;
+  const mockClient = {
+    callClaudeJSON: async () => {
+      aiCalled = true;
+      return { translations: [{ hebrew: 'בריכה', english: 'swimming pool' }] };
+    },
+  };
+  await Translate.translateWords(
+    [{ hebrew: 'בריכה', english: 'pool', category: 'object', hint: 'pool' }],
+    {
+      client: mockClient,
+      memoryText: 'בקיץ סבא היה לוקח אותי לבריכה וקונה לי גלידה',
+    }
+  );
+  assert(aiCalled, 'AI called even for non-action with pre-filled english when memory present');
+  console.log('PASS memory context routes all words through AI');
+}
+
+async function testNoMemoryFallback() {
+  const Translate = load();
+  const mockClient = {
+    callClaudeJSON: async () => { throw new Error('should not call AI'); },
+  };
+  const result = await Translate.translateWords(
+    [{ hebrew: 'בריכה', english: 'pool', category: 'object', hint: 'pool' }],
     { client: mockClient }
   );
-  assert(result.translations[0].english === 'travel', 'verb→noun');
-  assert(result.translations[0].source === 'ai', 'action verbs re-translated via AI');
-  console.log('PASS verb to pictogram noun');
+  assert(result.translations[0].english === 'pool', 'pass-through without memory');
+  assert(result.translations[0].source === 'semantic-analysis', 'semantic source without memory');
+  console.log('PASS no-memory fallback preserves pass-through');
+}
+
+async function testBuildCanonicalMapIncludesSourceText() {
+  const Translate = load();
+  const map = Translate.buildCanonicalMapFromRule1({
+    representativeWords: [
+      {
+        word: 'בריכה',
+        canonicalReferent: 'pool',
+        category: 'location',
+        sourceText: 'לבריכה',
+      },
+    ],
+  });
+  assert(map['בריכה'].sourceText === 'לבריכה', 'sourceText in canonical map');
+  assert(map['בריכה'].category === 'location', 'category in canonical map');
+  console.log('PASS buildCanonicalMapFromRule1 includes sourceText');
 }
 
 async function testResolvePictogramWords() {
@@ -144,7 +227,11 @@ async function run() {
   await testBatchAi();
   await testMixed();
   await testLogger();
-  await testVerbToNoun();
+  await testContextAwareDrive();
+  await testContextDisambiguationPool();
+  await testMemoryContextRoutesAllWordsThroughAi();
+  await testNoMemoryFallback();
+  await testBuildCanonicalMapIncludesSourceText();
   await testResolvePictogramWords();
   console.log('\nAll translate-words tests passed.');
 }
