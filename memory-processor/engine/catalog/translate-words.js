@@ -31,6 +31,8 @@ Examples:
 VERB RULE: If the Hebrew word is a verb or verb phrase, english MUST be a pictogram noun for that action in THIS context — never a conjugated verb, gerund, past tense, or clause.
 - saw / seen → see; singing / sang → song; cooking / cooked → cooking
 - traveled / travelling in a car-trip memory → drive or car, not travel
+- נסענו באופניים → prefer אופניים→bicycle and נסענו→ride (NOT bicycle for both)
+DUPLICATE RULE: Each english term must be unique across words when possible. If a verb and its instrument/vehicle would share the same pictogram (e.g. both → bicycle), assign the specific noun to the instrument/object and a distinct action term to the verb (ride, drive). Only repeat the same english when no distinct pictogram exists.
 Non-verbs (person, object, place): use a visually specific noun (grandfather, newspaper, forest, swimming pool).`;
 
   const ACTION_CATEGORIES = new Set(['action', 'activity']);
@@ -105,6 +107,27 @@ Non-verbs (person, object, place): use a visually specific noun (grandfather, ne
     return items.map((i) => byHebrew[i.hebrew] || normalizeEnglish(i.hebrew));
   }
 
+  function markTranslationDuplicates(translations) {
+    const seen = new Map();
+    return (translations || []).map((t) => {
+      const en = normalizeEnglish(t.english);
+      if (!en) return { ...t };
+      if (seen.has(en)) {
+        return { ...t, duplicateOf: seen.get(en) };
+      }
+      seen.set(en, t.hebrew);
+      return { ...t };
+    });
+  }
+
+  function uniqueTranslationsByEnglish(translations) {
+    return markTranslationDuplicates(translations).filter((t) => !t.duplicateOf);
+  }
+
+  function uniqueSlotsForSequence(slots) {
+    return (slots || []).filter((s) => !s.duplicateOf);
+  }
+
   /**
    * @param {Array<{hebrew:string, english?:string, hint?:string, sourceText?:string, category?:string}>} items
    * @param {{logger?, client?, canonicalMap?, memoryText?}} options
@@ -127,6 +150,17 @@ Non-verbs (person, object, place): use a visually specific noun (grandfather, ne
       const hebrew = item.hebrew.trim();
       const pre = item.english ? normalizeEnglish(item.english) : '';
       const hint = item.hint ? normalizeEnglish(item.hint) : pre;
+      const narratorGender = root.MemoryEngineNarratorGender;
+      if (narratorGender?.isNarratorSelfWord(hebrew, pre || hint)) {
+        results.push({
+          hebrew,
+          english: narratorGender.pictogramTermForGender(opts.narratorGender),
+          source: 'narrator-gender',
+          narratorRedirect: true,
+          originalEnglish: pre || hint || null,
+        });
+        return;
+      }
       const canPassThrough = pre && !isActionCategory(item.category) && !useContextAi;
       if (canPassThrough) {
         results.push({ hebrew, english: pre, source: 'semantic-analysis' });
@@ -154,7 +188,12 @@ Non-verbs (person, object, place): use a visually specific noun (grandfather, ne
     // Preserve original item order
     const order = list.map((i) => i.hebrew.trim());
     const byHebrew = Object.fromEntries(results.map((r) => [r.hebrew, r]));
-    const translations = order.map((h) => byHebrew[h]).filter(Boolean);
+    const narratorGender = root.MemoryEngineNarratorGender;
+    const rawTranslations = order.map((h) => byHebrew[h]).filter(Boolean);
+    const gendered = narratorGender
+      ? narratorGender.applyToTranslations(rawTranslations, opts.narratorGender)
+      : rawTranslations;
+    const translations = markTranslationDuplicates(gendered);
 
     if (logger) {
       logger.log(
@@ -162,6 +201,7 @@ Non-verbs (person, object, place): use a visually specific noun (grandfather, ne
         'TRANSLATE_DONE',
         {
           total: translations.length,
+          unique: uniqueTranslationsByEnglish(translations).length,
           fromSemantic: translations.filter((t) => t.source === 'semantic-analysis').length,
           fromAi: translations.filter((t) => t.source === 'ai').length,
         },
@@ -169,7 +209,7 @@ Non-verbs (person, object, place): use a visually specific noun (grandfather, ne
       );
     }
 
-    return { translations };
+    return { translations, uniqueTranslations: uniqueTranslationsByEnglish(translations) };
   }
 
   /**
@@ -217,39 +257,54 @@ Non-verbs (person, object, place): use a visually specific noun (grandfather, ne
   async function resolvePictogramWords(hebrewWords, options) {
     const opts = options || {};
     const canonicalMap = opts.canonicalMap || {};
-    const { translations } = await translateHebrewWords(hebrewWords, canonicalMap, opts);
-    const englishByHebrew = Object.fromEntries(
-      translations.map((t) => [t.hebrew, t.english])
-    );
+    const { translations, uniqueTranslations } = await translateHebrewWords(hebrewWords, canonicalMap, opts);
+    const translationByHebrew = Object.fromEntries(translations.map((t) => [t.hebrew, t]));
+    const englishByHebrew = Object.fromEntries(translations.map((t) => [t.hebrew, t.english]));
     const resolve = opts.resolve || root.MemoryEngineCatalogResolve?.resolveForWord;
     if (!resolve) throw new Error('MemoryEngineCatalogResolve.resolveForWord is not available');
 
-    const slots = await Promise.all(
-      (hebrewWords || []).map(async (hebrew) => {
-        const h = (hebrew || '').trim();
-        const english = englishByHebrew[h] || null;
-        const resolved = await resolve(h, {
+    const resolvedByEnglish = {};
+    await Promise.all(
+      uniqueTranslations.map(async (t) => {
+        const english = t.english || null;
+        if (!english || resolvedByEnglish[normalizeEnglish(english)]) return;
+        const resolved = await resolve(t.hebrew, {
           english,
           englishWord: english,
           canonicalReferent: english,
           catalog: opts.catalog,
           local: opts.local,
           external: opts.external,
+          narratorGender: opts.narratorGender,
         });
+        resolvedByEnglish[normalizeEnglish(english)] = resolved;
+      })
+    );
+
+    const slots = await Promise.all(
+      (hebrewWords || []).map(async (hebrew) => {
+        const h = (hebrew || '').trim();
+        const translation = translationByHebrew[h] || {};
+        const english = englishByHebrew[h] || null;
+        const duplicateOf = translation.duplicateOf || null;
+        const resolved = english ? resolvedByEnglish[normalizeEnglish(english)] : null;
         return {
           hebrew: h,
-          english: resolved.english || english,
-          status: resolved.status || 'gap',
-          source: resolved.source || null,
-          svg: resolved.svg || null,
-          catalogId: resolved.catalogId || null,
-          assetRef: resolved.assetRef || null,
-          entry: resolved.entry || null,
+          english: resolved?.english || english,
+          duplicateOf,
+          narratorRedirect: translation.narratorRedirect || resolved?.narratorRedirect || false,
+          originalEnglish: translation.originalEnglish || resolved?.originalEnglish || null,
+          status: duplicateOf ? 'duplicate' : (resolved?.status || 'gap'),
+          source: resolved?.source || null,
+          svg: resolved?.svg || null,
+          catalogId: resolved?.catalogId || null,
+          assetRef: resolved?.assetRef || null,
+          entry: resolved?.entry || null,
         };
       })
     );
 
-    return { translations, slots };
+    return { translations, uniqueTranslations, slots, sequenceSlots: uniqueSlotsForSequence(slots) };
   }
 
   root.MemoryEngineCatalogTranslate = {
@@ -262,6 +317,9 @@ Non-verbs (person, object, place): use a visually specific noun (grandfather, ne
     resolveBankWords: resolvePictogramWords,
     isActionCategory,
     hasMemoryContext,
+    markTranslationDuplicates,
+    uniqueTranslationsByEnglish,
+    uniqueSlotsForSequence,
     STAGE,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

@@ -191,6 +191,48 @@ async function testBuildCanonicalMapIncludesSourceText() {
   console.log('PASS buildCanonicalMapFromRule1 includes sourceText');
 }
 
+async function testDedupeByEnglish() {
+  const Translate = load();
+  const input = [
+    { hebrew: 'נסענו', english: 'bicycle', source: 'ai' },
+    { hebrew: 'אופניים', english: 'bicycle', source: 'ai' },
+    { hebrew: 'בר', english: 'bar', source: 'ai' },
+  ];
+  const marked = Translate.markTranslationDuplicates(input);
+  assert(marked[0].duplicateOf == null, 'first bicycle kept');
+  assert(marked[1].duplicateOf === 'נסענו', 'second bicycle marked duplicate');
+  assert(marked[2].duplicateOf == null, 'bar kept');
+  const unique = Translate.uniqueTranslationsByEnglish(marked);
+  assert(unique.length === 2, 'two unique english terms');
+  console.log('PASS dedupe by english pictogram term');
+}
+
+async function testResolvePictogramWordsDedupesResolve() {
+  const Translate = load();
+  let resolveCalls = 0;
+  const mockClient = {
+    callClaudeJSON: async () => ({
+      translations: [
+        { hebrew: 'נסענו', english: 'bicycle' },
+        { hebrew: 'אופניים', english: 'bicycle' },
+      ],
+    }),
+  };
+  const mockResolve = async () => {
+    resolveCalls++;
+    return { english: 'bicycle', status: 'hit', svg: '<svg></svg>', source: 'mapping' };
+  };
+  const result = await Translate.resolvePictogramWords(['נסענו', 'אופניים'], {
+    client: mockClient,
+    memoryText: 'נסענו באופניים',
+    resolve: mockResolve,
+  });
+  assert(resolveCalls === 1, 'resolve called once per unique english');
+  assert(result.slots[1].duplicateOf === 'נסענו', 'duplicate slot marked');
+  assert(result.sequenceSlots.length === 1, 'one sequence slot');
+  console.log('PASS resolvePictogramWords dedupes icon lookup');
+}
+
 async function testResolvePictogramWords() {
   const Translate = load();
   const mockClient = {
@@ -232,6 +274,8 @@ async function run() {
   await testMemoryContextRoutesAllWordsThroughAi();
   await testNoMemoryFallback();
   await testBuildCanonicalMapIncludesSourceText();
+  await testDedupeByEnglish();
+  await testResolvePictogramWordsDedupesResolve();
   await testResolvePictogramWords();
   console.log('\nAll translate-words tests passed.');
 }

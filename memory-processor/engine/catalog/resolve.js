@@ -18,11 +18,17 @@
   async function resolveForWord(word, options) {
     const sl = options?.streamline || streamline();
     const hebrew = (word || '').trim();
-    const english = options?.english || options?.englishWord || options?.canonicalReferent || null;
+    const rawEnglish = options?.english || options?.englishWord || options?.canonicalReferent || null;
+    const narratorGender = root.MemoryEngineNarratorGender;
+    const english = narratorGender
+      ? narratorGender.resolveEnglishForPictogram(hebrew, rawEnglish, options?.narratorGender)
+      : rawEnglish;
 
     if (!english) {
       return withPair({ status: 'gap', svg: null, source: null }, hebrew, null);
     }
+
+    const narratorRedirect = narratorGender?.isNarratorSelfWord(hebrew, rawEnglish) || false;
 
     if (!sl?.resolveIcon) {
       return withPair({ status: 'gap', svg: null, source: null }, hebrew, english);
@@ -39,6 +45,8 @@
             assetRef: `streamline://${result.hash || english}`,
             hash: result.hash,
             provisional: result.source === 'streamline-new',
+            narratorRedirect,
+            originalEnglish: narratorRedirect ? rawEnglish : undefined,
           },
           hebrew,
           english

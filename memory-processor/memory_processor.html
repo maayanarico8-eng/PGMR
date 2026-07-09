@@ -30,6 +30,10 @@ h1{font-size:22px;font-weight:500;margin-bottom:16px}
 textarea{width:100%;padding:16px;font-size:15px;line-height:1.75;color:var(--t1);background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r);resize:vertical;outline:none;font-family:var(--f);display:block}
 textarea:focus{border-color:var(--b1)}
 .input-footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.narrator-gender-picker{display:flex;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.narrator-gender-picker .gender-lbl{font-size:13px;font-weight:500;color:var(--t1)}
+.narrator-gender-picker label{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--t2);cursor:pointer}
+.narrator-gender-picker input[type=radio]{accent-color:#231F20}
 .word-count{font-size:12px;color:var(--t3)}
 .analyze-btn{padding:10px 22px;font-size:13px;font-weight:500;color:#fff;background:#231F20;border:none;border-radius:var(--r);cursor:pointer;font-family:var(--f);display:flex;align-items:center;gap:8px}
 .analyze-btn:disabled{background:var(--b2);cursor:not-allowed}
@@ -374,6 +378,11 @@ textarea:focus{border-color:var(--b1)}
       <div class="bank-test-chips" id="bank-test-chips"></div>
     </div>
     <textarea id="memory-input" dir="auto" rows="5" placeholder="Write your memory in Hebrew or English…"></textarea>
+    <div class="narrator-gender-picker" dir="rtl" id="narrator-gender-picker">
+      <span class="gender-lbl">אני:</span>
+      <label><input type="radio" name="narrator-gender" value="male" checked> זכר</label>
+      <label><input type="radio" name="narrator-gender" value="female"> נקבה</label>
+    </div>
     <div class="input-footer">
       <span class="word-count" id="word-count"></span>
       <button class="analyze-btn" id="analyze-btn">Preview pictograms</button>
@@ -395,6 +404,7 @@ textarea:focus{border-color:var(--b1)}
 <script src="/memory-processor/engine/catalog/resolve.js"></script>
 <script src="/memory-processor/engine/test-sentences.js"></script>
 <script src="/memory-processor/engine/anthropic-client.js"></script>
+<script src="/memory-processor/engine/catalog/narrator-gender.js"></script>
 <script src="/memory-processor/engine/catalog/translate-words.js"></script>
 <script src="/memory-processor/engine/rule1/extract-event-model.js"></script>
 <script src="/memory-processor/engine/rule1/rw-extract-prompt.js"></script>
@@ -412,6 +422,11 @@ textarea:focus{border-color:var(--b1)}
 let currentResult=null,currentVrpResult=null,currentAraResult=null,currentFilter='all';
 let processorMode='bank-test';
 let lastEngineSource=null;
+
+function getNarratorGender(){
+  const checked=document.querySelector('input[name="narrator-gender"]:checked');
+  return checked?.value==='female'?'female':'male';
+}
 let lastEngineExtractor=null;
 let currentRule3Result=null;
 let currentPipelineTrace=null;
@@ -796,11 +811,13 @@ async function attachTranslationsToRule1(parsed){
   const words=(parsed.representativeWords||[]).map(rw=>rw.word).filter(Boolean);
   if(!words.length)return parsed;
   const canonicalMap=MemoryEngineCatalogTranslate.buildCanonicalMapFromRule1(parsed);
-  const{translations}=await MemoryEngineCatalogTranslate.translateHebrewWords(words,canonicalMap,{memoryText:parsed.coreNarrative});
+  const{translations}=await MemoryEngineCatalogTranslate.translateHebrewWords(words,canonicalMap,{memoryText:parsed.coreNarrative,narratorGender:getNarratorGender()});
   const byHebrew=Object.fromEntries(translations.map(t=>[t.hebrew,t]));
   parsed.representativeWords=(parsed.representativeWords||[]).map(rw=>({
     ...rw,
     searchEnglish:byHebrew[rw.word]?.english||rw.canonicalReferent||null,
+    duplicateOf:byHebrew[rw.word]?.duplicateOf||null,
+    narratorRedirect:byHebrew[rw.word]?.narratorRedirect||false,
   }));
   parsed._translations=translations;
   return parsed;
@@ -874,15 +891,21 @@ function translationLoadingHTML(){
 
 function renderTranslationSection(translations){
   if(!translations?.length)return'';
-  const rows=translations.map(t=>{
-    const srcLabel=t.source==='semantic-analysis'?'semantic analysis':'translated';
-    return`<div class="translate-row"><span class="translate-he">${esc(t.hebrew)}</span><span class="translate-arrow">→</span><span class="translate-en">${esc(t.english)}</span><span class="translate-source">${esc(srcLabel)}</span></div>`;
+  const unique=translations.filter(t=>!t.duplicateOf);
+  const rows=unique.map(t=>{
+    const srcLabel=t.narratorRedirect?'narrator gender':t.source==='semantic-analysis'?'semantic analysis':'translated';
+    const enNote=t.narratorRedirect&&t.originalEnglish?` <span style="color:var(--t3);font-size:10px">(not ${esc(t.originalEnglish)})</span>`:'';
+    return`<div class="translate-row"><span class="translate-he">${esc(t.hebrew)}</span><span class="translate-arrow">→</span><span class="translate-en">${esc(t.english)}${enNote}</span><span class="translate-source">${esc(srcLabel)}</span></div>`;
   }).join('');
-  return`<div class="sec-label">Word translation <span>${translations.length} word${translations.length!==1?'s':''} · English for pictogram search</span></div><div class="translate-grid">${rows}</div>`;
+  const dupCount=translations.length-unique.length;
+  const dupNote=dupCount?` · ${dupCount} duplicate pictogram term${dupCount!==1?'s':''} hidden`:'';
+  return`<div class="sec-label">Word translation <span>${unique.length} unique term${unique.length!==1?'s':''}${dupNote} · English for pictogram search</span></div><div class="translate-grid">${rows}</div>`;
 }
 
-function englishRefMeta(english){
-  return english?`<div class="word-en-ref">EN: ${esc(english)}</div>`:'';
+function englishRefMeta(english,slot){
+  if(!english)return'';
+  const note=slot?.narratorRedirect?` <span style="color:var(--t3)">(narrator → ${esc(english)})</span>`:'';
+  return`<div class="word-en-ref">EN: ${esc(english)}${note}</div>`;
 }
 
 function pictogramSourceMeta(source){
@@ -912,10 +935,11 @@ function sequenceSlotSvg(svgHtml,size=64){
 }
 
 async function buildBankSequence(slots,rtl=true){
-  const N=slots.length;if(!N)return'';
+  const seqSlots=(slots||[]).filter(s=>!s.duplicateOf);
+  const N=seqSlots.length;if(!N)return'';
   const ps=64,gap=24,cW=Math.max(320,N*ps+(N-1)*gap+40),cH=128;
   const totW=N*ps+(N-1)*gap,x0=(cW-totW)/2,y0=(cH-ps)/2;
-  const parts=slots.map((slot,i)=>{
+  const parts=seqSlots.map((slot,i)=>{
     const svg=slot.status==='hit'&&slot.svg?slot.svg:GAP_SVG;
     const x=rtl?x0+(N-1-i)*(ps+gap):x0+i*(ps+gap);
     return`<g transform="translate(${x},${y0})">${sequenceSlotSvg(svg)}</g>`;
@@ -928,16 +952,19 @@ async function renderBankTest(sentence){
   if(!container)return;
   const words=sentence.words||[];
   container.innerHTML=`<div class="mem-banner"><div class="mem-banner-lbl">Test sentence</div><div dir="rtl">${esc(sentence.text)}</div></div>${translationLoadingHTML()}`;
-  const{translations,slots}=await MemoryEngineCatalogTranslate.resolvePictogramWords(words,{memoryText:sentence.text});
-  const hits=slots.filter(s=>s.status==='hit').length;
-  const gaps=slots.length-hits;
+  const{translations,slots}=await MemoryEngineCatalogTranslate.resolvePictogramWords(words,{memoryText:sentence.text,narratorGender:getNarratorGender()});
+  const hits=slots.filter(s=>!s.duplicateOf&&s.status==='hit').length;
+  const gaps=slots.filter(s=>!s.duplicateOf&&s.status!=='hit').length;
   const seqSvg=await buildBankSequence(slots,true);
   const rows=slots.map(slot=>{
-    const isGap=slot.status!=='hit';
-    const meta=isGap
+    const isDup=!!slot.duplicateOf;
+    const isGap=!isDup&&slot.status!=='hit';
+    const meta=isDup
+      ?`<div class="cat-hit-meta" style="color:var(--t3)">same pictogram as ${esc(slot.duplicateOf)}</div>`
+      :isGap
       ?`<div class="cat-hit-meta" style="color:#D85A30">✕ Streamline fetch failed</div>`
       :`${pictogramSourceMeta(slot.source)}${slot.assetRef?`<div style="font-size:10px;color:var(--t3)">${esc(slot.assetRef)}</div>`:''}`;
-    return`<div class="bank-word-row${isGap?' is-gap':''}"><div class="cat-svg-wrap${isGap?' cat-gap-wrap':''}">${isGap?GAP_SVG:slot.svg}</div><div class="cat-hit-info"><div class="cat-hit-word">${esc(slot.hebrew)}</div>${englishRefMeta(slot.english)}${meta}</div></div>`;
+    return`<div class="bank-word-row${isGap?' is-gap':''}${isDup?' opacity-70':''}"><div class="cat-svg-wrap${isGap?' cat-gap-wrap':''}">${isGap?GAP_SVG:slot.svg}</div><div class="cat-hit-info"><div class="cat-hit-word">${esc(slot.hebrew)}</div>${englishRefMeta(slot.english,slot)}${meta}</div></div>`;
   }).join('');
   container.innerHTML=`
     <div class="mem-banner"><div class="mem-banner-lbl">Test sentence</div><div dir="rtl">${esc(sentence.text)}</div></div>
@@ -960,21 +987,24 @@ async function previewFullApiPictograms(){
   container.innerHTML=translationLoadingHTML();
   try{
     const canonicalMap=MemoryEngineCatalogTranslate.buildCanonicalMapFromRule1(currentResult);
-    const{translations,slots}=await MemoryEngineCatalogTranslate.resolvePictogramWords(words,{canonicalMap,memoryText:currentResult.coreNarrative});
+    const{translations,slots}=await MemoryEngineCatalogTranslate.resolvePictogramWords(words,{canonicalMap,memoryText:currentResult.coreNarrative,narratorGender:getNarratorGender()});
     const rtl=currentResult.memoryLanguage==='Hebrew';
-    const hits=slots.filter(s=>s.status==='hit').length;
-    const gaps=slots.length-hits;
+    const hits=slots.filter(s=>!s.duplicateOf&&s.status==='hit').length;
+    const gaps=slots.filter(s=>!s.duplicateOf&&s.status!=='hit').length;
     const seqSvg=await buildBankSequence(slots,rtl);
     const rows=slots.map(slot=>{
-      const isGap=slot.status!=='hit';
+      const isDup=!!slot.duplicateOf;
+      const isGap=!isDup&&slot.status!=='hit';
       const gapId='gap-'+slot.hebrew.replace(/\s+/g,'-');
-      const meta=isGap
+      const meta=isDup
+        ?`<div class="cat-hit-meta" style="color:var(--t3)">same pictogram as ${esc(slot.duplicateOf)}</div>`
+        :isGap
         ?`<div class="cat-hit-meta" style="color:#D85A30">✕ Streamline fetch failed</div>`
         :`${pictogramSourceMeta(slot.source)}${slot.assetRef?`<div style="font-size:10px;color:var(--t3)">${esc(slot.assetRef)}</div>`:''}`;
       const uploadBtn=isGap&&rule3AutoRealizationEnabled()
         ?`<div style="margin-top:8px;display:flex;align-items:center;gap:10px"><button onclick="createFileInput(${JSON.stringify(slot.hebrew)},document.getElementById(${JSON.stringify(gapId)}))" style="padding:4px 11px;font-size:11px;font-family:var(--f);border:1px solid #C0846A;border-radius:5px;background:transparent;color:#9B4D2C;cursor:pointer">↑ Upload reference SVG</button><span class="realize-status" style="font-size:10.5px;color:var(--t3)"></span></div>`
         :'';
-      return`<div class="bank-word-row${isGap?' is-gap':''}"${isGap?` id="${esc(gapId)}"`:''}><div class="cat-svg-wrap${isGap?' cat-gap-wrap':''}">${isGap?GAP_SVG:slot.svg}</div><div class="cat-hit-info"><div class="cat-hit-word">${esc(slot.hebrew)}</div>${englishRefMeta(slot.english)}${meta}${uploadBtn}</div></div>`;
+      return`<div class="bank-word-row${isGap?' is-gap':''}${isDup?' opacity-70':''}"${isGap?` id="${esc(gapId)}"`:''}><div class="cat-svg-wrap${isGap?' cat-gap-wrap':''}">${isGap?GAP_SVG:slot.svg}</div><div class="cat-hit-info"><div class="cat-hit-word">${esc(slot.hebrew)}</div>${englishRefMeta(slot.english,slot)}${meta}${uploadBtn}</div></div>`;
     }).join('');
     container.innerHTML=`
       ${renderTranslationSection(translations)}
@@ -992,8 +1022,12 @@ async function previewFullApiPictograms(){
 }
 
 async function buildSequenceSVG(vrpResult,slots){
-  const units=(vrpResult?.vrp||[]).filter(u=>['independent','both'].includes(u.phase2?.modeDecision?.mode));
   const slotByHebrew=Object.fromEntries((slots||[]).map(s=>[s.hebrew,s]));
+  const units=(vrpResult?.vrp||[]).filter(u=>{
+    if(!['independent','both'].includes(u.phase2?.modeDecision?.mode))return false;
+    const slot=slotByHebrew[u.unit||''];
+    return slot&&!slot.duplicateOf;
+  });
   const N=units.length;if(!N)return'';
   const ps=64,gap=24,cW=856,cH=128;
   const totW=N*ps+(N-1)*gap,x0=(cW-totW)/2,y0=(cH-ps)/2;
@@ -1223,7 +1257,7 @@ async function renderCatalogSection(vrpResult){
   container.innerHTML=`<div class="divider"></div>${translationLoadingHTML()}`;
   const hebrewWords=units.map(u=>u.unit||'').filter(Boolean);
   const canonicalMap=MemoryEngineCatalogTranslate.buildCanonicalMapFromRule1(currentResult);
-  const{translations,slots}=await MemoryEngineCatalogTranslate.resolvePictogramWords(hebrewWords,{canonicalMap,memoryText:currentResult.coreNarrative});
+  const{translations,slots}=await MemoryEngineCatalogTranslate.resolvePictogramWords(hebrewWords,{canonicalMap,memoryText:currentResult.coreNarrative,narratorGender:getNarratorGender()});
   const slotByHebrew=Object.fromEntries(slots.map(s=>[s.hebrew,s]));
   container.innerHTML=`<div class="divider"></div>${renderTranslationSection(translations)}<div class="sec-label">Library Lookup <span>Loading pictograms…</span></div>`;
   let hits=0,gaps=0;
@@ -1231,7 +1265,7 @@ async function renderCatalogSection(vrpResult){
     const hebrew=u.unit||'';
     const slot=slotByHebrew[hebrew]||{hebrew,english:null,status:'gap'};
     const english=slot.english;
-    const enMeta=englishRefMeta(english);
+    const enMeta=englishRefMeta(english,slot);
     if(slot.status==='hit'){
       hits++;
       const svgHtml=slot.svg||GAP_SVG;
@@ -1516,8 +1550,10 @@ function renderResults(result){
   const rwCards=repWords.map((rw,i)=>{
     const cc=SF_CATEGORY_CFG[rw.category]||{label:rw.category||'',bg:'#F1EFE8',b:'#D3D1C7',t:'#444441'};
     const en=rw.searchEnglish||rw.canonicalReferent||'';
-    const enRow=isFullApi&&en?`<span class="translate-arrow" style="margin:0 8px;color:var(--t3)">→</span><span class="translate-en">${esc(en)}</span>`:'';
-    return `<div class="unit-card"><div class="unit-num">${i+1}</div><div class="unit-body"><div class="unit-name-row"><span class="unit-name" dir="${rtl?'rtl':'ltr'}">${esc(rw.word)}</span>${enRow}${badge(cc.label,cc.bg,cc.b,cc.t)}</div><div class="unit-src" dir="${rtl?'rtl':'ltr'}"><em>"${esc(rw.sourceText)}"</em></div></div></div>`;
+    const dupNote=rw.duplicateOf?`<span style="font-size:10px;color:var(--t3);margin-left:8px">same pictogram as ${esc(rw.duplicateOf)}</span>`:'';
+    const narrNote=rw.narratorRedirect?`<span style="font-size:10px;color:var(--t3);margin-left:8px">narrator → ${esc(en)}</span>`:'';
+    const enRow=isFullApi&&en?`<span class="translate-arrow" style="margin:0 8px;color:var(--t3)">→</span><span class="translate-en">${esc(en)}</span>${dupNote}${narrNote}`:'';
+    return `<div class="unit-card${rw.duplicateOf?' opacity-70':''}"><div class="unit-num">${i+1}</div><div class="unit-body"><div class="unit-name-row"><span class="unit-name" dir="${rtl?'rtl':'ltr'}">${esc(rw.word)}</span>${enRow}${badge(cc.label,cc.bg,cc.b,cc.t)}</div><div class="unit-src" dir="${rtl?'rtl':'ltr'}"><em>"${esc(rw.sourceText)}"</em></div></div></div>`;
   }).join('');
   html+=`<div class="mb28">${sectionLabel('Representative Words',`${repWords.length} words`)}<div class="units-list">${rwCards}</div></div>`;
   if(isFullApi&&translations.length){
