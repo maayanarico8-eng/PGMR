@@ -42,6 +42,9 @@ async function testStreamlineResolution() {
     if (u.includes('/api/streamline-mapping') && !u.includes('action=')) {
       return { ok: true, async json() { return { version: 1, icons: {} }; } };
     }
+    if (u.includes('/api/pictogram-cache')) {
+      return { ok: true, async json() { return { english: '', entry: null }; } };
+    }
     if (u.includes('action=family-search')) {
       return {
         ok: true,
@@ -112,8 +115,8 @@ async function main() {
   }
 
   const hitSources = (out.rule3?.lookups || []).filter((l) => l.outcome === 'hit').map((l) => l.source);
-  if (!hitSources.every((s) => s === 'mapping' || s === 'streamline')) {
-    console.error('FAIL: catalog hits should have source=mapping or streamline');
+  if (!hitSources.every((s) => s === 'cache' || s === 'mapping' || s === 'streamline')) {
+    console.error('FAIL: catalog hits should have source=cache, mapping, or streamline');
     process.exit(1);
   }
 

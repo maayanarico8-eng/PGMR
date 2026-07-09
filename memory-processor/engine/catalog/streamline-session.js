@@ -17,6 +17,16 @@
     return active.slice();
   }
 
+  function getByEnglish(english) {
+    const key = (english || '').toLowerCase().trim();
+    if (!key) return null;
+    for (let i = active.length - 1; i >= 0; i--) {
+      const item = active[i];
+      if ((item.meta?.english || '').toLowerCase().trim() === key) return item;
+    }
+    return null;
+  }
+
   function cleanup() {
     active.length = 0;
     if (typeof URL !== 'undefined' && URL.revokeObjectURL) {
@@ -29,6 +39,7 @@
     register,
     trackBlobUrl,
     getActive,
+    getByEnglish,
     cleanup,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

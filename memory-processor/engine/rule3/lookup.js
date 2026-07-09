@@ -62,6 +62,7 @@
 
       const sl = root.MemoryEngineCatalogStreamlineProvider;
       sl?.ensureMappingLoadedSync?.();
+      const cached = english && sl?.hasCachedSvg?.(english);
       const mapped = english && sl?.hasMapping?.(english);
       if (english) {
         hits++;
@@ -72,7 +73,7 @@
           word: hebrew,
           mode,
           outcome: 'hit',
-          source: mapped ? 'mapping' : 'streamline',
+          source: cached ? 'cache' : mapped ? 'mapping' : 'streamline',
         };
         lookups.push(entry);
         viableUnits.push({ hebrew, english, source: entry.source });

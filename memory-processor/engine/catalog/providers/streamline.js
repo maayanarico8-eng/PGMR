@@ -1,25 +1,33 @@
 /**
  * Streamline HQ pictogram provider — mapping-first, family search, then download.
+ * SVG bytes are stored in pictogram-cache (Blob/disk), not in the mapping file.
+ * Download params: https://docs.streamlinehq.com/reference/downloadiconassvg
  */
 (function (root) {
   const MAPPING_API_URL = '/api/streamline-mapping';
+  const CACHE_API_URL = '/api/pictogram-cache';
+
+  const DEFAULT_FAMILY_SLUG = 'streamline-regular';
 
   const DEFAULT_SEARCH_PARAMS = {
     mode: 'family',
-    familySlug: 'core-line-free',
+    familySlug: DEFAULT_FAMILY_SLUG,
     limit: 10,
   };
 
+  /** Maayan-aligned export settings for 64×64 pictogram references */
   const DEFAULT_DOWNLOAD_PARAMS = {
     size: 64,
     responsive: true,
     strokeToFill: false,
-    colors: '',
     backgroundColor: '#ffffff00',
+    colors: '#000000',
+    strokeWidth: 1,
   };
 
   let mappingCache = null;
   let mappingLoadPromise = null;
+  const svgCacheMemory = {};
 
   function normalizeEnglish(s) {
     return (s || '').toLowerCase().trim();
@@ -27,6 +35,10 @@
 
   function isPremiumDownloadError(message) {
     return /paying customers|premium|forbidden|not have access|don't have access/i.test(message || '');
+  }
+
+  function isFreeFamily(familySlug) {
+    return String(familySlug || '').endsWith('-free');
   }
 
   function isMappedEntryCurrent(entry) {
@@ -37,13 +49,24 @@
     );
   }
 
-  function mappingFileCandidates() {
-    if (typeof window !== 'undefined') return [];
+  function pictogramsDir() {
+    if (typeof window !== 'undefined') return null;
     const path = require('path');
-    return [
-      path.join(__dirname, '../../pictograms/streamline-mapping.json'),
-      path.join(__dirname, '../../../pictograms/streamline-mapping.json'),
-    ];
+    return path.join(__dirname, '../../../pictograms');
+  }
+
+  function mappingFileCandidates() {
+    const dir = pictogramsDir();
+    if (!dir) return [];
+    const path = require('path');
+    return [path.join(dir, 'streamline-mapping.json')];
+  }
+
+  function cacheFileCandidates() {
+    const dir = pictogramsDir();
+    if (!dir) return [];
+    const path = require('path');
+    return [path.join(dir, 'pictogram-cache.json')];
   }
 
   function readMappingFromDisk() {
@@ -53,7 +76,21 @@
         return JSON.parse(fs.readFileSync(file, 'utf8'));
       }
     }
-    return { version: 2, meta: { searchMode: 'family', familySlug: 'core-line-free' }, icons: {} };
+    return {
+      version: 2,
+      meta: { searchMode: 'family', familySlug: DEFAULT_FAMILY_SLUG },
+      icons: {},
+    };
+  }
+
+  function readCacheFromDisk() {
+    const fs = require('fs');
+    for (const file of cacheFileCandidates()) {
+      if (fs.existsSync(file)) {
+        return JSON.parse(fs.readFileSync(file, 'utf8'));
+      }
+    }
+    return { version: 1, icons: {} };
   }
 
   function ensureMappingLoadedSync() {
@@ -97,17 +134,45 @@
     return !!getMappedEntry(english)?.hash;
   }
 
+  function hasCachedSvg(english) {
+    const key = normalizeEnglish(english);
+    if (!key) return false;
+    if (svgCacheMemory[key]?.svg) return true;
+    if (typeof window === 'undefined') {
+      const cache = readCacheFromDisk();
+      return !!cache.icons?.[key]?.svg;
+    }
+    return false;
+  }
+
+  function mappingEntryForSave(entry) {
+    if (!entry) return entry;
+    const { svg, ...rest } = entry;
+    return rest;
+  }
+
   async function saveMappingEntry(english, entry) {
     const key = normalizeEnglish(english);
     await loadMapping();
     if (!mappingCache.icons) mappingCache.icons = {};
-    mappingCache.icons[key] = entry;
+    const stored = mappingEntryForSave(entry);
+    mappingCache.icons[key] = stored;
+
+    if (typeof window === 'undefined') {
+      const fs = require('fs');
+      for (const file of mappingFileCandidates()) {
+        fs.mkdirSync(require('path').dirname(file), { recursive: true });
+        fs.writeFileSync(file, `${JSON.stringify(mappingCache, null, 2)}\n`, 'utf8');
+        return;
+      }
+      return;
+    }
 
     try {
-      const res = await fetch('/api/streamline-mapping', {
+      const res = await fetch(MAPPING_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ english: key, entry }),
+        body: JSON.stringify({ english: key, entry: stored }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -123,19 +188,96 @@
     }
   }
 
-  function rankIconCandidates(results, english) {
+  async function getCachedEntry(english) {
+    const key = normalizeEnglish(english);
+    if (!key) return null;
+    if (svgCacheMemory[key]?.svg) return svgCacheMemory[key];
+
+    if (typeof window === 'undefined') {
+      const cache = readCacheFromDisk();
+      const entry = cache.icons?.[key] || null;
+      if (entry?.svg) svgCacheMemory[key] = entry;
+      return entry;
+    }
+
+    try {
+      const res = await fetch(`${CACHE_API_URL}?english=${encodeURIComponent(key)}`);
+      if (!res.ok) return null;
+      const body = await res.json();
+      if (body.entry?.svg) {
+        svgCacheMemory[key] = body.entry;
+        return body.entry;
+      }
+    } catch (err) {
+      console.warn('pictogram-cache read error:', err.message);
+    }
+    return null;
+  }
+
+  async function saveCacheEntry(english, entry) {
+    const key = normalizeEnglish(english);
+    if (!key || !entry?.svg) return;
+    const stored = {
+      svg: entry.svg,
+      hash: entry.hash || null,
+      cachedAt: entry.cachedAt || new Date().toISOString(),
+    };
+    svgCacheMemory[key] = stored;
+
+    if (typeof window === 'undefined') {
+      const fs = require('fs');
+      const path = require('path');
+      const cache = readCacheFromDisk();
+      if (!cache.icons) cache.icons = {};
+      cache.icons[key] = stored;
+      for (const file of cacheFileCandidates()) {
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        fs.writeFileSync(file, `${JSON.stringify(cache, null, 2)}\n`, 'utf8');
+        return;
+      }
+      return;
+    }
+
+    try {
+      const res = await fetch(CACHE_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ english: key, entry: stored }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        console.warn('pictogram-cache save:', body.error?.message || res.status);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        if (body.entry) svgCacheMemory[key] = body.entry;
+      }
+    } catch (err) {
+      console.warn('pictogram-cache save error:', err.message);
+    }
+  }
+
+  /** Legacy: mapping entries may still carry inline svg from older builds. */
+  async function migrateLegacyInlineSvg(term, mapped) {
+    if (!mapped?.svg) return null;
+    await saveCacheEntry(term, { svg: mapped.svg, hash: mapped.hash });
+    await saveMappingEntry(term, mapped);
+    return mapped.svg;
+  }
+
+  function rankIconCandidates(results, english, familySlug) {
     const list = results || [];
     if (!list.length) return [];
     const key = normalizeEnglish(english);
+    const slug = familySlug || DEFAULT_FAMILY_SLUG;
     const free = list.filter((r) => r.isFree);
-    const pool = free.length ? free : list;
+    const pool = isFreeFamily(slug) && free.length ? free : list;
     const exact = pool.find((r) => normalizeEnglish(r.name) === key);
     const rest = pool.filter((r) => r !== exact);
     return exact ? [exact, ...rest] : pool;
   }
 
-  function pickIcon(results, english) {
-    return rankIconCandidates(results, english)[0] || null;
+  function pickIcon(results, english, familySlug) {
+    return rankIconCandidates(results, english, familySlug)[0] || null;
   }
 
   async function apiCall(action, params) {
@@ -181,17 +323,26 @@
     return { svg: null, icon: null };
   }
 
+  function registerSession(svg, meta) {
+    root.MemoryEngineStreamlineSession?.register?.(svg, meta);
+  }
+
+  function returnSvg(term, svg, hash, source) {
+    registerSession(svg, { english: term, hash, source });
+    return { svg, source, hash, english: term };
+  }
+
   async function resolveFromSearch(term, searchParams) {
     const searchResult = await searchIcons(term, searchParams);
-    const candidates = rankIconCandidates(searchResult?.results, term);
+    const sp = { ...DEFAULT_SEARCH_PARAMS, ...(searchParams || {}) };
+    const candidates = rankIconCandidates(searchResult?.results, term, sp.familySlug);
     if (!candidates.length) return null;
 
     const downloadParams = { ...DEFAULT_DOWNLOAD_PARAMS };
-    const sp = { ...DEFAULT_SEARCH_PARAMS, ...(searchParams || {}) };
     const { svg, icon } = await tryDownloadCandidates(candidates, downloadParams);
     if (!svg || !icon) return null;
 
-    const entry = {
+    const mappingEntry = {
       hash: icon.hash,
       iconName: icon.name || term,
       familySlug: sp.familySlug,
@@ -200,32 +351,46 @@
       searchQuery: term,
       updatedAt: new Date().toISOString(),
     };
-    await saveMappingEntry(term, entry);
+    await saveMappingEntry(term, mappingEntry);
+    await saveCacheEntry(term, { svg, hash: icon.hash });
 
-    root.MemoryEngineStreamlineSession?.register(svg, {
-      english: term,
-      hash: icon.hash,
-      source: 'streamline-new',
-    });
-    return { svg, source: 'streamline-new', hash: icon.hash, english: term };
+    return returnSvg(term, svg, icon.hash, 'streamline-new');
   }
 
   async function resolveIcon(english) {
     const term = normalizeEnglish(english);
     if (!term) return null;
 
+    const sessionCached = root.MemoryEngineStreamlineSession?.getByEnglish?.(term);
+    if (sessionCached?.svg) {
+      return {
+        svg: sessionCached.svg,
+        source: sessionCached.meta?.source || 'cache',
+        hash: sessionCached.meta?.hash || null,
+        english: term,
+      };
+    }
+
+    const cached = await getCachedEntry(term);
+    if (cached?.svg) {
+      return returnSvg(term, cached.svg, cached.hash, 'cache');
+    }
+
     await loadMapping();
     const mapped = getMappedEntry(term);
+
+    if (mapped) {
+      const legacySvg = await migrateLegacyInlineSvg(term, mapped);
+      if (legacySvg) {
+        return returnSvg(term, legacySvg, mapped.hash, 'cache');
+      }
+    }
 
     if (mapped?.hash) {
       try {
         const svg = await downloadSvg(mapped.hash, mapped.downloadParams || DEFAULT_DOWNLOAD_PARAMS);
-        root.MemoryEngineStreamlineSession?.register(svg, {
-          english: term,
-          hash: mapped.hash,
-          source: 'mapping',
-        });
-        return { svg, source: 'mapping', hash: mapped.hash, english: term };
+        await saveCacheEntry(term, { svg, hash: mapped.hash });
+        return returnSvg(term, svg, mapped.hash, 'mapping');
       } catch (err) {
         if (!isPremiumDownloadError(err.message)) throw err;
         if (mappingCache?.icons) delete mappingCache.icons[term];
@@ -244,14 +409,18 @@
   function clearMappingCache() {
     mappingCache = null;
     mappingLoadPromise = null;
+    Object.keys(svgCacheMemory).forEach((k) => delete svgCacheMemory[k]);
   }
 
   root.MemoryEngineCatalogStreamlineProvider = {
     loadMapping,
     ensureMappingLoadedSync,
     getMappedEntry,
+    getCachedEntry,
     hasMapping,
+    hasCachedSvg,
     saveMappingEntry,
+    saveCacheEntry,
     pickIcon,
     rankIconCandidates,
     searchIcons,
@@ -262,8 +431,10 @@
     clearMappingCache,
     DEFAULT_SEARCH_PARAMS,
     DEFAULT_DOWNLOAD_PARAMS,
+    DEFAULT_FAMILY_SLUG,
     normalizeEnglish,
     isPremiumDownloadError,
     isMappedEntryCurrent,
+    isFreeFamily,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

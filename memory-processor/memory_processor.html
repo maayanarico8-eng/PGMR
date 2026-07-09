@@ -620,7 +620,7 @@ JSON SCHEMA:
 {"ensembleReasoning":"paragraph: holistic analysis before individual classification; identify likely Independent candidates first","vrp":[{"unitId":"rw_01","unit":"string","canonicalReferent":"string","phase1":{"entityNature":"string","identityFeatures":["string"],"inherentlyVisual":true},"phase2":{"possibilityInventory":{"independentPossible":true,"independentRationale":"string","contextualPossible":false,"contextualRationale":"string","contextualDependencies":[]},"testV":{"applied":false,"alternativeMemory":null,"visuallyDistinguishable":null,"testVConclusion":"not-applicable"},"modeDecision":{"mode":"independent|contextual|both|gap","modeRationale":"string","independent":{"visualConcept":"string","constructible":true},"contextual":{"expressedThrough":["rw_01"],"relationalMechanism":"string","emergenceExplanation":"string"},"gap":{"gapType":"string","gapRationale":"string","alternativeStrategy":"string or null"}}},"phase3":{"survivabilityStatus":"string","independentConfidence":"string","contextualConfidence":"string","mutuallyReinforcing":null,"assessment":"string"},"phase4":{"h002Status":"string","auditNote":"string"}}],"vrpSummary":{"independent":0,"contextual":0,"both":0,"gap":0,"sequenceViability":"viable|partial|blocked","sequenceComment":"string"}}`;
 
 
-/* Pictograms: streamline-mapping.json → Streamline HQ API */
+/* Pictograms: pictogram-cache → streamline-mapping → Streamline HQ API */
 
 const GAP_SVG=`<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#D85A30" stroke-width="1.5" stroke-dasharray="5 4"/><text x="32" y="40" text-anchor="middle" font-family="system-ui,sans-serif" font-size="26" font-weight="600" fill="#D85A30">✕</text></svg>`;
 
@@ -823,6 +823,7 @@ function englishRefMeta(english){
 }
 
 function pictogramSourceMeta(source){
+  if(source==='cache')return '<div class="cat-hit-meta">Stored · cached</div>';
   if(source==='mapping')return '<div class="cat-hit-meta">Streamline · mapped</div>';
   if(source==='streamline-new')return '<div class="cat-hit-meta">Streamline · new</div>';
   if(source==='streamline')return '<div class="cat-hit-meta">Streamline</div>';
@@ -882,7 +883,7 @@ async function renderBankTest(sentence){
     <div class="bank-word-grid">${rows}</div>
     <div class="sec-label">Sequence</div>
     <div class="seq-display">${seqSvg}</div>
-    <div style="font-size:11px;color:var(--t3);margin-top:8px">Icons resolve from <code style="font-size:10px">streamline-mapping.json</code> first, then Streamline HQ search.</div>
+    <div style="font-size:11px;color:var(--t3);margin-top:8px">Icons resolve from <code style="font-size:10px">pictogram-cache</code> first, then <code style="font-size:10px">streamline-mapping.json</code>, then Streamline HQ (<code style="font-size:10px">streamline-regular</code>).</div>
   `;
 }
 
@@ -918,7 +919,7 @@ async function previewFullApiPictograms(){
       <div class="bank-word-grid">${rows}</div>
       <div class="sec-label">Sequence</div>
       <div class="seq-display">${seqSvg}</div>
-      <div style="font-size:11px;color:var(--t3);margin-top:8px">Icons resolve from <code style="font-size:10px">streamline-mapping.json</code> first, then Streamline HQ family search (<code style="font-size:10px">core-line-free</code>).</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:8px">Icons resolve from <code style="font-size:10px">pictogram-cache</code> first, then <code style="font-size:10px">streamline-mapping.json</code>, then Streamline HQ (<code style="font-size:10px">streamline-regular</code>).</div>
     `;
   }catch(e){
     container.innerHTML=`<div class="error-card" style="margin-top:12px">${esc(e.message)}</div>`;

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Verify Streamline family search (core-line-free) returns downloadable SVGs.
+ * Verify Streamline family search (streamline-regular) returns downloadable SVGs.
  * Run: BASE=https://pgmr-two.vercel.app node memory-processor/scripts/test-streamline-free.js
  */
 const BASE = process.env.BASE || 'http://localhost:3000';
-const FAMILY = 'core-line-free';
+const FAMILY = 'streamline-regular';
 const WORDS = ['cat', 'grandfather', 'pool', 'pool swing', 'newspaper'];
 
 async function search(word) {
@@ -27,6 +27,9 @@ async function download(hash) {
     size: '64',
     responsive: 'true',
     strokeToFill: 'false',
+    backgroundColor: '#ffffff00',
+    colors: '#000000',
+    strokeWidth: '1',
   });
   const res = await fetch(`${BASE}/api/streamline?${qs}`);
   const body = await res.json();

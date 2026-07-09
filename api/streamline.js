@@ -1,3 +1,5 @@
+const { DEFAULT_FAMILY_SLUG, buildDownloadQueryParams } = require('./streamline-config');
+
 module.exports = async (req, res) => {
   const apiKey = process.env.STREAMLINE_API_KEY?.trim();
   if (!apiKey) {
@@ -13,13 +15,9 @@ module.exports = async (req, res) => {
   try {
     if (action === 'family-search') {
       const query = q.query;
-      const familySlug = q.familySlug;
+      const familySlug = q.familySlug || DEFAULT_FAMILY_SLUG;
       if (!query) {
         res.status(400).json({ error: { message: 'query is required' } });
-        return;
-      }
-      if (!familySlug) {
-        res.status(400).json({ error: { message: 'familySlug is required' } });
         return;
       }
       const params = new URLSearchParams({
@@ -47,7 +45,7 @@ module.exports = async (req, res) => {
         productType: String(q.productType || 'icons'),
         query: String(query),
         limit: String(q.limit || '10'),
-        productTier: String(q.productTier || 'free'),
+        productTier: String(q.productTier || 'premium'),
       });
       if (q.style) params.set('style', String(q.style));
       if (q.offset != null && q.offset !== '') params.set('offset', String(q.offset));
@@ -66,16 +64,15 @@ module.exports = async (req, res) => {
         res.status(400).json({ error: { message: 'hash is required' } });
         return;
       }
-      const params = new URLSearchParams({
-        size: String(q.size ?? 64),
-        responsive: String(q.responsive ?? true),
-        strokeToFill: String(q.strokeToFill ?? false),
-        backgroundColor: String(q.backgroundColor ?? '#ffffff00'),
+
+      const params = buildDownloadQueryParams({
+        size: q.size,
+        responsive: q.responsive,
+        strokeToFill: q.strokeToFill,
+        backgroundColor: q.backgroundColor,
+        colors: q.colors,
+        strokeWidth: q.strokeWidth,
       });
-      if (q.colors) params.set('colors', String(q.colors));
-      if (q.strokeWidth != null && q.strokeWidth !== '') {
-        params.set('strokeWidth', String(q.strokeWidth));
-      }
 
       const upstream = await fetch(
         `https://public-api.streamlinehq.com/v1/icons/${encodeURIComponent(hash)}/download/svg?${params}`,

@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { DEFAULT_FAMILY_SLUG } = require('./streamline-config');
 
 const MAPPING_PATH = path.join(process.cwd(), 'memory-processor/pictograms/streamline-mapping.json');
 const BLOB_PATHNAME = 'streamline-mapping.json';
@@ -7,7 +8,7 @@ const BLOB_PATHNAME = 'streamline-mapping.json';
 function emptyMapping() {
   return {
     version: 2,
-    meta: { searchMode: 'family', familySlug: 'core-line-free' },
+    meta: { searchMode: 'family', familySlug: DEFAULT_FAMILY_SLUG },
     icons: {},
   };
 }

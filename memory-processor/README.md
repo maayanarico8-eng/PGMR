@@ -10,7 +10,8 @@ This is a graduation project in Visual Communication. It does not aim to reconst
 vercel.json                  ← Vercel rewrite: / → memory_processor.html
 api/anthropic.js             ← server-side Anthropic proxy (uses ANTHROPIC_API_KEY)
 api/streamline.js            ← server-side Streamline proxy (uses STREAMLINE_API_KEY)
-api/streamline-mapping.js    ← local-dev writes to pictograms/streamline-mapping.json
+api/streamline-mapping.js    ← word → Streamline hash metadata (Blob / local JSON)
+api/pictogram-cache.js       ← cached SVG bytes per English word (Blob / local JSON)
 engine/                      ← local Rule 1 + Rule 2 + Rule 3 + pipeline
   logger.js                    ← structured smart logging
   pipeline.js                  ← full Rule 1→2→3 orchestrator
@@ -57,15 +58,16 @@ The built-in example memory is pre-filled in Mock mode; click **Analyze memory**
 3. Redeploy (or run `vercel --prod` from the repo root)
 
 
-### Pictogram mapping (live on production)
+### Pictogram mapping + SVG cache (live on production)
 
-English → Streamline icon mappings are stored in a single JSON file via **Vercel Blob** (not a database).
+English → Streamline icon **metadata** (`streamline-mapping.json`) and downloaded **SVG bytes** (`pictogram-cache.json`) are stored via **Vercel Blob** (not a database).
 
 1. Vercel dashboard → **Storage** → **Blob** → create store and link to this project
 2. Vercel auto-adds `BLOB_READ_WRITE_TOKEN`
-3. New words are saved live via `POST /api/streamline-mapping` — no git commit per word
+3. New words are saved live via `POST /api/streamline-mapping` (hash/metadata) and `POST /api/pictogram-cache` (SVG) — no git commit per word
+4. After the first Streamline download for a word, later resolves fetch SVG from your Blob cache (`GET /api/pictogram-cache?english=...`) instead of calling Streamline again
 
-Without Blob configured, mapping falls back to the repo file `memory-processor/pictograms/streamline-mapping.json` (local dev only).
+Without Blob configured, both files fall back to `memory-processor/pictograms/streamline-mapping.json` and `pictogram-cache.json` (local dev only).
 
 For local Real mode testing, copy `.env.example` to `.env.local`, add your key, and run `vercel dev` from the repo root (opening the HTML file directly will not reach the API proxy).
 
@@ -88,7 +90,7 @@ The project is currently deployed under a temporary Vercel account pending Maaya
 
 The processor has six modes (Settings → Processor Mode):
 
-- **Bank test** — pick a sample sentence; translates Hebrew words to English, then resolves pictograms via `streamline-mapping.json` → Streamline HQ. Missing words show ✕.
+- **Bank test** — pick a sample sentence; translates Hebrew words to English, then resolves pictograms via pictogram cache → `streamline-mapping.json` → Streamline HQ. Missing words show ✕.
 - **AI Words** — one Anthropic call (`claude-sonnet-5`, PROMPT_R1 verb decision tree, max 20 words). Validation + one retry; sequence order computed in code. **VRP, catalog lookup run locally.**
 - **Local** — deterministic rules only (`engine/`). Zero API. Best for curated memories and rule tuning.
 - **Mock** — pre-scripted analysis on the built-in example memory. No API.
@@ -132,7 +134,7 @@ In **AI Words / Hybrid** mode, the processor:
 In **Full API** mode, the processor:
 1. Calls Anthropic with PROMPT_R1 to extract Representative Words (Rule 1)
 2. Translates each word to English for pictogram search (verb→noun rule for actions)
-3. On **Preview pictograms**, resolves icons via `streamline-mapping.json` → Streamline HQ family search (`core-line-free`). Gaps can be filled by uploading a reference SVG for Rule 3 auto-realization.
+3. On **Preview pictograms**, resolves icons via pictogram cache → `streamline-mapping.json` → Streamline HQ family search (`streamline-regular`). Gaps can be filled by uploading a reference SVG for Rule 3 auto-realization.
 
 ## Methodology
 

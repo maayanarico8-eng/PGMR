@@ -2,7 +2,28 @@
   "version": 2,
   "meta": {
     "searchMode": "family",
-    "familySlug": "core-line-free"
+    "familySlug": "streamline-regular"
   },
-  "icons": {}
+  "icons": {
+    "dog": {
+      "hash": "ico_new",
+      "iconName": "dog",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 1
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "dog",
+      "updatedAt": "2026-07-09T11:46:13.432Z"
+    }
+  }
 }
