@@ -20,12 +20,13 @@ function buildDownloadQueryParams(overrides) {
   const qs = new URLSearchParams({
     size: String(p.size),
     responsive: String(p.responsive),
-    strokeToFill: String(p.strokeToFill),
     backgroundColor: String(p.backgroundColor),
   });
   if (p.colors != null && p.colors !== '') qs.set('colors', String(p.colors));
   if (p.strokeWidth != null && p.strokeWidth !== '') {
     qs.set('strokeWidth', String(p.strokeWidth));
+  } else {
+    qs.set('strokeToFill', String(p.strokeToFill));
   }
   return qs;
 }
