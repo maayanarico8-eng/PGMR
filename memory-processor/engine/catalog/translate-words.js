@@ -177,7 +177,7 @@ Non-verbs (person, object, place): use a simple noun (grandfather, newspaper, fo
   }
 
   /**
-   * Translate Hebrew representative words and resolve pictograms via Streamline + Haiku realization.
+   * Translate Hebrew representative words and resolve pictograms via Streamline mapping.
    * @returns {{ translations, slots: Array<{hebrew, english, status, svg?, source?, catalogId?, assetRef?}> }}
    */
   async function resolvePictogramWords(hebrewWords, options) {

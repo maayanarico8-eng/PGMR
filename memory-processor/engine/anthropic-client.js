@@ -1,9 +1,8 @@
 /**
- * Anthropic API client — Sonnet for semantics, Haiku for pictogram realization.
+ * Anthropic API client — claude-sonnet-5 only, 429 backoff, robust JSON parse.
  */
 (function (root) {
   const MODEL = 'claude-sonnet-5';
-  const HAIKU_MODEL = 'claude-haiku-4-5';
   const MAX_ATTEMPTS = 4;
 
   function sleep(ms) {
@@ -63,7 +62,7 @@
   }
 
   async function callClaude(body) {
-    const payload = { ...body, model: body.model || MODEL };
+    const payload = { ...body, model: MODEL };
     let lastError;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       const res = await fetch('/api/anthropic', {
@@ -90,21 +89,10 @@
     return parseModelJSON(await callClaude(body));
   }
 
-  async function callHaiku(body) {
-    return callClaude({ ...body, model: HAIKU_MODEL });
-  }
-
-  async function callHaikuJSON(body) {
-    return parseModelJSON(await callHaiku(body));
-  }
-
   root.MemoryEngineAnthropic = {
     MODEL,
-    HAIKU_MODEL,
     callClaude,
     callClaudeJSON,
-    callHaiku,
-    callHaikuJSON,
     parseModelJSON,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

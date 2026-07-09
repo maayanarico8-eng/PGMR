@@ -1,13 +1,13 @@
 /**
- * External pictogram provider — Streamline reference + Haiku Maayan realization.
+ * External pictogram provider — delegates to Streamline HQ.
  */
 (function (root) {
-  const realize = () => root.MemoryEngineCatalogPictogramRealizeProvider;
+  const streamline = () => root.MemoryEngineCatalogStreamlineProvider;
 
   async function fetchPictogram(opts) {
-    const pr = realize();
-    if (!pr?.fetchPictogram) return null;
-    return pr.fetchPictogram(opts || {});
+    const sl = streamline();
+    if (!sl?.fetchPictogram) return null;
+    return sl.fetchPictogram(opts || {});
   }
 
   root.MemoryEngineCatalogExternalProvider = { fetchPictogram };

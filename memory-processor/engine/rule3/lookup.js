@@ -60,9 +60,9 @@
         return;
       }
 
-      const pr = root.MemoryEngineCatalogPictogramRealizeProvider;
-      pr?.ensureCacheLoadedSync?.();
-      const cached = english && pr?.hasCached?.(english);
+      const sl = root.MemoryEngineCatalogStreamlineProvider;
+      sl?.ensureMappingLoadedSync?.();
+      const mapped = english && sl?.hasMapping?.(english);
       if (english) {
         hits++;
         const entry = {
@@ -72,7 +72,7 @@
           word: hebrew,
           mode,
           outcome: 'hit',
-          source: cached ? 'cache' : 'generated',
+          source: mapped ? 'mapping' : 'streamline',
         };
         lookups.push(entry);
         viableUnits.push({ hebrew, english, source: entry.source });
