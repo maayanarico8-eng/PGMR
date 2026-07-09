@@ -26,7 +26,6 @@ async function download(hash) {
     hash,
     size: '64',
     responsive: 'true',
-    strokeToFill: 'false',
     backgroundColor: '#ffffff00',
     colors: '#000000',
     strokeWidth: '1',
