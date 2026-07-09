@@ -60,9 +60,9 @@
         return;
       }
 
-      const sl = root.MemoryEngineCatalogStreamlineProvider;
-      sl?.ensureMappingLoadedSync?.();
-      const mapped = english && sl?.hasMapping?.(english);
+      const pr = root.MemoryEngineCatalogPictogramRealizeProvider;
+      pr?.ensureCacheLoadedSync?.();
+      const cached = english && pr?.hasCached?.(english);
       if (english) {
         hits++;
         const entry = {
@@ -72,7 +72,7 @@
           word: hebrew,
           mode,
           outcome: 'hit',
-          source: mapped ? 'mapping' : 'streamline',
+          source: cached ? 'cache' : 'generated',
         };
         lookups.push(entry);
         viableUnits.push({ hebrew, english, source: entry.source });
@@ -107,5 +107,7 @@
     };
   }
 
-  root.MemoryEngineRule3 = { runCatalogLookup, findConsiderationRecord };
+  root.MemoryEngineRule3 = root.MemoryEngineRule3 || {};
+  root.MemoryEngineRule3.runCatalogLookup = runCatalogLookup;
+  root.MemoryEngineRule3.findConsiderationRecord = findConsiderationRecord;
 })(typeof globalThis !== 'undefined' ? globalThis : window);

@@ -1,9 +1,9 @@
 /**
- * Pictogram resolver — mapping-first Streamline HQ (no local bank).
+ * Pictogram resolver — Streamline reference → Haiku Maayan realization → cache.
  * All results include hebrew + english word pair for client UX.
  */
 (function (root) {
-  const streamline = () => root.MemoryEngineCatalogStreamlineProvider;
+  const realize = () => root.MemoryEngineCatalogPictogramRealizeProvider;
 
   function pair(hebrew, english) {
     const h = (hebrew || '').trim();
@@ -16,7 +16,7 @@
   }
 
   async function resolveForWord(word, options) {
-    const sl = options?.streamline || streamline();
+    const provider = options?.realize || realize();
     const hebrew = (word || '').trim();
     const english = options?.english || options?.englishWord || options?.canonicalReferent || null;
 
@@ -24,28 +24,28 @@
       return withPair({ status: 'gap', svg: null, source: null }, hebrew, null);
     }
 
-    if (!sl?.resolveIcon) {
+    if (!provider?.resolveIcon) {
       return withPair({ status: 'gap', svg: null, source: null }, hebrew, english);
     }
 
     try {
-      const result = await sl.resolveIcon(english, options);
+      const result = await provider.resolveIcon(english, { ...options, hebrew, english });
       if (result?.svg) {
         return withPair(
           {
             status: 'hit',
             source: result.source,
             svg: result.svg,
-            assetRef: `streamline://${result.hash || english}`,
+            assetRef: `maayan://${result.hash || english}`,
             hash: result.hash,
-            provisional: result.source === 'streamline-new',
+            provisional: result.source === 'generated',
           },
           hebrew,
           english
         );
       }
     } catch (err) {
-      console.warn('Streamline resolve failed:', err.message);
+      console.warn('Pictogram realize failed:', err.message);
     }
 
     return withPair({ status: 'gap', svg: null, source: null }, hebrew, english);

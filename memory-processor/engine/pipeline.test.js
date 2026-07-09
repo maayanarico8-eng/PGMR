@@ -1,21 +1,68 @@
 /**
- * Golden test — full local pipeline (Rule 1 → 2 → 3) + pictogram bank resolution.
+ * Golden test — full local pipeline (Rule 1 → 2 → 3) + pictogram realization resolution.
  * Run: node memory-processor/engine/pipeline.test.js
  */
 const path = require('path');
 const fs = require('fs');
 
+const VALID_SVG =
+  '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000000" stroke-width="1.0" stroke-linecap="round" stroke-linejoin="round"><path d="M12 32 L52 32" fill="none"/></svg>';
+
 function loadEngine() {
   const g = globalThis;
   const engineDir = path.join(__dirname);
+
+  g.fetch = async (url, init) => {
+    const u = String(url);
+    const method = (init?.method || 'GET').toUpperCase();
+
+    if (u.includes('/api/pictogram-cache') && method === 'GET') {
+      return { ok: true, async json() { return { version: 1, icons: {} }; } };
+    }
+    if (u.includes('/api/pictogram-cache') && method === 'POST') {
+      return { ok: true, async json() { return { ok: true }; } };
+    }
+    if (u.includes('/api/streamline-mapping') && !u.includes('action=')) {
+      return { ok: true, async json() { return { version: 1, icons: {} }; } };
+    }
+    if (u.includes('action=family-search')) {
+      return {
+        ok: true,
+        async json() {
+          return { results: [{ hash: 'ico_grandfather', name: 'grandfather', isFree: true }] };
+        },
+      };
+    }
+    if (u.includes('action=download')) {
+      return { ok: true, async json() { return { svg: '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="16"/></svg>' }; } };
+    }
+    if (u.includes('/api/streamline-mapping') && method === 'POST') {
+      return { ok: true, async json() { return { ok: true }; } };
+    }
+    if (u.includes('/api/anthropic')) {
+      return {
+        ok: true,
+        async json() {
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ svg: VALID_SVG, geometricDescription: 'test' }) }],
+          };
+        },
+      };
+    }
+    throw new Error('unexpected fetch in pipeline test: ' + u);
+  };
+
   const files = [
     'logger.js',
     'config.js',
     'catalog/entries.js',
     'catalog/index.js',
     'catalog/providers/local.js',
+    'anthropic-client.js',
+    'rule3/pictogram-generate-prompt.js',
     'catalog/streamline-session.js',
     'catalog/providers/streamline.js',
+    'catalog/providers/pictogram-realize.js',
     'catalog/providers/external.js',
     'catalog/resolve.js',
     'catalog/translate-words.js',
@@ -36,29 +83,7 @@ function loadEngine() {
 
 const MOCK_MEMORY = 'בשבת בבוקר, סבא היה קורא לי עיתון ושרנו ביחד.';
 
-async function testStreamlineResolution() {
-  globalThis.fetch = async (url) => {
-    const u = String(url);
-    if (u.includes('/api/streamline-mapping') && !u.includes('action=')) {
-      return { ok: true, async json() { return { version: 1, icons: {} }; } };
-    }
-    if (u.includes('action=family-search')) {
-      return {
-        ok: true,
-        async json() {
-          return { results: [{ hash: 'ico_grandfather', name: 'grandfather' }] };
-        },
-      };
-    }
-    if (u.includes('action=download')) {
-      return { ok: true, async json() { return { svg: '<svg></svg>' }; } };
-    }
-    if (u.includes('/api/streamline-mapping')) {
-      return { ok: true, async json() { return { ok: true }; } };
-    }
-    throw new Error('unexpected fetch in pipeline test: ' + u);
-  };
-
+async function testPictogramResolution() {
   const resolved = await globalThis.MemoryEngine.resolvePictogram('סבא', { english: 'grandfather' });
   if (resolved.status !== 'hit' || !resolved.svg) {
     throw new Error('resolvePictogram for סבא failed');
@@ -66,8 +91,11 @@ async function testStreamlineResolution() {
   if (resolved.hebrew !== 'סבא' || resolved.english !== 'grandfather') {
     throw new Error('resolvePictogram should return hebrew + english pair');
   }
+  if (!['generated', 'cache', 'generated-fallback'].includes(resolved.source)) {
+    throw new Error('expected generated, cache, or generated-fallback source, got ' + resolved.source);
+  }
 
-  console.log('Streamline resolution: grandfather OK');
+  console.log('Pictogram resolution: grandfather OK');
 }
 
 async function main() {
@@ -112,8 +140,8 @@ async function main() {
   }
 
   const hitSources = (out.rule3?.lookups || []).filter((l) => l.outcome === 'hit').map((l) => l.source);
-  if (!hitSources.every((s) => s === 'mapping' || s === 'streamline')) {
-    console.error('FAIL: catalog hits should have source=mapping or streamline');
+  if (!hitSources.every((s) => s === 'cache' || s === 'generated' || s === 'generated-fallback')) {
+    console.error('FAIL: catalog hits should have source=cache, generated, or generated-fallback');
     process.exit(1);
   }
 
@@ -127,7 +155,7 @@ async function main() {
     process.exit(1);
   }
 
-  await testStreamlineResolution();
+  await testPictogramResolution();
 
   console.log('Trace events:', out.trace?.summary?.total || 0);
   console.log('PASS: full pipeline golden test');

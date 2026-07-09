@@ -288,10 +288,10 @@ textarea:focus{border-color:var(--b1)}
           <button class="mode-btn" data-mode="local" id="mode-local">Local</button>
           <button class="mode-btn" data-mode="mock" id="mode-mock">Mock</button>
           <button class="mode-btn mode-btn-secondary" data-mode="hybrid" id="mode-hybrid" title="Local first, then minimal AI words">Hybrid</button>
-          <button class="mode-btn mode-btn-secondary" data-mode="anthropic" id="mode-anthropic" title="PROMPT_R1 Rule 1 + Streamline pictogram preview">Full API</button>
+          <button class="mode-btn mode-btn-secondary" data-mode="anthropic" id="mode-anthropic" title="PROMPT_R1 Rule 1 + Haiku pictogram preview">Full API</button>
         </div>
         <div style="font-size:11px;color:var(--t3);line-height:1.55" id="mode-desc">
-          Bank test: pick a sample sentence — translates words to English, then fetches pictograms from Streamline (mapping first).
+          Bank test: pick a sample sentence — translates words to English, then generates pictograms (Streamline reference → Haiku).
         </div>
       </div>
     </div>
@@ -328,6 +328,8 @@ textarea:focus{border-color:var(--b1)}
 <script src="/memory-processor/engine/catalog/providers/local.js"></script>
 <script src="/memory-processor/engine/catalog/streamline-session.js"></script>
 <script src="/memory-processor/engine/catalog/providers/streamline.js"></script>
+<script src="/memory-processor/engine/rule3/pictogram-generate-prompt.js"></script>
+<script src="/memory-processor/engine/catalog/providers/pictogram-realize.js"></script>
 <script src="/memory-processor/engine/catalog/providers/external.js"></script>
 <script src="/memory-processor/engine/catalog/resolve.js"></script>
 <script src="/memory-processor/engine/test-sentences.js"></script>
@@ -620,7 +622,7 @@ JSON SCHEMA:
 {"ensembleReasoning":"paragraph: holistic analysis before individual classification; identify likely Independent candidates first","vrp":[{"unitId":"rw_01","unit":"string","canonicalReferent":"string","phase1":{"entityNature":"string","identityFeatures":["string"],"inherentlyVisual":true},"phase2":{"possibilityInventory":{"independentPossible":true,"independentRationale":"string","contextualPossible":false,"contextualRationale":"string","contextualDependencies":[]},"testV":{"applied":false,"alternativeMemory":null,"visuallyDistinguishable":null,"testVConclusion":"not-applicable"},"modeDecision":{"mode":"independent|contextual|both|gap","modeRationale":"string","independent":{"visualConcept":"string","constructible":true},"contextual":{"expressedThrough":["rw_01"],"relationalMechanism":"string","emergenceExplanation":"string"},"gap":{"gapType":"string","gapRationale":"string","alternativeStrategy":"string or null"}}},"phase3":{"survivabilityStatus":"string","independentConfidence":"string","contextualConfidence":"string","mutuallyReinforcing":null,"assessment":"string"},"phase4":{"h002Status":"string","auditNote":"string"}}],"vrpSummary":{"independent":0,"contextual":0,"both":0,"gap":0,"sequenceViability":"viable|partial|blocked","sequenceComment":"string"}}`;
 
 
-/* Pictograms: streamline-mapping.json → Streamline HQ API */
+/* Pictograms: Streamline reference → Haiku Maayan realization → pictogram-cache */
 
 const GAP_SVG=`<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#D85A30" stroke-width="1.5" stroke-dasharray="5 4"/><text x="32" y="40" text-anchor="middle" font-family="system-ui,sans-serif" font-size="26" font-weight="600" fill="#D85A30">✕</text></svg>`;
 
@@ -746,7 +748,7 @@ async function attachTranslationsToRule1(parsed){
 function renderEngineBadge(source,extractor){
   const container=document.getElementById('results');
   if(!container||!source)return;
-  const label=source==='local'?`Local engine${extractor?` (${extractor})`:''}`:source==='ai-words'?'PROMPT_R1 (claude-sonnet-5) + local VRP/catalog':source==='mock'?'Mock (scripted)':'PROMPT_R1 (claude-sonnet-5) → Streamline pictogram preview';
+  const label=source==='local'?`Local engine${extractor?` (${extractor})`:''}`:source==='ai-words'?'PROMPT_R1 (claude-sonnet-5) + local VRP/catalog':source==='mock'?'Mock (scripted)':'PROMPT_R1 (claude-sonnet-5) → Haiku pictogram preview';
   container.insertAdjacentHTML('afterbegin',`<div style="font-size:10px;color:var(--t3);margin-bottom:12px;padding:6px 10px;border:1px solid var(--b3);border-radius:6px;display:inline-block">Engine: ${esc(label)}</div>`);
 }
 
@@ -823,6 +825,9 @@ function englishRefMeta(english){
 }
 
 function pictogramSourceMeta(source){
+  if(source==='cache')return '<div class="cat-hit-meta">Maayan language · cached</div>';
+  if(source==='generated')return '<div class="cat-hit-meta">Maayan language · from Streamline reference</div>';
+  if(source==='generated-fallback')return '<div class="cat-hit-meta">Maayan language · generated (no Streamline match)</div>';
   if(source==='mapping')return '<div class="cat-hit-meta">Streamline · mapped</div>';
   if(source==='streamline-new')return '<div class="cat-hit-meta">Streamline · new</div>';
   if(source==='streamline')return '<div class="cat-hit-meta">Streamline</div>';
@@ -871,7 +876,7 @@ async function renderBankTest(sentence){
   const rows=slots.map(slot=>{
     const isGap=slot.status!=='hit';
     const meta=isGap
-      ?`<div class="cat-hit-meta" style="color:#D85A30">✕ Streamline fetch failed</div>`
+      ?`<div class="cat-hit-meta" style="color:#D85A30">✕ Pictogram generation failed</div>`
       :`${pictogramSourceMeta(slot.source)}${slot.assetRef?`<div style="font-size:10px;color:var(--t3)">${esc(slot.assetRef)}</div>`:''}`;
     return`<div class="bank-word-row${isGap?' is-gap':''}"><div class="cat-svg-wrap${isGap?' cat-gap-wrap':''}">${isGap?GAP_SVG:slot.svg}</div><div class="cat-hit-info"><div class="cat-hit-word">${esc(slot.hebrew)}</div>${englishRefMeta(slot.english)}${meta}</div></div>`;
   }).join('');
@@ -882,7 +887,7 @@ async function renderBankTest(sentence){
     <div class="bank-word-grid">${rows}</div>
     <div class="sec-label">Sequence</div>
     <div class="seq-display">${seqSvg}</div>
-    <div style="font-size:11px;color:var(--t3);margin-top:8px">Icons resolve from <code style="font-size:10px">streamline-mapping.json</code> first, then Streamline HQ search.</div>
+    <div style="font-size:11px;color:var(--t3);margin-top:8px">Icons: Streamline reference (core-line-free) → Haiku Maayan realization. Cached in <code style="font-size:10px">pictogram-cache.json</code>.</div>
   `;
 }
 
@@ -905,7 +910,7 @@ async function previewFullApiPictograms(){
       const isGap=slot.status!=='hit';
       const gapId='gap-'+slot.hebrew.replace(/\s+/g,'-');
       const meta=isGap
-        ?`<div class="cat-hit-meta" style="color:#D85A30">✕ Streamline fetch failed</div>`
+        ?`<div class="cat-hit-meta" style="color:#D85A30">✕ Pictogram generation failed</div>`
         :`${pictogramSourceMeta(slot.source)}${slot.assetRef?`<div style="font-size:10px;color:var(--t3)">${esc(slot.assetRef)}</div>`:''}`;
       const uploadBtn=isGap&&rule3AutoRealizationEnabled()
         ?`<div style="margin-top:8px;display:flex;align-items:center;gap:10px"><button onclick="createFileInput(${JSON.stringify(slot.hebrew)},document.getElementById(${JSON.stringify(gapId)}))" style="padding:4px 11px;font-size:11px;font-family:var(--f);border:1px solid #C0846A;border-radius:5px;background:transparent;color:#9B4D2C;cursor:pointer">↑ Upload reference SVG</button><span class="realize-status" style="font-size:10.5px;color:var(--t3)"></span></div>`
@@ -918,7 +923,7 @@ async function previewFullApiPictograms(){
       <div class="bank-word-grid">${rows}</div>
       <div class="sec-label">Sequence</div>
       <div class="seq-display">${seqSvg}</div>
-      <div style="font-size:11px;color:var(--t3);margin-top:8px">Icons resolve from <code style="font-size:10px">streamline-mapping.json</code> first, then Streamline HQ family search (<code style="font-size:10px">core-line-free</code>).</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:8px">Icons: Streamline reference (core-line-free) → Haiku Maayan realization. Cached in <code style="font-size:10px">pictogram-cache.json</code>.</div>
     `;
   }catch(e){
     container.innerHTML=`<div class="error-card" style="margin-top:12px">${esc(e.message)}</div>`;
@@ -1098,8 +1103,13 @@ async function realizeFromReference(conceptLabel,referenceSvg,gapEl){
 
   try{
     const userMsg=`Concept: ${conceptLabel}\n\nReference SVG:\n${referenceSvg}`;
-    const raw=await callAPI(R3_PROMPT,userMsg,3000);
-    const parsed=extractJSON(raw);
+    const realized=await MemoryEngineCatalogPictogramRealizeProvider.realizeWithHaiku(
+      conceptLabel,
+      referenceSvg,
+      { hebrew: conceptLabel },
+      1
+    );
+    const parsed=realized;
     if(!parsed?.svg)throw new Error('No SVG in response');
 
     // Store in catalog
@@ -1174,13 +1184,13 @@ async function renderCatalogSection(vrpResult){
       const isFileGap=!slot.svg;
       const provNote=slot.provisional?`<div class="prov-note">⚑ new icon — added to mapping</div>`:'';
       const assetRef=slot.assetRef?`<div class="cat-hit-meta" style="font-size:10px;color:var(--t3)">${esc(slot.assetRef)}</div>`:'';
-      const gapNote=isFileGap?`<div class="cat-hit-meta" style="color:#D85A30;font-size:10px">✕ Streamline fetch failed</div>`:'';
+      const gapNote=isFileGap?`<div class="cat-hit-meta" style="color:#D85A30;font-size:10px">✕ Pictogram generation failed</div>`:'';
       return`<div class="cat-hit${isFileGap?' cat-miss':''}"><div class="cat-svg-wrap${isFileGap?' cat-gap-wrap':''}">${svgHtml}</div><div class="cat-hit-info"><div class="cat-hit-word">${esc(hebrew)}</div>${enMeta}${pictogramSourceMeta(slot.source)}${assetRef}${gapNote}${provNote}</div></div>`;
     }
     gaps++;
     const gapId='gap-'+u.unitId;
     const uploadBtn=processorMode==='anthropic'?`<div style="margin-top:8px;display:flex;align-items:center;gap:10px"><button onclick="createFileInput(${JSON.stringify(hebrew)},document.getElementById(${JSON.stringify(gapId)}))" style="padding:4px 11px;font-size:11px;font-family:var(--f);border:1px solid #C0846A;border-radius:5px;background:transparent;color:#9B4D2C;cursor:pointer">↑ Upload reference SVG</button><span class="realize-status" style="font-size:10.5px;color:var(--t3)"></span></div>`:'';
-    return`<div class="cat-miss" id="${gapId}"><div class="cat-svg-wrap cat-gap-wrap">${GAP_SVG}</div><div class="cat-miss-info"><div class="cat-miss-word">${esc(hebrew)}</div>${enMeta}<div class="cat-miss-meta">VISUAL GAP — Streamline could not resolve "${esc(hebrew)}"</div>${uploadBtn}</div></div>`;
+    return`<div class="cat-miss" id="${gapId}"><div class="cat-svg-wrap cat-gap-wrap">${GAP_SVG}</div><div class="cat-miss-info"><div class="cat-miss-word">${esc(hebrew)}</div>${enMeta}<div class="cat-miss-meta">VISUAL GAP — could not generate pictogram for "${esc(hebrew)}"</div>${uploadBtn}</div></div>`;
   });
 
   const skippedRows=skipped.map(u=>{
@@ -1708,12 +1718,12 @@ document.querySelectorAll('.mode-btn').forEach(btn=>{
     const desc=document.getElementById('mode-desc');
     const isMock=processorMode==='mock';
     const descs={
-      'bank-test':'Bank test: pick a sample sentence — translates words to English, then fetches pictograms from Streamline (mapping first).',
+      'bank-test':'Bank test: pick a sample sentence — translates words to English, then generates pictograms (Streamline reference → Haiku).',
       'ai-words':'AI Words: PROMPT_R1 verb decision tree (claude-sonnet-5). VRP + catalog run locally.',
       mock:'Mock: pre-scripted pipeline on the built-in example. Catalog lookup is real.',
       hybrid:'Hybrid: local rules when supported; otherwise minimal AI word extraction + local VRP.',
       local:'Local: deterministic rules only — no API.',
-      anthropic:'Full API: PROMPT_R1 Rule 1 → Representative Words (Hebrew + English) → Streamline pictogram preview.',
+      anthropic:'Full API: PROMPT_R1 Rule 1 → Representative Words (Hebrew + English) → Haiku pictogram preview.',
     };
     desc.textContent=descs[processorMode]||descs.hybrid;
     const picker=document.getElementById('bank-test-picker');
