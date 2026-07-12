@@ -12,7 +12,7 @@ const DOWNLOAD_PARAMS = {
   strokeToFill: false,
   backgroundColor: '#ffffff00',
   colors: '#000000',
-  strokeWidth: 1,
+  strokeWidth: 0.5,
 };
 const SEARCH_PARAMS = { mode: 'family', familySlug: FAMILY, limit: 10 };
 
@@ -257,11 +257,77 @@ async function testMappingMiss() {
   console.log('PASS mapping miss searches and saves');
 }
 
+async function testConcurrentBankSavesPersistAll() {
+  const SL = load();
+  SL.clearMappingCache();
+  const cachePath = path.join(__dirname, '../../../pictograms/pictogram-cache.json');
+  const cacheBackup = fs.existsSync(cachePath) ? fs.readFileSync(cachePath, 'utf8') : null;
+  fs.writeFileSync(cachePath, JSON.stringify({ version: 1, icons: {} }, null, 2) + '\n', 'utf8');
+
+  const icons = [
+    { english: 'bicycle', svg: '<svg id="bicycle"></svg>', hash: 'h1' },
+    { english: 'yom kippur', svg: '<svg id="yom-kippur"></svg>', hash: 'h2' },
+    { english: 'billiards', svg: '<svg id="billiards"></svg>', hash: 'h3' },
+    { english: 'bar', svg: '<svg id="bar"></svg>', hash: 'h4' },
+  ];
+
+  await Promise.all(icons.map((icon) => SL.saveCacheEntry(icon.english, icon)));
+
+  const cache = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+  icons.forEach((icon) => {
+    const key = icon.english.toLowerCase();
+    assert(cache.icons?.[key]?.svg?.includes(icon.english.replace(/\s+/g, '-')), `expected ${key} in bank`);
+  });
+
+  if (cacheBackup != null) fs.writeFileSync(cachePath, cacheBackup, 'utf8');
+  else if (fs.existsSync(cachePath)) fs.unlinkSync(cachePath);
+  SL.clearMappingCache();
+  console.log('PASS concurrent bank saves persist all icons');
+}
+
+async function testEnsureBankedIconsBatchSkipsExisting() {
+  const SL = load();
+  SL.clearMappingCache();
+  const cachePath = path.join(__dirname, '../../../pictograms/pictogram-cache.json');
+  const cacheBackup = fs.existsSync(cachePath) ? fs.readFileSync(cachePath, 'utf8') : null;
+  fs.writeFileSync(
+    cachePath,
+    JSON.stringify(
+      {
+        version: 1,
+        icons: {
+          bicycle: { svg: '<svg id="existing-bicycle"></svg>', hash: 'keep' },
+        },
+      },
+      null,
+      2
+    ) + '\n',
+    'utf8'
+  );
+
+  const result = await SL.ensureBankedIcons([
+    { english: 'bicycle', svg: '<svg id="new-bicycle"></svg>', hash: 'new' },
+    { english: 'bar', svg: '<svg id="bar"></svg>', hash: 'h4' },
+  ]);
+
+  const cache = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+  assert(cache.icons.bicycle.svg.includes('existing-bicycle'), 'existing bicycle kept');
+  assert(cache.icons.bar?.svg?.includes('bar'), 'bar added');
+  assert(result.saved.includes('bar'), 'only bar reported saved');
+
+  if (cacheBackup != null) fs.writeFileSync(cachePath, cacheBackup, 'utf8');
+  else if (fs.existsSync(cachePath)) fs.unlinkSync(cachePath);
+  SL.clearMappingCache();
+  console.log('PASS ensureBankedIcons skips existing and batch-saves missing');
+}
+
 async function run() {
   await testCachedSvgSkipsDownload();
   await testHashOnlyMappingDownloadsOnce();
   await testSecondResolveUsesCache();
   await testMappingMiss();
+  await testConcurrentBankSavesPersistAll();
+  await testEnsureBankedIconsBatchSkipsExisting();
   console.log('\nAll streamline provider tests passed.');
 }
 

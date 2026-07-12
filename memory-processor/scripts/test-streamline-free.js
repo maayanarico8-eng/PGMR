@@ -28,7 +28,7 @@ async function download(hash) {
     responsive: 'true',
     backgroundColor: '#ffffff00',
     colors: '#000000',
-    strokeWidth: '1',
+    strokeWidth: '0.5',
   });
   const res = await fetch(`${BASE}/api/streamline?${qs}`);
   const body = await res.json();

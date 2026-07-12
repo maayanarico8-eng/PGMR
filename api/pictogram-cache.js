@@ -59,13 +59,19 @@ async function writeCacheToBlob(cache) {
 }
 
 async function readCache() {
+  const fromDisk = readCacheFromDisk();
+  let fromBlob = null;
   try {
-    const fromBlob = await readCacheFromBlob();
-    if (fromBlob) return fromBlob;
+    fromBlob = await readCacheFromBlob();
   } catch (err) {
     console.warn('pictogram-cache blob read failed:', err.message);
   }
-  return readCacheFromDisk();
+  if (!fromBlob) return fromDisk;
+  // Committed disk bank wins over stale Blob for the same keys.
+  return {
+    version: fromDisk.version || fromBlob.version || 1,
+    icons: { ...(fromBlob.icons || {}), ...(fromDisk.icons || {}) },
+  };
 }
 
 async function writeCache(cache) {
@@ -151,7 +157,32 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const { english, entry } = req.body || {};
+    const { english, entry, entries } = req.body || {};
+
+    if (entries && typeof entries === 'object' && !Array.isArray(entries)) {
+      const cache = await readCache();
+      if (!cache.icons) cache.icons = {};
+      const saved = {};
+      for (const [rawKey, rawEntry] of Object.entries(entries)) {
+        if (!rawEntry?.svg) continue;
+        const key = String(rawKey).toLowerCase().trim();
+        if (!key) continue;
+        cache.icons[key] = {
+          svg: rawEntry.svg,
+          hash: rawEntry.hash || null,
+          cachedAt: rawEntry.cachedAt || new Date().toISOString(),
+        };
+        saved[key] = cache.icons[key];
+      }
+      if (!Object.keys(saved).length) {
+        res.status(400).json({ error: { message: 'entries must include at least one entry with svg' } });
+        return;
+      }
+      const storage = await writeCache(cache);
+      res.status(200).json({ ok: true, saved: Object.keys(saved), entries: saved, storage });
+      return;
+    }
+
     if (!english || !entry?.svg) {
       res.status(400).json({ error: { message: 'english and entry.svg are required' } });
       return;

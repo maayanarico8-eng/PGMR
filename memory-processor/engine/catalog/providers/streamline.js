@@ -22,12 +22,32 @@
     strokeToFill: false,
     backgroundColor: '#ffffff00',
     colors: '#000000',
-    strokeWidth: 1,
+    strokeWidth: 0.5,
   };
 
   let mappingCache = null;
   let mappingLoadPromise = null;
   const svgCacheMemory = {};
+  let cacheWriteQueue = Promise.resolve();
+  let mappingWriteQueue = Promise.resolve();
+
+  function runSerializedCacheWrite(task) {
+    const result = cacheWriteQueue.then(() => task());
+    cacheWriteQueue = result.then(
+      () => undefined,
+      () => undefined
+    );
+    return result;
+  }
+
+  function runSerializedMappingWrite(task) {
+    const result = mappingWriteQueue.then(() => task());
+    mappingWriteQueue = result.then(
+      () => undefined,
+      () => undefined
+    );
+    return result;
+  }
 
   function normalizeEnglish(s) {
     return (s || '').toLowerCase().trim();
@@ -158,36 +178,38 @@
     const stored = mappingEntryForSave(entry);
     mappingCache.icons[key] = stored;
 
-    if (typeof window === 'undefined') {
-      const fs = require('fs');
-      for (const file of mappingFileCandidates()) {
-        fs.mkdirSync(require('path').dirname(file), { recursive: true });
-        fs.writeFileSync(file, `${JSON.stringify(mappingCache, null, 2)}\n`, 'utf8');
-        return true;
-      }
-      return false;
-    }
-
-    try {
-      const res = await fetch(MAPPING_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ english: key, entry: stored }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        console.warn('streamline-mapping save:', body.error?.message || res.status);
+    return runSerializedMappingWrite(async () => {
+      if (typeof window === 'undefined') {
+        const fs = require('fs');
+        for (const file of mappingFileCandidates()) {
+          fs.mkdirSync(require('path').dirname(file), { recursive: true });
+          fs.writeFileSync(file, `${JSON.stringify(mappingCache, null, 2)}\n`, 'utf8');
+          return true;
+        }
         return false;
       }
-      const body = await res.json().catch(() => ({}));
-      if (body.entry && mappingCache?.icons) {
-        mappingCache.icons[key] = body.entry;
+
+      try {
+        const res = await fetch(MAPPING_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ english: key, entry: stored }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          console.warn('streamline-mapping save:', body.error?.message || res.status);
+          return false;
+        }
+        const body = await res.json().catch(() => ({}));
+        if (body.entry && mappingCache?.icons) {
+          mappingCache.icons[key] = body.entry;
+        }
+        return true;
+      } catch (err) {
+        console.warn('streamline-mapping save error:', err.message);
+        return false;
       }
-      return true;
-    } catch (err) {
-      console.warn('streamline-mapping save error:', err.message);
-      return false;
-    }
+    });
   }
 
   async function deleteMappingEntry(english) {
@@ -297,6 +319,57 @@
     }
   }
 
+  async function persistCacheEntries(entriesByKey) {
+    const entries = entriesByKey || {};
+    const keys = Object.keys(entries);
+    if (!keys.length) return { saved: [] };
+
+    keys.forEach((key) => {
+      const entry = entries[key];
+      if (entry?.svg) svgCacheMemory[key] = entry;
+    });
+
+    return runSerializedCacheWrite(async () => {
+      if (typeof window === 'undefined') {
+        const fs = require('fs');
+        const path = require('path');
+        const cache = readCacheFromDisk();
+        if (!cache.icons) cache.icons = {};
+        keys.forEach((key) => {
+          if (entries[key]?.svg) cache.icons[key] = entries[key];
+        });
+        for (const file of cacheFileCandidates()) {
+          fs.mkdirSync(path.dirname(file), { recursive: true });
+          fs.writeFileSync(file, `${JSON.stringify(cache, null, 2)}\n`, 'utf8');
+          return { saved: keys };
+        }
+        return { saved: [] };
+      }
+
+      try {
+        const res = await fetch(CACHE_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ entries }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          console.warn('pictogram-cache batch save:', body.error?.message || res.status);
+          return { saved: [] };
+        }
+        const body = await res.json().catch(() => ({}));
+        const saved = body.saved || keys;
+        saved.forEach((key) => {
+          if (body.entries?.[key]) svgCacheMemory[key] = body.entries[key];
+        });
+        return { saved };
+      } catch (err) {
+        console.warn('pictogram-cache batch save error:', err.message);
+        return { saved: [] };
+      }
+    });
+  }
+
   async function saveCacheEntry(english, entry) {
     const key = normalizeEnglish(english);
     if (!key || !entry?.svg) return false;
@@ -305,40 +378,28 @@
       hash: entry.hash || null,
       cachedAt: entry.cachedAt || new Date().toISOString(),
     };
-    svgCacheMemory[key] = stored;
+    const result = await persistCacheEntries({ [key]: stored });
+    return (result.saved || []).includes(key);
+  }
 
-    if (typeof window === 'undefined') {
-      const fs = require('fs');
-      const path = require('path');
-      const cache = readCacheFromDisk();
-      if (!cache.icons) cache.icons = {};
-      cache.icons[key] = stored;
-      for (const file of cacheFileCandidates()) {
-        fs.mkdirSync(path.dirname(file), { recursive: true });
-        fs.writeFileSync(file, `${JSON.stringify(cache, null, 2)}\n`, 'utf8');
-        return true;
-      }
-      return false;
+  /**
+   * Ensure resolved pictogram SVGs are stored in the bank (pictogram-cache).
+   * Skips terms already persisted; batch-writes the rest in one request.
+   */
+  async function ensureBankedIcons(items) {
+    const pending = {};
+    for (const item of items || []) {
+      const key = normalizeEnglish(item?.english);
+      if (!key || !item?.svg) continue;
+      const existing = await getCachedEntry(key);
+      if (existing?.svg) continue;
+      pending[key] = {
+        svg: item.svg,
+        hash: item.hash || null,
+        cachedAt: new Date().toISOString(),
+      };
     }
-
-    try {
-      const res = await fetch(CACHE_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ english: key, entry: stored }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        console.warn('pictogram-cache save:', body.error?.message || res.status);
-        return false;
-      }
-      const body = await res.json().catch(() => ({}));
-      if (body.entry) svgCacheMemory[key] = body.entry;
-      return true;
-    } catch (err) {
-      console.warn('pictogram-cache save error:', err.message);
-      return false;
-    }
+    return persistCacheEntries(pending);
   }
 
   /** Legacy: mapping entries may still carry inline svg from older builds. */
@@ -507,6 +568,8 @@
     saveMappingEntry,
     deleteMappingEntry,
     saveCacheEntry,
+    persistCacheEntries,
+    ensureBankedIcons,
     loadCache,
     deleteCacheEntry,
     pickIcon,

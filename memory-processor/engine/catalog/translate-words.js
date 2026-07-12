@@ -297,12 +297,21 @@ Non-verbs (person, object, place): use a visually specific noun (grandfather, ne
           status: duplicateOf ? 'duplicate' : (resolved?.status || 'gap'),
           source: resolved?.source || null,
           svg: resolved?.svg || null,
+          hash: resolved?.hash || null,
           catalogId: resolved?.catalogId || null,
           assetRef: resolved?.assetRef || null,
           entry: resolved?.entry || null,
         };
       })
     );
+
+    const bank = opts.streamline || root.MemoryEngineCatalogStreamlineProvider;
+    if (bank?.ensureBankedIcons) {
+      const iconsToBank = uniqueSlotsForSequence(slots)
+        .filter((s) => s.status === 'hit' && s.svg)
+        .map((s) => ({ english: s.english, svg: s.svg, hash: s.hash }));
+      await bank.ensureBankedIcons(iconsToBank);
+    }
 
     return { translations, uniqueTranslations, slots, sequenceSlots: uniqueSlotsForSequence(slots) };
   }

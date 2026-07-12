@@ -149,7 +149,28 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const { english, entry } = req.body || {};
+    const { english, entry, entries } = req.body || {};
+
+    if (entries && typeof entries === 'object' && !Array.isArray(entries)) {
+      const mapping = await readMapping();
+      if (!mapping.icons) mapping.icons = {};
+      const saved = {};
+      for (const [rawKey, rawEntry] of Object.entries(entries)) {
+        if (!rawEntry?.hash) continue;
+        const key = String(rawKey).toLowerCase().trim();
+        if (!key) continue;
+        mapping.icons[key] = rawEntry;
+        saved[key] = rawEntry;
+      }
+      if (!Object.keys(saved).length) {
+        res.status(400).json({ error: { message: 'entries must include at least one entry with hash' } });
+        return;
+      }
+      const storage = await writeMapping(mapping);
+      res.status(200).json({ ok: true, saved: Object.keys(saved), entries: saved, storage });
+      return;
+    }
+
     if (!english || !entry?.hash) {
       res.status(400).json({ error: { message: 'english and entry.hash are required' } });
       return;

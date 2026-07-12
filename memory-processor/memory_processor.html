@@ -274,23 +274,9 @@ textarea:focus{border-color:var(--b1)}
 .bank-upload-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--t3)}
 .bank-upload-refresh{padding:3px 9px;font-size:10px;font-family:var(--f);border:1px solid var(--b2);border-radius:4px;background:var(--bg);color:var(--t3);cursor:pointer}
 .bank-upload-refresh:hover{border-color:var(--b1);color:var(--t1)}
-.bank-upload-section{padding:12px;border-bottom:1px solid var(--b3)}
-.bank-upload-section:last-child{border-bottom:none}
+.bank-upload-section{padding:12px}
 .bank-upload-section-lbl{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:10px}
 .bank-upload-body{padding:0;display:flex;flex-direction:column;gap:0}
-.bank-upload-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.bank-upload-name{flex:1;min-width:140px;padding:7px 10px;font-size:12px;color:var(--t1);background:var(--bg);border:1px solid var(--b2);border-radius:5px;outline:none;font-family:var(--f)}
-.bank-upload-name:focus{border-color:var(--b1)}
-.bank-upload-file-btn{padding:6px 12px;font-size:11px;font-family:var(--f);border:1px solid var(--b2);border-radius:5px;background:var(--bg2);color:var(--t2);cursor:pointer;white-space:nowrap}
-.bank-upload-file-btn:hover{border-color:var(--b1);color:var(--t1)}
-.bank-upload-save{padding:7px 14px;font-size:11px;font-weight:500;font-family:var(--f);border:none;border-radius:5px;background:#231F20;color:#fff;cursor:pointer;white-space:nowrap}
-.bank-upload-save:disabled{background:var(--b2);cursor:not-allowed}
-.bank-upload-preview{display:flex;align-items:center;gap:10px;min-height:52px;margin-top:10px}
-.bank-upload-preview svg{width:48px;height:48px;display:block;border:1px solid var(--b3);border-radius:5px;background:#fff}
-.bank-upload-preview-lbl{font-size:11px;color:var(--t3);line-height:1.45}
-.bank-upload-status{font-size:11px;line-height:1.45;margin-top:10px}
-.bank-upload-status.ok{color:#04342C}
-.bank-upload-status.err{color:#991b1b}
 .bank-list{display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto}
 .bank-list-empty{font-size:11px;color:var(--t3);line-height:1.5;padding:4px 0}
 .bank-list-row{display:flex;align-items:center;gap:10px;padding:7px 8px;border:1px solid var(--b3);border-radius:5px;background:var(--bg)}
@@ -299,36 +285,19 @@ textarea:focus{border-color:var(--b1)}
 .bank-list-info{flex:1;min-width:0}
 .bank-list-word{font-size:12px;font-weight:500;color:var(--t1)}
 .bank-list-meta{font-size:10px;color:var(--t3);margin-top:2px}
-.bank-list-remove{padding:4px 9px;font-size:10px;font-family:var(--f);border:1px solid #F0997B;border-radius:4px;background:transparent;color:#9B4D2C;cursor:pointer;flex-shrink:0}
-.bank-list-remove:hover{background:#FAECE7}
-.bank-list-remove:disabled{opacity:.5;cursor:not-allowed}
 
 </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- Bank upload -->
+  <!-- Pictogram bank (view only) -->
   <div class="bank-upload" id="bank-upload-panel">
     <div class="bank-upload-hdr">
       <span class="bank-upload-title">Pictogram bank</span>
       <button type="button" class="bank-upload-refresh" id="bank-upload-refresh">Refresh</button>
     </div>
     <div class="bank-upload-body">
-      <div class="bank-upload-section">
-        <div class="bank-upload-section-lbl">Add new</div>
-        <div class="bank-upload-row">
-          <input type="text" class="bank-upload-name" id="bank-upload-name" placeholder="English name (e.g. dog, morning)" autocomplete="off" spellcheck="false">
-          <input type="file" id="bank-upload-file" accept=".svg,image/svg+xml" hidden>
-          <button type="button" class="bank-upload-file-btn" id="bank-upload-pick">Choose SVG</button>
-          <button type="button" class="bank-upload-save" id="bank-upload-save" disabled>Save</button>
-        </div>
-        <div class="bank-upload-preview" id="bank-upload-preview" hidden>
-          <div id="bank-upload-thumb"></div>
-          <div class="bank-upload-preview-lbl" id="bank-upload-filename"></div>
-        </div>
-        <div class="bank-upload-status" id="bank-upload-status"></div>
-      </div>
       <div class="bank-upload-section">
         <div class="bank-upload-section-lbl" id="bank-list-label">In the bank</div>
         <div class="bank-list" id="bank-list">
@@ -975,6 +944,7 @@ async function renderBankTest(sentence){
     <div class="seq-display">${seqSvg}</div>
     <div style="font-size:11px;color:var(--t3);margin-top:8px">Icons resolve from <code style="font-size:10px">pictogram-cache</code> first, then <code style="font-size:10px">streamline-mapping.json</code>, then Streamline HQ (<code style="font-size:10px">streamline-regular</code>).</div>
   `;
+  loadBankList();
 }
 
 async function previewFullApiPictograms(){
@@ -1014,6 +984,7 @@ async function previewFullApiPictograms(){
       <div class="seq-display">${seqSvg}</div>
       <div style="font-size:11px;color:var(--t3);margin-top:8px">Icons resolve from <code style="font-size:10px">pictogram-cache</code> first, then <code style="font-size:10px">streamline-mapping.json</code>, then Streamline HQ (<code style="font-size:10px">streamline-regular</code>).</div>
     `;
+    loadBankList();
   }catch(e){
     container.innerHTML=`<div class="error-card" style="margin-top:12px">${esc(e.message)}</div>`;
   }finally{
@@ -1301,6 +1272,7 @@ async function renderCatalogSection(vrpResult){
     ${skipped.length?`<div style="margin-top:16px"><div class="sec-label" style="margin-bottom:10px">Excluded from lookup <span>${skipped.length} unit${skipped.length!==1?'s':''}</span></div>${skippedRows.join('')}</div>`:''}
     ${hasSeq?`<div style="margin-top:20px"><div class="sec-label">Pictographic Sequence</div><div class="seq-display">${seqSvg}</div>${gaps>0?`<div style="font-size:11px;color:#D85A30;margin-top:6px">${gaps} word${gaps!==1?'s':''} could not be realized — VISUAL GAP events recorded. The sequence is incomplete.</div>`:''}</div>`:''}
   `;
+  loadBankList();
 }
 
 function analyzeBtnLabel(){return processorMode==='bank-test'?'Preview pictograms':'Analyze memory';}
@@ -1875,43 +1847,9 @@ function initBankTestChips(){
   });
 }
 
-/* ─── Pre-fill first test sentence ─── */
-let bankUploadSvg=null;
-
-function bankUploadCanSave(){
-  const name=document.getElementById('bank-upload-name')?.value?.trim();
-  return!!(name&&bankUploadSvg);
-}
-
-function updateBankUploadSaveBtn(){
-  const btn=document.getElementById('bank-upload-save');
-  if(btn)btn.disabled=!bankUploadCanSave();
-}
-
-function setBankUploadStatus(msg,type){
-  const el=document.getElementById('bank-upload-status');
-  if(!el)return;
-  el.textContent=msg||'';
-  el.className='bank-upload-status'+(type?` ${type}`:'');
-}
-
-function resetBankUploadForm(){
-  bankUploadSvg=null;
-  const fileInp=document.getElementById('bank-upload-file');
-  const nameInp=document.getElementById('bank-upload-name');
-  const preview=document.getElementById('bank-upload-preview');
-  const thumb=document.getElementById('bank-upload-thumb');
-  const fname=document.getElementById('bank-upload-filename');
-  if(fileInp)fileInp.value='';
-  if(nameInp)nameInp.value='';
-  if(preview)preview.hidden=true;
-  if(thumb)thumb.innerHTML='';
-  if(fname)fname.textContent='';
-  updateBankUploadSaveBtn();
-}
-
+/* ─── Pictogram bank (view only) ─── */
 function bankEntrySourceLabel(entry){
-  if(entry?.hash==='manual-upload')return'Uploaded manually';
+  if(entry?.hash==='manual-upload')return'Manual';
   if(entry?.hash)return'Streamline / cached';
   return'Cached';
 }
@@ -1929,7 +1867,7 @@ async function loadBankList(){
     const words=Object.keys(icons).sort((a,b)=>a.localeCompare(b));
     if(labelEl)labelEl.textContent=`In the bank (${words.length})`;
     if(!words.length){
-      listEl.innerHTML='<div class="bank-list-empty">No pictograms yet. Add one above.</div>';
+      listEl.innerHTML='<div class="bank-list-empty">No pictograms in the bank.</div>';
       return;
     }
     listEl.innerHTML=words.map(word=>{
@@ -1942,98 +1880,17 @@ async function loadBankList(){
           <div class="bank-list-word">${esc(word)}</div>
           <div class="bank-list-meta">${esc(meta)}</div>
         </div>
-        <button type="button" class="bank-list-remove" data-word="${esc(word)}">Remove</button>
       </div>`;
     }).join('');
-    listEl.querySelectorAll('.bank-list-remove').forEach(btn=>{
-      btn.addEventListener('click',()=>removeBankEntry(btn.dataset.word,btn));
-    });
   }catch(err){
     listEl.innerHTML=`<div class="bank-list-empty" style="color:#991b1b">${esc(err.message||'Could not load bank')}</div>`;
     if(labelEl)labelEl.textContent='In the bank';
   }
 }
 
-async function removeBankEntry(word,btn){
-  if(!word)return;
-  if(!confirm(`Remove "${word}" from the pictogram bank?`))return;
-  if(btn)btn.disabled=true;
-  setBankUploadStatus('Removing…','');
-  try{
-    const provider=MemoryEngineCatalogStreamlineProvider;
-    if(!provider?.deleteCacheEntry)throw new Error('Bank provider not available');
-    const ok=await provider.deleteCacheEntry(word);
-    if(!ok)throw new Error('Could not remove from bank.');
-    if(provider.deleteMappingEntry)await provider.deleteMappingEntry(word);
-    setBankUploadStatus(`Removed "${word}".`,'ok');
-    await loadBankList();
-  }catch(err){
-    setBankUploadStatus(err.message||'Remove failed','err');
-    if(btn)btn.disabled=false;
-  }
-}
-
 function initBankUpload(){
-  const pickBtn=document.getElementById('bank-upload-pick');
-  const fileInp=document.getElementById('bank-upload-file');
-  const nameInp=document.getElementById('bank-upload-name');
-  const saveBtn=document.getElementById('bank-upload-save');
   const refreshBtn=document.getElementById('bank-upload-refresh');
-  if(!pickBtn||!fileInp||!nameInp||!saveBtn)return;
-
-  pickBtn.addEventListener('click',()=>fileInp.click());
   if(refreshBtn)refreshBtn.addEventListener('click',()=>loadBankList());
-
-  fileInp.addEventListener('change',()=>{
-    const file=fileInp.files?.[0];
-    if(!file)return;
-    const reader=new FileReader();
-    reader.onload=e=>{
-      const svg=(e.target?.result||'').trim();
-      if(!/^<svg[\s>]/i.test(svg)){
-        setBankUploadStatus('Please choose a valid SVG file.','err');
-        bankUploadSvg=null;
-        updateBankUploadSaveBtn();
-        return;
-      }
-      bankUploadSvg=svg;
-      const preview=document.getElementById('bank-upload-preview');
-      const thumb=document.getElementById('bank-upload-thumb');
-      const fname=document.getElementById('bank-upload-filename');
-      if(preview)preview.hidden=false;
-      if(thumb)thumb.innerHTML=svg;
-      if(fname)fname.textContent=file.name;
-      setBankUploadStatus('');
-      updateBankUploadSaveBtn();
-    };
-    reader.readAsText(file);
-  });
-
-  nameInp.addEventListener('input',updateBankUploadSaveBtn);
-
-  saveBtn.addEventListener('click',async()=>{
-    const english=nameInp.value.trim().toLowerCase();
-    if(!english||!bankUploadSvg)return;
-    saveBtn.disabled=true;
-    setBankUploadStatus('Saving…','');
-    try{
-      const provider=MemoryEngineCatalogStreamlineProvider;
-      if(!provider?.saveCacheEntry)throw new Error('Bank provider not available');
-      const ok=await provider.saveCacheEntry(english,{
-        svg:bankUploadSvg,
-        hash:'manual-upload',
-        cachedAt:new Date().toISOString(),
-      });
-      if(!ok)throw new Error('Could not save to bank. Is Blob storage connected?');
-      setBankUploadStatus(`Saved "${english}" to the bank.`,'ok');
-      resetBankUploadForm();
-      await loadBankList();
-    }catch(err){
-      setBankUploadStatus(err.message||'Save failed','err');
-      updateBankUploadSaveBtn();
-    }
-  });
-
   loadBankList();
 }
 
