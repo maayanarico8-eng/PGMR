@@ -226,4 +226,25 @@ console.log('expressive-render tests…');
   assert(!/\sstyle=/.test(html), 'style attr removed');
 }
 
+// Bank / manual-upload SVGs: <style>.cls-1{stroke-width:0.5} must not lock Impact
+{
+  const bankLike =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 48 48">` +
+    `<defs><style>.cls-1{fill:none;stroke:#000;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.5;}</style></defs>` +
+    `<path class="cls-1" d="M8 24h32"/>` +
+    `</svg>`;
+  const seq =
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">` +
+    `<g transform="translate(0,0)">${bankLike}</g>` +
+    `</svg>`;
+  const { svg, state } = api.applyExpressiveRendering(seq, {
+    ...api.DEFAULT_PARAMS,
+    memoryImpact: 14,
+  });
+  assert(approx(state.strokeWidth, 4.63), 'impact 14 → ~4.63 stroke');
+  assert(/stroke-width="4\.63"/.test(svg), 'presentation stroke-width applied');
+  assert(/stroke-width:4\.63/.test(svg), 'CSS stroke-width rewritten for Impact');
+  assert(!/stroke-width:0\.5/.test(svg), 'CSS no longer locks 0.5');
+}
+
 console.log('All expressive-render tests passed.');

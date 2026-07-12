@@ -226,9 +226,66 @@
     return t;
   }
 
+  /**
+   * Bank / manual-upload SVGs often style via <style>.cls-1{…}.
+   * CSS beats presentation attributes, so Impact/Frequency must rewrite
+   * those declarations — otherwise stroke-width stays locked at 0.5.
+   */
+  function rewriteCssDeclarationsForExpressive(body, strokeWidth, dash) {
+    const decls = String(body || '')
+      .split(';')
+      .map((p) => p.trim())
+      .filter(Boolean);
+    const map = {};
+    for (const part of decls) {
+      const idx = part.indexOf(':');
+      if (idx < 0) continue;
+      const key = part.slice(0, idx).trim().toLowerCase();
+      const val = part.slice(idx + 1).trim();
+      map[key] = val;
+    }
+    const touchesStroke =
+      'stroke' in map ||
+      'stroke-width' in map ||
+      'fill' in map ||
+      'stroke-dasharray' in map ||
+      'stroke-dashoffset' in map ||
+      'stroke-linecap' in map ||
+      'stroke-linejoin' in map;
+    if (!touchesStroke) {
+      return Object.entries(map)
+        .map(([k, v]) => `${k}:${v}`)
+        .join(';');
+    }
+    map.fill = 'none';
+    map.stroke = STROKE_COLOR;
+    map['stroke-width'] = formatNum(strokeWidth);
+    map['stroke-linecap'] = 'round';
+    map['stroke-linejoin'] = 'round';
+    if (dash.solid) {
+      delete map['stroke-dasharray'];
+      delete map['stroke-dashoffset'];
+    } else {
+      map['stroke-dasharray'] = dash.dasharray;
+      map['stroke-dashoffset'] = '0';
+    }
+    return Object.entries(map)
+      .map(([k, v]) => `${k}:${v}`)
+      .join(';');
+  }
+
+  function normalizeStyleBlocksInHtml(html, strokeWidth, dash) {
+    return String(html || '').replace(/<style\b([^>]*)>([\s\S]*?)<\/style>/gi, (full, attrs, css) => {
+      const rewritten = String(css).replace(/\{([^}]*)\}/g, (_, body) => {
+        return `{${rewriteCssDeclarationsForExpressive(body, strokeWidth, dash)}}`;
+      });
+      return `<style${attrs}>${rewritten}</style>`;
+    });
+  }
+
   function normalizeGraphicsInHtml(html, strokeWidth, dash) {
+    let out = normalizeStyleBlocksInHtml(html, strokeWidth, dash);
     const tags = GRAPHIC_SEL.split(',');
-    let out = html;
     for (const tag of tags) {
       const re = new RegExp(`<${tag}\\b([^>]*?)(/?)>`, 'gi');
       out = out.replace(re, (full, attrs, selfClose) => {
