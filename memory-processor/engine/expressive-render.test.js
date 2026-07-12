@@ -159,6 +159,35 @@ console.log('expressive-render tests…');
   assert(approx(state.collapseScale, 0.02), 'collapse at clarity 0');
 }
 
+// Layout positions must come from sequence translates, not local getBBox metrics
+{
+  const base = sampleSequence(3);
+  const resolved = api._resolvePictograms(base, {
+    metrics: [
+      { x: 2, y: 4, width: 50, height: 50 },
+      { x: 1, y: 3, width: 52, height: 52 },
+      { x: 0, y: 2, width: 55, height: 55 },
+    ],
+  });
+  assert(resolved.pictograms.length === 3, '3 pictograms');
+  const xs = resolved.pictograms.map((p) => p.x);
+  assert(xs[1] > xs[0] + 60, 'second pictogram to the right of first');
+  assert(xs[2] > xs[1] + 60, 'third pictogram to the right of second');
+  // bbox may use metrics, but slot origin stays on layout grid
+  assert(resolved.pictograms[0].bbox.width === 50, 'bbox width from metrics');
+}
+
+// Default params keep distinct horizontal placements in output
+{
+  const base = sampleSequence(3);
+  const { svg } = api.applyExpressiveRendering(base, api.DEFAULT_PARAMS);
+  const translates = [...svg.matchAll(/translate\(([-\d.]+),/g)].map((m) => Number(m[1]));
+  // Expect pictogram placement translates (ignore clarity 0 wrappers): distinct slot xs
+  const slotXs = translates.filter((x) => x > 20);
+  assert(slotXs.length >= 3, 'has placement translates');
+  assert(new Set(slotXs.map((x) => Math.round(x))).size >= 3, 'distinct horizontal slots');
+}
+
 // Determinism
 {
   const params = {

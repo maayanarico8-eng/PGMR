@@ -306,16 +306,14 @@
         if (!p) return null;
         if (options && options.metrics && options.metrics[i]) {
           const m = options.metrics[i];
+          // Metrics refine content bbox (for clarity centers). Keep layout
+          // slot origin from the sequence translate for placement.
           p.bbox = {
             x: m.x != null ? m.x : p.x,
             y: m.y != null ? m.y : p.y,
             width: m.width != null ? m.width : p.width,
             height: m.height != null ? m.height : p.height,
           };
-          p.x = p.bbox.x;
-          p.y = p.bbox.y;
-          p.width = p.bbox.width;
-          p.height = p.bbox.height;
         }
         return p;
       })
@@ -361,7 +359,15 @@
     const metrics = nodes.map((node) => {
       try {
         const b = node.getBBox();
-        return { x: b.x, y: b.y, width: b.width, height: b.height };
+        // getBBox is in the element's local space (own transform ignored).
+        // Add translate so metrics are in root/user coordinates.
+        const t = parseTranslate(node.getAttribute && node.getAttribute('transform'));
+        return {
+          x: t.x + b.x,
+          y: t.y + b.y,
+          width: b.width,
+          height: b.height,
+        };
       } catch (_) {
         return null;
       }
