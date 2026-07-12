@@ -375,6 +375,7 @@ textarea:focus{border-color:var(--b1)}
 <script src="/memory-processor/engine/config.js"></script>
 <script src="/memory-processor/engine/catalog/entries.js"></script>
 <script src="/memory-processor/engine/catalog/index.js"></script>
+<script src="/memory-processor/engine/catalog/normalize-pictogram-svg.js"></script>
 <script src="/memory-processor/engine/catalog/providers/local.js"></script>
 <script src="/memory-processor/engine/catalog/streamline-session.js"></script>
 <script src="/memory-processor/engine/catalog/providers/streamline.js"></script>
@@ -912,15 +913,23 @@ function lookupHitForUnit(u){
   return{word,hit,cr};
 }
 
-/** Resize a pictogram for the sequence row while preserving root SVG attributes (e.g. fill="none"). */
+/** Canonicalize + size a pictogram for the sequence row (stroke 0.5, #000000, size 64). */
 function sequenceSlotSvg(svgHtml,size=64){
-  const svg=(svgHtml||'').trim();
+  const norm=MemoryEngineNormalizePictogramSvg?.normalizePictogramSvg;
+  let svg=norm?norm(svgHtml):(svgHtml||'').trim();
   if(!/^<svg/i.test(svg))return svg;
   return svg.replace(/^<svg([^>]*)>/i,(match,attrs)=>{
     let a=attrs.replace(/\s(?:width|height)="[^"]*"/gi,'');
+    a=a.replace(/\s(?:width|height)=[^\s>]+/gi,'');
     if(!/\bviewBox=/i.test(a))a+=` viewBox="0 0 ${size} ${size}"`;
     return`<svg width="${size}" height="${size}"${a} overflow="hidden">`;
   });
+}
+
+/** Normalize a pictogram for list thumbs / previews (matches sequence base style). */
+function displayPictogramSvg(svgHtml){
+  const norm=MemoryEngineNormalizePictogramSvg?.normalizePictogramSvg;
+  return norm?norm(svgHtml):(svgHtml||'');
 }
 
 function getExpressiveParams(){
@@ -1071,7 +1080,7 @@ async function renderBankTest(sentence){
       :isGap
       ?`<div class="cat-hit-meta" style="color:#D85A30">✕ Streamline fetch failed</div>`
       :`${pictogramSourceMeta(slot.source)}${slot.assetRef?`<div style="font-size:10px;color:var(--t3)">${esc(slot.assetRef)}</div>`:''}`;
-    return`<div class="bank-word-row${isGap?' is-gap':''}${isDup?' opacity-70':''}"><div class="cat-svg-wrap${isGap?' cat-gap-wrap':''}">${isGap?GAP_SVG:slot.svg}</div><div class="cat-hit-info"><div class="cat-hit-word">${esc(slot.hebrew)}</div>${englishRefMeta(slot.english,slot)}${meta}</div></div>`;
+    return`<div class="bank-word-row${isGap?' is-gap':''}${isDup?' opacity-70':''}"><div class="cat-svg-wrap${isGap?' cat-gap-wrap':''}">${isGap?GAP_SVG:displayPictogramSvg(slot.svg)}</div><div class="cat-hit-info"><div class="cat-hit-word">${esc(slot.hebrew)}</div>${englishRefMeta(slot.english,slot)}${meta}</div></div>`;
   }).join('');
   container.innerHTML=`
     <div class="mem-banner"><div class="mem-banner-lbl">Test sentence</div><div dir="rtl">${esc(sentence.text)}</div></div>
@@ -1114,7 +1123,7 @@ async function previewFullApiPictograms(){
       const uploadBtn=isGap&&rule3AutoRealizationEnabled()
         ?`<div style="margin-top:8px;display:flex;align-items:center;gap:10px"><button onclick="createFileInput(${JSON.stringify(slot.hebrew)},document.getElementById(${JSON.stringify(gapId)}))" style="padding:4px 11px;font-size:11px;font-family:var(--f);border:1px solid #C0846A;border-radius:5px;background:transparent;color:#9B4D2C;cursor:pointer">↑ Upload reference SVG</button><span class="realize-status" style="font-size:10.5px;color:var(--t3)"></span></div>`
         :'';
-      return`<div class="bank-word-row${isGap?' is-gap':''}${isDup?' opacity-70':''}"${isGap?` id="${esc(gapId)}"`:''}><div class="cat-svg-wrap${isGap?' cat-gap-wrap':''}">${isGap?GAP_SVG:slot.svg}</div><div class="cat-hit-info"><div class="cat-hit-word">${esc(slot.hebrew)}</div>${englishRefMeta(slot.english,slot)}${meta}${uploadBtn}</div></div>`;
+      return`<div class="bank-word-row${isGap?' is-gap':''}${isDup?' opacity-70':''}"${isGap?` id="${esc(gapId)}"`:''}><div class="cat-svg-wrap${isGap?' cat-gap-wrap':''}">${isGap?GAP_SVG:displayPictogramSvg(slot.svg)}</div><div class="cat-hit-info"><div class="cat-hit-word">${esc(slot.hebrew)}</div>${englishRefMeta(slot.english,slot)}${meta}${uploadBtn}</div></div>`;
     }).join('');
     container.innerHTML=`
       ${renderTranslationSection(translations)}
@@ -1394,7 +1403,7 @@ async function renderCatalogSection(vrpResult){
     const enMeta=englishRefMeta(english,slot);
     if(slot.status==='hit'){
       hits++;
-      const svgHtml=slot.svg||GAP_SVG;
+      const svgHtml=slot.svg?displayPictogramSvg(slot.svg):GAP_SVG;
       const isFileGap=!slot.svg;
       const provNote=slot.provisional?`<div class="prov-note">⚑ new icon — added to mapping</div>`:'';
       const assetRef=slot.assetRef?`<div class="cat-hit-meta" style="font-size:10px;color:var(--t3)">${esc(slot.assetRef)}</div>`:'';
@@ -2028,7 +2037,7 @@ async function loadBankList(){
     }
     listEl.innerHTML=words.map(word=>{
       const entry=icons[word]||{};
-      const svg=entry.svg||'';
+      const svg=entry.svg?displayPictogramSvg(entry.svg):'';
       const meta=bankEntrySourceLabel(entry);
       return`<div class="bank-list-row" data-word="${esc(word)}">
         <div class="bank-list-thumb">${svg}</div>

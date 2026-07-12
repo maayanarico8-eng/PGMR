@@ -72,6 +72,7 @@ function load() {
     throw new Error('unexpected fetch: ' + u);
   };
 
+  eval(fs.readFileSync(path.join(__dirname, '../normalize-pictogram-svg.js'), 'utf8'));
   eval(fs.readFileSync(path.join(__dirname, '../streamline-session.js'), 'utf8'));
   eval(fs.readFileSync(path.join(__dirname, 'streamline.js'), 'utf8'));
   return g.MemoryEngineCatalogStreamlineProvider;

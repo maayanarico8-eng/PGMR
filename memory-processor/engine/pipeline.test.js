@@ -13,6 +13,7 @@ function loadEngine() {
     'config.js',
     'catalog/entries.js',
     'catalog/index.js',
+    'catalog/normalize-pictogram-svg.js',
     'catalog/providers/local.js',
     'catalog/streamline-session.js',
     'catalog/providers/streamline.js',

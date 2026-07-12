@@ -10,9 +10,9 @@
   const FRAG_STRIPS = [1, 4, 4];
   const FRAG_DIST = [0, 18, 18];
   const DOT_CLEARANCE = 1.6;
-  const BASE_STROKE = 1;
+  const BASE_STROKE = 0.5;
   const MAX_STROKE = 30;
-  const STROKE_COLOR = '#231F20';
+  const STROKE_COLOR = '#000000';
   const GRAPHIC_SEL = 'path,rect,circle,ellipse,line,polyline,polygon';
 
   const DEFAULT_PARAMS = {

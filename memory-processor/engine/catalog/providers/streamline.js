@@ -373,8 +373,10 @@
   async function saveCacheEntry(english, entry) {
     const key = normalizeEnglish(english);
     if (!key || !entry?.svg) return false;
+    const norm = root.MemoryEngineNormalizePictogramSvg?.normalizePictogramSvg;
+    const svg = norm ? norm(entry.svg) : entry.svg;
     const stored = {
-      svg: entry.svg,
+      svg,
       hash: entry.hash || null,
       cachedAt: entry.cachedAt || new Date().toISOString(),
     };
@@ -388,13 +390,14 @@
    */
   async function ensureBankedIcons(items) {
     const pending = {};
+    const norm = root.MemoryEngineNormalizePictogramSvg?.normalizePictogramSvg;
     for (const item of items || []) {
       const key = normalizeEnglish(item?.english);
       if (!key || !item?.svg) continue;
       const existing = await getCachedEntry(key);
       if (existing?.svg) continue;
       pending[key] = {
-        svg: item.svg,
+        svg: norm ? norm(item.svg) : item.svg,
         hash: item.hash || null,
         cachedAt: new Date().toISOString(),
       };
@@ -474,8 +477,10 @@
   }
 
   function returnSvg(term, svg, hash, source) {
-    registerSession(svg, { english: term, hash, source });
-    return { svg, source, hash, english: term };
+    const norm = root.MemoryEngineNormalizePictogramSvg?.normalizePictogramSvg;
+    const out = norm ? norm(svg) : svg;
+    registerSession(out, { english: term, hash, source });
+    return { svg: out, source, hash, english: term };
   }
 
   async function resolveFromSearch(term, searchParams) {

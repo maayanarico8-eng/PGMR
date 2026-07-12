@@ -47,9 +47,9 @@ console.log('expressive-render tests…');
 
 // Impact
 {
-  assert(api.computeStrokeWidth(0) === 1, 'impact 0 → stroke 1');
+  assert(api.computeStrokeWidth(0) === 0.5, 'impact 0 → stroke 0.5');
   assert(api.computeStrokeWidth(100) === 30, 'impact 100 → stroke 30');
-  assert(approx(api.computeStrokeWidth(50), 15.5), 'impact 50 → mid stroke');
+  assert(approx(api.computeStrokeWidth(50), 15.25), 'impact 50 → mid stroke');
 }
 
 // Frequency
@@ -95,10 +95,10 @@ console.log('expressive-render tests…');
   assert(state.stripsPerPictogram === 1, 'mine → 1 strip');
   assert(state.maxOffset === 0, 'mine maxOffset 0');
   assert(state.dasharray === 'solid', 'default dash solid');
-  assert(state.strokeWidth === 1, 'default stroke 1');
+  assert(state.strokeWidth === 0.5, 'default stroke 0.5');
   assert(approx(state.collapseScale, 1), 'default collapse 1');
   assert(svg.includes('ex-master-0'), 'master in defs');
-  assert(svg.includes('stroke="#231F20"') || svg.includes("stroke='#231F20'"), 'normalized stroke color');
+  assert(svg.includes('stroke="#000000"') || svg.includes("stroke='#000000'"), 'normalized stroke color');
   assert(svg.includes('stroke-linecap="round"'), 'round linecap');
   assert(!svg.includes('fill="#fff"') && !svg.includes('fill="#FFF"'), 'fill overridden on path');
   assert(svg.includes('viewBox="'), 'has viewBox');
@@ -114,7 +114,7 @@ console.log('expressive-render tests…');
   const vb = (svg) => (svg.match(/viewBox="([^"]+)"/) || [])[1];
   assert(vb(low.svg) === vb(high.svg), 'impact 0 and 100 share viewBox');
   assert(low.state.pad === high.state.pad, 'pad stable across impact');
-  assert(low.state.strokeWidth === 1 && high.state.strokeWidth === 30, 'stroke still scales');
+  assert(low.state.strokeWidth === 0.5 && high.state.strokeWidth === 30, 'stroke still scales');
 }
 
 // apply — family fragmentation
@@ -156,7 +156,7 @@ console.log('expressive-render tests…');
   });
   assert(state.dasharray !== 'solid', 'dashed state');
   assert(svg.includes('stroke-dasharray='), 'dasharray in svg');
-  assert(approx(state.strokeWidth, 15.5), 'impact mid stroke in state');
+  assert(approx(state.strokeWidth, 15.25), 'impact mid stroke in state');
 }
 
 // apply — clarity collapse factor
@@ -221,7 +221,7 @@ console.log('expressive-render tests…');
     { solid: true, dasharray: null }
   );
   assert(html.includes('fill="none"'), 'fill none');
-  assert(html.includes('stroke="#231F20"'), 'stroke color');
+  assert(html.includes('stroke="#000000"'), 'stroke color');
   assert(html.includes('stroke-width="4"'), 'stroke width');
   assert(!/\sstyle=/.test(html), 'style attr removed');
 }
