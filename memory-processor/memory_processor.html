@@ -234,6 +234,15 @@ textarea:focus{border-color:var(--b1)}
 .cat-skip-sub{font-size:10px;color:var(--t3);margin-top:6px}
 .seq-display{background:#fff;border:1px solid rgba(26,25,24,.22);border-radius:var(--r);padding:20px;display:flex;justify-content:center;overflow-x:auto;margin:14px 0}
 .seq-display svg{display:block}
+.expressive-panel{margin:0 0 20px;padding:14px 16px;border:1px solid var(--b3);border-radius:var(--r);background:var(--bg2)}
+.expressive-panel .sec-label{margin:0 0 12px}
+.expressive-row{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.expressive-row:last-child{margin-bottom:0}
+.expressive-row-hdr{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.expressive-val{font-size:11px;color:var(--t3);font-variant-numeric:tabular-nums}
+.expressive-panel input[type=range]{width:100%;accent-color:#231F20}
+.expressive-state{margin-top:12px;padding-top:10px;border-top:1px solid var(--b3);font-size:10.5px;color:var(--t3);line-height:1.55;display:flex;flex-wrap:wrap;gap:8px 14px}
+.expressive-state span{white-space:nowrap}
 .bank-test-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
 .bank-test-chip{padding:6px 12px;border-radius:20px;font-size:12px;border:1px solid var(--b2);background:var(--bg2);color:var(--t2);cursor:pointer;font-family:var(--f);line-height:1.4}
 .bank-test-chip:hover{border-color:var(--b1);color:var(--t1)}
@@ -386,11 +395,16 @@ textarea:focus{border-color:var(--b1)}
 <script src="/memory-processor/engine/rule3/lookup.js"></script>
 <script src="/memory-processor/engine/pipeline.js"></script>
 <script src="/memory-processor/engine/index.js"></script>
+<script src="/memory-processor/engine/expressive-render.js"></script>
 <script>
 
 let currentResult=null,currentVrpResult=null,currentAraResult=null,currentFilter='all';
 let processorMode='bank-test';
 let lastEngineSource=null;
+let cachedBaseSequenceSvg='';
+let cachedSequenceBuild=null; // { kind:'bank'|'vrp', slots, rtl?, vrpResult? }
+let lastExpressiveState=null;
+let expressiveParams=Object.assign({},MemoryEngineExpressive.DEFAULT_PARAMS);
 
 function getNarratorGender(){
   const checked=document.querySelector('input[name="narrator-gender"]:checked');
@@ -903,9 +917,113 @@ function sequenceSlotSvg(svgHtml,size=64){
   });
 }
 
+function getExpressiveParams(){
+  return MemoryEngineExpressive.normalizeParams(expressiveParams);
+}
+
+function applyExpressiveToBase(baseSvg){
+  if(!baseSvg)return{svg:'',state:null};
+  const{svg,state}=MemoryEngineExpressive.applyExpressiveRendering(baseSvg,getExpressiveParams());
+  lastExpressiveState=state;
+  return{svg,state};
+}
+
+function renderExpressiveStateHtml(state){
+  if(!state)return'';
+  const dash=state.dasharray==='solid'?'solid':esc(String(state.dasharray));
+  return`<div class="expressive-state" id="expressive-state">
+    <span>pictograms: ${state.pictogramCount}</span>
+    <span>strips: ${state.stripsPerPictogram}</span>
+    <span>maxOffset: ${state.maxOffset}</span>
+    <span>dash: ${dash}</span>
+    <span>stroke: ${Number(state.strokeWidth).toFixed(2)}</span>
+    <span>collapse: ${Number(state.collapseScale).toFixed(3)}</span>
+  </div>`;
+}
+
+function renderExpressivePanelHtml(){
+  const p=getExpressiveParams();
+  const src=p.memorySource;
+  return`<div class="expressive-panel" id="expressive-panel">
+    <div class="sec-label">Parameters</div>
+    <div class="expressive-row">
+      <label class="input-lbl">Memory source</label>
+      <div class="mode-toggle" id="expressive-source">
+        <button type="button" class="mode-btn${src===0?' active':''}" data-source="0">Mine</button>
+        <button type="button" class="mode-btn${src===1?' active':''}" data-source="1">Family</button>
+        <button type="button" class="mode-btn${src===2?' active':''}" data-source="2">Acquaintance</button>
+      </div>
+    </div>
+    <div class="expressive-row">
+      <div class="expressive-row-hdr"><label class="input-lbl" for="expressive-frequency">Recall frequency</label><span class="expressive-val" id="expressive-frequency-val">${p.memoryFrequency}</span></div>
+      <input type="range" id="expressive-frequency" min="0" max="100" step="1" value="${p.memoryFrequency}">
+    </div>
+    <div class="expressive-row">
+      <div class="expressive-row-hdr"><label class="input-lbl" for="expressive-clarity">Memory clarity</label><span class="expressive-val" id="expressive-clarity-val">${p.memoryClarity}</span></div>
+      <input type="range" id="expressive-clarity" min="0" max="100" step="1" value="${p.memoryClarity}">
+    </div>
+    <div class="expressive-row">
+      <div class="expressive-row-hdr"><label class="input-lbl" for="expressive-impact">Memory impact</label><span class="expressive-val" id="expressive-impact-val">${p.memoryImpact}</span></div>
+      <input type="range" id="expressive-impact" min="0" max="100" step="1" value="${p.memoryImpact}">
+    </div>
+    ${renderExpressiveStateHtml(lastExpressiveState)}
+  </div>`;
+}
+
+function sequenceBlockHtml(seqSvg){
+  if(!seqSvg)return'';
+  return`<div class="seq-display">${seqSvg}</div>${renderExpressivePanelHtml()}`;
+}
+
+function refreshExpressiveSequenceDisplay(){
+  const seqEl=document.querySelector('.seq-display');
+  if(!seqEl||!cachedBaseSequenceSvg)return;
+  const{svg,state}=applyExpressiveToBase(cachedBaseSequenceSvg);
+  if(svg)seqEl.innerHTML=svg;
+  const stateEl=document.getElementById('expressive-state');
+  if(stateEl)stateEl.outerHTML=renderExpressiveStateHtml(state);
+  else{
+    const panel=document.getElementById('expressive-panel');
+    if(panel)panel.insertAdjacentHTML('beforeend',renderExpressiveStateHtml(state));
+  }
+}
+
+function bindExpressivePanel(){
+  const panel=document.getElementById('expressive-panel');
+  if(!panel||panel.dataset.bound==='1')return;
+  panel.dataset.bound='1';
+  panel.querySelectorAll('#expressive-source .mode-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      expressiveParams.memorySource=Number(btn.dataset.source)||0;
+      panel.querySelectorAll('#expressive-source .mode-btn').forEach(b=>b.classList.toggle('active',b===btn));
+      refreshExpressiveSequenceDisplay();
+    });
+  });
+  const wireRange=(id,key,valId)=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.addEventListener('input',()=>{
+      expressiveParams[key]=Number(el.value);
+      const lab=document.getElementById(valId);
+      if(lab)lab.textContent=String(expressiveParams[key]);
+      refreshExpressiveSequenceDisplay();
+    });
+  };
+  wireRange('expressive-frequency','memoryFrequency','expressive-frequency-val');
+  wireRange('expressive-clarity','memoryClarity','expressive-clarity-val');
+  wireRange('expressive-impact','memoryImpact','expressive-impact-val');
+}
+
+function finalizeSequenceSvg(baseSvg){
+  cachedBaseSequenceSvg=baseSvg||'';
+  if(!cachedBaseSequenceSvg){lastExpressiveState=null;return'';}
+  return applyExpressiveToBase(cachedBaseSequenceSvg).svg;
+}
+
 async function buildBankSequence(slots,rtl=true){
   const seqSlots=(slots||[]).filter(s=>!s.duplicateOf);
-  const N=seqSlots.length;if(!N)return'';
+  const N=seqSlots.length;if(!N){cachedSequenceBuild=null;return'';}
+  cachedSequenceBuild={kind:'bank',slots,rtl:!!rtl};
   const ps=64,gap=24,cW=Math.max(320,N*ps+(N-1)*gap+40),cH=128;
   const totW=N*ps+(N-1)*gap,x0=(cW-totW)/2,y0=(cH-ps)/2;
   const parts=seqSlots.map((slot,i)=>{
@@ -913,7 +1031,8 @@ async function buildBankSequence(slots,rtl=true){
     const x=rtl?x0+(N-1-i)*(ps+gap):x0+i*(ps+gap);
     return`<g transform="translate(${x},${y0})">${sequenceSlotSvg(svg)}</g>`;
   });
-  return`<svg viewBox="0 0 ${cW} ${cH}" xmlns="http://www.w3.org/2000/svg">${parts.join('')}</svg>`;
+  const base=`<svg viewBox="0 0 ${cW} ${cH}" xmlns="http://www.w3.org/2000/svg">${parts.join('')}</svg>`;
+  return finalizeSequenceSvg(base);
 }
 
 async function renderBankTest(sentence){
@@ -941,9 +1060,10 @@ async function renderBankTest(sentence){
     <div class="sec-label">Pictograms <span>${hits} hit${hits!==1?'s':''}, ${gaps} ✕</span></div>
     <div class="bank-word-grid">${rows}</div>
     <div class="sec-label">Sequence</div>
-    <div class="seq-display">${seqSvg}</div>
+    ${sequenceBlockHtml(seqSvg)}
     <div style="font-size:11px;color:var(--t3);margin-top:8px">Icons resolve from <code style="font-size:10px">pictogram-cache</code> first, then <code style="font-size:10px">streamline-mapping.json</code>, then Streamline HQ (<code style="font-size:10px">streamline-regular</code>).</div>
   `;
+  bindExpressivePanel();
   loadBankList();
 }
 
@@ -981,9 +1101,10 @@ async function previewFullApiPictograms(){
       <div class="sec-label">Pictograms <span>${hits} hit${hits!==1?'s':''}, ${gaps} ✕</span></div>
       <div class="bank-word-grid">${rows}</div>
       <div class="sec-label">Sequence</div>
-      <div class="seq-display">${seqSvg}</div>
+      ${sequenceBlockHtml(seqSvg)}
       <div style="font-size:11px;color:var(--t3);margin-top:8px">Icons resolve from <code style="font-size:10px">pictogram-cache</code> first, then <code style="font-size:10px">streamline-mapping.json</code>, then Streamline HQ (<code style="font-size:10px">streamline-regular</code>).</div>
     `;
+    bindExpressivePanel();
     loadBankList();
   }catch(e){
     container.innerHTML=`<div class="error-card" style="margin-top:12px">${esc(e.message)}</div>`;
@@ -999,7 +1120,8 @@ async function buildSequenceSVG(vrpResult,slots){
     const slot=slotByHebrew[u.unit||''];
     return slot&&!slot.duplicateOf;
   });
-  const N=units.length;if(!N)return'';
+  const N=units.length;if(!N){if(slots)cachedSequenceBuild=null;return'';}
+  if(slots)cachedSequenceBuild={kind:'vrp',slots,vrpResult};
   const ps=64,gap=24,cW=856,cH=128;
   const totW=N*ps+(N-1)*gap,x0=(cW-totW)/2,y0=(cH-ps)/2;
   const rtl=currentResult?.memoryLanguage==='Hebrew';
@@ -1011,7 +1133,8 @@ async function buildSequenceSVG(vrpResult,slots){
     return`<g transform="translate(${x},${y0})">${sequenceSlotSvg(svg)}</g>`;
   }));
   const inner=parts.join('');
-  return inner?`<svg viewBox="0 0 ${cW} ${cH}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`:'';
+  const base=inner?`<svg viewBox="0 0 ${cW} ${cH}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`:'';
+  return finalizeSequenceSvg(base);
 }
 
 
@@ -1200,9 +1323,20 @@ async function realizeFromReference(conceptLabel,referenceSvg,gapEl){
 }
 
 async function rebuildSequence(){
-  const seqEl=document.querySelector('.seq-display');if(!seqEl||!currentVrpResult)return;
-  const seqSvg=await buildSequenceSVG(currentVrpResult);
-  if(seqSvg)seqEl.innerHTML=seqSvg;
+  const seqEl=document.querySelector('.seq-display');if(!seqEl)return;
+  let seqSvg='';
+  if(cachedSequenceBuild?.kind==='vrp'&&(currentVrpResult||cachedSequenceBuild.vrpResult)){
+    seqSvg=await buildSequenceSVG(currentVrpResult||cachedSequenceBuild.vrpResult,cachedSequenceBuild.slots);
+  }else if(cachedSequenceBuild?.kind==='bank'){
+    seqSvg=await buildBankSequence(cachedSequenceBuild.slots,cachedSequenceBuild.rtl);
+  }else if(currentVrpResult){
+    seqSvg=await buildSequenceSVG(currentVrpResult);
+  }
+  if(seqSvg){
+    seqEl.innerHTML=seqSvg;
+    const stateEl=document.getElementById('expressive-state');
+    if(stateEl)stateEl.outerHTML=renderExpressiveStateHtml(lastExpressiveState);
+  }
 }
 
 function buildSkippedLookupReason(u){
@@ -1270,8 +1404,9 @@ async function renderCatalogSection(vrpResult){
     <div class="sec-label">Library Lookup <span>${lookupSummary}</span></div>
     ${rows.join('')}
     ${skipped.length?`<div style="margin-top:16px"><div class="sec-label" style="margin-bottom:10px">Excluded from lookup <span>${skipped.length} unit${skipped.length!==1?'s':''}</span></div>${skippedRows.join('')}</div>`:''}
-    ${hasSeq?`<div style="margin-top:20px"><div class="sec-label">Pictographic Sequence</div><div class="seq-display">${seqSvg}</div>${gaps>0?`<div style="font-size:11px;color:#D85A30;margin-top:6px">${gaps} word${gaps!==1?'s':''} could not be realized — VISUAL GAP events recorded. The sequence is incomplete.</div>`:''}</div>`:''}
+    ${hasSeq?`<div style="margin-top:20px"><div class="sec-label">Pictographic Sequence</div>${sequenceBlockHtml(seqSvg)}${gaps>0?`<div style="font-size:11px;color:#D85A30;margin-top:6px">${gaps} word${gaps!==1?'s':''} could not be realized — VISUAL GAP events recorded. The sequence is incomplete.</div>`:''}</div>`:''}
   `;
+  bindExpressivePanel();
   loadBankList();
 }
 
