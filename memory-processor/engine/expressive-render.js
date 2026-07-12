@@ -28,11 +28,15 @@
 
   function normalizeParams(params) {
     const p = { ...DEFAULT_PARAMS, ...(params || {}) };
+    const num = (v, fallback) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : fallback;
+    };
     return {
-      memorySource: clamp(Math.round(Number(p.memorySource) || 0), 0, 2),
-      memoryFrequency: clamp(Number(p.memoryFrequency), 0, 100),
-      memoryClarity: clamp(Number(p.memoryClarity), 0, 100),
-      memoryImpact: clamp(Number(p.memoryImpact), 0, 100),
+      memorySource: clamp(Math.round(num(p.memorySource, 0)), 0, 2),
+      memoryFrequency: clamp(num(p.memoryFrequency, 100), 0, 100),
+      memoryClarity: clamp(num(p.memoryClarity, 100), 0, 100),
+      memoryImpact: clamp(num(p.memoryImpact, 0), 0, 100),
     };
   }
 

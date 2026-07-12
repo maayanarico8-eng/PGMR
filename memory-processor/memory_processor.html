@@ -404,7 +404,13 @@ let lastEngineSource=null;
 let cachedBaseSequenceSvg='';
 let cachedSequenceBuild=null; // { kind:'bank'|'vrp', slots, rtl?, vrpResult? }
 let lastExpressiveState=null;
-let expressiveParams=Object.assign({},MemoryEngineExpressive.DEFAULT_PARAMS);
+let expressiveParams=null;
+
+function resetExpressiveParams(){
+  expressiveParams=Object.assign({},MemoryEngineExpressive.DEFAULT_PARAMS);
+}
+
+resetExpressiveParams();
 
 function getNarratorGender(){
   const checked=document.querySelector('input[name="narrator-gender"]:checked');
@@ -944,7 +950,7 @@ function renderExpressiveStateHtml(state){
 function renderExpressivePanelHtml(){
   const p=getExpressiveParams();
   const src=p.memorySource;
-  return`<div class="expressive-panel" id="expressive-panel">
+  return`<div class="expressive-panel" id="expressive-panel" dir="ltr">
     <div class="sec-label">Parameters</div>
     <div class="expressive-row">
       <label class="input-lbl">Memory source</label>
@@ -956,15 +962,15 @@ function renderExpressivePanelHtml(){
     </div>
     <div class="expressive-row">
       <div class="expressive-row-hdr"><label class="input-lbl" for="expressive-frequency">Recall frequency</label><span class="expressive-val" id="expressive-frequency-val">${p.memoryFrequency}</span></div>
-      <input type="range" id="expressive-frequency" min="0" max="100" step="1" value="${p.memoryFrequency}">
+      <input type="range" id="expressive-frequency" min="0" max="100" step="1" value="${p.memoryFrequency}" autocomplete="off">
     </div>
     <div class="expressive-row">
       <div class="expressive-row-hdr"><label class="input-lbl" for="expressive-clarity">Memory clarity</label><span class="expressive-val" id="expressive-clarity-val">${p.memoryClarity}</span></div>
-      <input type="range" id="expressive-clarity" min="0" max="100" step="1" value="${p.memoryClarity}">
+      <input type="range" id="expressive-clarity" min="0" max="100" step="1" value="${p.memoryClarity}" autocomplete="off">
     </div>
     <div class="expressive-row">
       <div class="expressive-row-hdr"><label class="input-lbl" for="expressive-impact">Memory impact</label><span class="expressive-val" id="expressive-impact-val">${p.memoryImpact}</span></div>
-      <input type="range" id="expressive-impact" min="0" max="100" step="1" value="${p.memoryImpact}">
+      <input type="range" id="expressive-impact" min="0" max="100" step="1" value="${p.memoryImpact}" autocomplete="off">
     </div>
     ${renderExpressiveStateHtml(lastExpressiveState)}
   </div>`;
@@ -972,6 +978,8 @@ function renderExpressivePanelHtml(){
 
 function sequenceBlockHtml(seqSvg){
   if(!seqSvg)return'';
+  // Fresh sequence block always shows canonical defaults in the panel chrome;
+  // param state was reset by the caller before building the SVG.
   return`<div class="seq-display">${seqSvg}</div>${renderExpressivePanelHtml()}`;
 }
 
@@ -1012,6 +1020,16 @@ function bindExpressivePanel(){
   wireRange('expressive-frequency','memoryFrequency','expressive-frequency-val');
   wireRange('expressive-clarity','memoryClarity','expressive-clarity-val');
   wireRange('expressive-impact','memoryImpact','expressive-impact-val');
+  // Force displayed defaults (avoids browser form restore / RTL thumb quirks)
+  const synced=getExpressiveParams();
+  [['expressive-frequency','memoryFrequency','expressive-frequency-val'],
+   ['expressive-clarity','memoryClarity','expressive-clarity-val'],
+   ['expressive-impact','memoryImpact','expressive-impact-val']].forEach(([id,key,valId])=>{
+    const el=document.getElementById(id);
+    const lab=document.getElementById(valId);
+    if(el)el.value=String(synced[key]);
+    if(lab)lab.textContent=String(synced[key]);
+  });
 }
 
 function finalizeSequenceSvg(baseSvg){
@@ -1038,6 +1056,7 @@ async function buildBankSequence(slots,rtl=true){
 async function renderBankTest(sentence){
   const container=document.getElementById('results');
   if(!container)return;
+  resetExpressiveParams();
   const words=sentence.words||[];
   container.innerHTML=`<div class="mem-banner"><div class="mem-banner-lbl">Test sentence</div><div dir="rtl">${esc(sentence.text)}</div></div>${translationLoadingHTML()}`;
   const{translations,slots}=await MemoryEngineCatalogTranslate.resolvePictogramWords(words,{memoryText:sentence.text,narratorGender:getNarratorGender()});
@@ -1071,6 +1090,7 @@ async function previewFullApiPictograms(){
   const container=document.getElementById('pictogram-preview-section');
   const btn=document.getElementById('preview-pictograms-btn');
   if(!container||!currentResult)return;
+  resetExpressiveParams();
   const words=(currentResult.representativeWords||[]).map(rw=>rw.word).filter(Boolean);
   if(!words.length)return;
   if(btn){btn.disabled=true;btn.innerHTML='<span class="vrp-dark-spinner"></span> Loading pictograms…';}
@@ -1356,6 +1376,7 @@ function buildSkippedLookupReason(u){
 
 async function renderCatalogSection(vrpResult){
   const container=document.getElementById('catalog-section');if(!container)return;
+  resetExpressiveParams();
   const allVrp=vrpResult?.vrp||[];
   const units=allVrp.filter(u=>['independent','both'].includes(u.phase2?.modeDecision?.mode));
   const skipped=allVrp.filter(u=>!['independent','both'].includes(u.phase2?.modeDecision?.mode));
