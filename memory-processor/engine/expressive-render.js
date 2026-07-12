@@ -460,7 +460,10 @@
       return newCenterX - centerX;
     });
 
-    const pad = Math.max(12, maxFrag + strokeWidth * 1.2);
+    // ViewBox padding must NOT depend on current stroke width — otherwise raising
+    // Impact expands the canvas and pictograms appear to shift. Use frag slide
+    // room only; thick strokes may paint into the fixed pad / overflow.
+    const pad = Math.max(12, maxFrag);
     let maxAbsClarity = 0;
     for (const d of clarityDxList) maxAbsClarity = Math.max(maxAbsClarity, Math.abs(d));
 
@@ -477,7 +480,7 @@
 
       // Clips in local master coordinates (0..w, 0..h); cut piece moves with translate
       const localBBox = { x: 0, y: 0, width: pic.width, height: pic.height };
-      const clipPad = pad + Math.abs(clarityDx) + 4;
+      const clipPad = Math.max(pad, maxFrag + MAX_STROKE * 1.2) + Math.abs(clarityDx) + 4;
       const clips = stripClipRects(localBBox, level, clipPad);
 
       const stripGroups = [];
@@ -516,7 +519,7 @@
     const outH = viewBox.h + pad * 2;
 
     const svg =
-      `<svg xmlns="${SVG_NS}" xmlns:xlink="${XLINK_NS}" viewBox="${formatNum(outX)} ${formatNum(outY)} ${formatNum(outW)} ${formatNum(outH)}">` +
+      `<svg xmlns="${SVG_NS}" xmlns:xlink="${XLINK_NS}" viewBox="${formatNum(outX)} ${formatNum(outY)} ${formatNum(outW)} ${formatNum(outH)}" overflow="visible">` +
       `<defs>${defsParts.join('')}</defs>` +
       bodyParts.join('') +
       `</svg>`;

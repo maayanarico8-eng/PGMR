@@ -1024,7 +1024,7 @@ async function buildBankSequence(slots,rtl=true){
   const seqSlots=(slots||[]).filter(s=>!s.duplicateOf);
   const N=seqSlots.length;if(!N){cachedSequenceBuild=null;return'';}
   cachedSequenceBuild={kind:'bank',slots,rtl:!!rtl};
-  const ps=64,gap=24,cW=Math.max(320,N*ps+(N-1)*gap+40),cH=128;
+  const ps=64,gap=12,cW=Math.max(320,N*ps+(N-1)*gap+40),cH=128;
   const totW=N*ps+(N-1)*gap,x0=(cW-totW)/2,y0=(cH-ps)/2;
   const parts=seqSlots.map((slot,i)=>{
     const svg=slot.status==='hit'&&slot.svg?slot.svg:GAP_SVG;
@@ -1122,7 +1122,7 @@ async function buildSequenceSVG(vrpResult,slots){
   });
   const N=units.length;if(!N){if(slots)cachedSequenceBuild=null;return'';}
   if(slots)cachedSequenceBuild={kind:'vrp',slots,vrpResult};
-  const ps=64,gap=24,cW=856,cH=128;
+  const ps=64,gap=12,cW=856,cH=128;
   const totW=N*ps+(N-1)*gap,x0=(cW-totW)/2,y0=(cH-ps)/2;
   const rtl=currentResult?.memoryLanguage==='Hebrew';
   const parts=await Promise.all(units.map(async(u,i)=>{

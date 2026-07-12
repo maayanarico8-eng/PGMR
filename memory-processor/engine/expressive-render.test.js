@@ -106,6 +106,17 @@ console.log('expressive-render tests…');
   assert(state.pad >= 12, 'pad at least 12');
 }
 
+// Impact must not change viewBox (no canvas jump / pictogram shift)
+{
+  const base = sampleSequence(2);
+  const low = api.applyExpressiveRendering(base, { ...api.DEFAULT_PARAMS, memoryImpact: 0 });
+  const high = api.applyExpressiveRendering(base, { ...api.DEFAULT_PARAMS, memoryImpact: 100 });
+  const vb = (svg) => (svg.match(/viewBox="([^"]+)"/) || [])[1];
+  assert(vb(low.svg) === vb(high.svg), 'impact 0 and 100 share viewBox');
+  assert(low.state.pad === high.state.pad, 'pad stable across impact');
+  assert(low.state.strokeWidth === 1 && high.state.strokeWidth === 30, 'stroke still scales');
+}
+
 // apply — family fragmentation
 {
   const { svg, state } = api.applyExpressiveRendering(sampleSequence(2), {
