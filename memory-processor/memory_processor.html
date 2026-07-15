@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Memory Processor</title>
+<title>מחולל זיכרונות</title>
 <style>
 
 :root{--bg:#fff;--bg2:#f8f7f5;--bg3:#f1efe8;--t1:#1a1918;--t2:#4a4845;--t3:#888780;--b1:rgba(26,25,24,.40);--b2:rgba(26,25,24,.22);--b3:rgba(26,25,24,.11);--err-bg:#fef2f2;--err-t:#991b1b;--err-b:#fecaca;--r:8px;--f:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif}
@@ -295,81 +295,519 @@ textarea:focus{border-color:var(--b1)}
 .bank-list-word{font-size:12px;font-weight:500;color:var(--t1)}
 .bank-list-meta{font-size:10px;color:var(--t3);margin-top:2px}
 
+/* ── Maayan web interface ─────────────────────────────────────────────── */
+@font-face{font-family:"PGMR Masada";src:url("/memory-processor/assets/fonts/Masada-Bold.otf") format("opentype");font-style:normal;font-weight:700;font-display:swap}
+@font-face{font-family:"PGMR Narkiss Block";src:url("/memory-processor/assets/fonts/NarkissBlock-Regular.otf") format("opentype");font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:"PGMR Narkiss Block Mono";src:url("/memory-processor/assets/fonts/NarkissBlockMono-Regular-TRIAL.otf") format("opentype");font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:"PGMR Narkiss Block Mono";src:url("/memory-processor/assets/fonts/NarkissBlockMono-Bold-TRIAL.otf") format("opentype");font-style:normal;font-weight:700;font-display:swap}
+:root{
+  --figma-unit:min(.0520833333vw,1px);
+  --design-blue:#0676fe;
+  --design-blue-soft:#f5f9ff;
+  --design-line:#d9d9d9;
+  --design-muted:#ababab;
+  --design-error:#df3838;
+  --font-display:"PGMR Masada","Masada","Arial Hebrew",Arial,sans-serif;
+  --font-body:"PGMR Narkiss Block","Narkiss Block","Arial Hebrew",Arial,sans-serif;
+  --font-mono:"PGMR Narkiss Block Mono","Narkiss Block Mono","Arial Hebrew",Arial,sans-serif;
+  --font-mono-bold:"PGMR Narkiss Block Mono","Narkiss Block Mono","Arial Hebrew",Arial,sans-serif;
+}
+@media(prefers-color-scheme:dark){:root{--bg:#fff;--bg2:#fff;--bg3:#f2f7fd;--t1:#111;--t2:#333;--t3:#777;--b1:rgba(0,0,0,.42);--b2:rgba(0,0,0,.18);--b3:rgba(0,0,0,.1)}}
+html{min-width:320px;background:#fcfcfc}
+body{min-height:100vh;background:#fcfcfc;color:#000;font-family:var(--font-body)}
+button,input,textarea{font:inherit}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--design-blue);outline-offset:2px}
+.app{width:100%;max-width:1920px;min-height:100vh;margin:0 auto;padding:0 calc(83 * var(--figma-unit)) calc(63 * var(--figma-unit));background:#fcfcfc}
+.site-header{
+  height:calc(119 * var(--figma-unit));padding-top:calc(54.46875 * var(--figma-unit));
+  display:flex;align-items:flex-start;justify-content:flex-end;direction:ltr;gap:calc(46 * var(--figma-unit))
+}
+.site-brand{
+  color:#000;text-decoration:none;white-space:nowrap;font-family:var(--font-mono-bold);font-size:calc(18 * var(--figma-unit));
+  font-weight:700;line-height:calc(19 * var(--figma-unit))
+}
+.utility-toggle{
+  border:0;background:none;padding:0;cursor:pointer;color:#000;white-space:nowrap;font-family:var(--font-mono);
+  font-size:calc(18 * var(--figma-unit));font-weight:400;line-height:calc(19 * var(--figma-unit))
+}
+.workspace{
+  display:grid;grid-template-columns:minmax(0,calc(1342 * var(--figma-unit))) calc(392 * var(--figma-unit));
+  gap:calc(20 * var(--figma-unit));height:calc(898 * var(--figma-unit));min-height:0
+}
+.memory-main{width:calc(1342 * var(--figma-unit));height:calc(898 * var(--figma-unit));min-width:0;display:flex;flex-direction:column}
+.memory-entry{
+  width:calc(926 * var(--figma-unit));height:calc(204 * var(--figma-unit));margin:0 0 0 auto;
+  display:flex;flex-direction:column;align-items:flex-end;direction:rtl
+}
+.entry-heading{
+  width:100%;height:calc(32 * var(--figma-unit));margin:0 0 calc(4 * var(--figma-unit));
+  font-family:var(--font-display);font-size:calc(27 * var(--figma-unit));font-weight:700;
+  line-height:calc(28 * var(--figma-unit));text-align:right
+}
+.entry-count{
+  display:block;width:100%;min-height:calc(18 * var(--figma-unit));margin-bottom:calc(16 * var(--figma-unit));
+  color:var(--design-muted);font-family:var(--font-body);font-size:calc(14 * var(--figma-unit));
+  font-weight:400;line-height:calc(18 * var(--figma-unit));text-align:right;white-space:nowrap
+}
+.memory-input-wrap{position:relative;width:100%;height:calc(79 * var(--figma-unit));margin-bottom:calc(16 * var(--figma-unit))}
+textarea#memory-input{
+  width:100%;height:100%;min-height:0;max-height:none;padding:calc(16 * var(--figma-unit)) calc(20 * var(--figma-unit));
+  resize:none;border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));background:var(--design-blue-soft);
+  color:#000;font-family:var(--font-body);font-size:calc(19 * var(--figma-unit));font-weight:400;
+  line-height:calc(20 * var(--figma-unit));text-align:right;overflow:hidden
+}
+textarea#memory-input::placeholder{color:var(--design-muted);opacity:1}
+textarea#memory-input:hover:not(:focus):not([aria-invalid="true"]){border-color:var(--design-muted)}
+textarea#memory-input:focus{border-color:var(--design-blue);outline:none}
+textarea#memory-input[aria-invalid="true"]{border-color:var(--design-error)}
+.input-footer{width:100%;height:calc(39 * var(--figma-unit));display:flex;justify-content:flex-start;align-items:center;margin:0}
+.word-count{display:none}
+.analyze-btn,.generate-vrp-btn{
+  width:calc(237 * var(--figma-unit));height:calc(39 * var(--figma-unit));min-width:0;justify-content:center;
+  padding:calc(10 * var(--figma-unit)) calc(24 * var(--figma-unit));border:1px solid var(--design-line);
+  border-radius:calc(8 * var(--figma-unit));background:#e9f3ff;color:var(--design-muted);
+  font-family:var(--font-body);font-size:calc(19 * var(--figma-unit));font-weight:400;line-height:calc(20 * var(--figma-unit))
+}
+.analyze-btn:not(:disabled),.generate-vrp-btn:not(:disabled){border-color:var(--design-blue);background:var(--design-blue);color:#fff}
+.analyze-btn:disabled,.generate-vrp-btn:disabled{background:#e9f3ff;color:var(--design-muted)}
+.edit-memory-btn{
+  display:none;border:0;background:none;color:var(--design-blue);padding:calc(6 * var(--figma-unit)) calc(8 * var(--figma-unit));
+  font-family:var(--font-body);font-size:calc(19 * var(--figma-unit));font-weight:400;line-height:calc(20 * var(--figma-unit));
+  cursor:pointer;align-items:center;justify-content:center;gap:calc(6 * var(--figma-unit));direction:ltr;border-radius:calc(8 * var(--figma-unit))
+}
+.edit-memory-btn img{width:calc(20 * var(--figma-unit));height:calc(20 * var(--figma-unit));display:block}
+.app.has-results .entry-heading{font-size:calc(27 * var(--figma-unit))}
+.app.has-results .edit-memory-btn{display:flex;position:absolute;left:0;top:1px}
+.app.has-results .memory-entry{position:relative}
+.app.has-results .entry-count{margin-bottom:calc(16 * var(--figma-unit))}
+.app.has-results textarea#memory-input{height:100%;resize:none}
+.app.has-results .input-footer{visibility:hidden}
+.app.has-results .memory-stage{margin-top:calc(16 * var(--figma-unit))}
+.memory-stage{
+  width:100%;height:calc(678 * var(--figma-unit));min-height:0;flex:none;margin-top:calc(16 * var(--figma-unit));
+  border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));
+  display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff;padding:0
+}
+.visual-output{width:100%;height:100%;min-height:100%;display:flex;align-items:center;justify-content:center}
+.visual-output:empty::after{content:"";display:block}
+.visual-output svg{display:block;width:min(100%,856px);height:auto;max-height:360px}
+.app.has-visual-result .visual-output{position:relative;display:block}
+.app.has-visual-result .visual-output>svg{
+  position:absolute;left:calc(212 * var(--figma-unit));top:calc(163 * var(--figma-unit));
+  width:calc(966 * var(--figma-unit));height:auto;max-height:none
+}
+.app.parameters-active .visual-output>svg{
+  left:calc(369.28 * var(--figma-unit));top:calc(212.43 * var(--figma-unit));
+  width:calc(615.65 * var(--figma-unit))
+}
+.visual-memory-text{
+  position:absolute;top:calc(536.55 * var(--figma-unit));right:calc(164.8 * var(--figma-unit));
+  width:calc(405 * var(--figma-unit));margin:0;direction:rtl;text-align:right;color:#000;
+  font-family:var(--font-display);font-size:calc(22 * var(--figma-unit));font-weight:700;
+  line-height:calc(25 * var(--figma-unit))
+}
+.error-card{direction:rtl;margin:8px 0;color:#d42b2b;border-color:#f4a9a9;background:#fff7f7;font-size:11px}
+
+.design-sidebar{
+  display:none;width:calc(392 * var(--figma-unit));height:calc(898 * var(--figma-unit));
+  border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));background:#fff;direction:rtl;
+  min-height:0;max-height:none;overflow:hidden;position:relative
+}
+.app.has-results .design-sidebar{display:flex;flex-direction:column}
+.sidebar-content{
+  flex:1;overflow-y:scroll;scrollbar-width:none;
+  padding:
+    calc(24 * var(--figma-unit))
+    calc(47 * var(--figma-unit))
+    calc(111 * var(--figma-unit))
+    calc(24 * var(--figma-unit));
+  direction:ltr
+}
+.sidebar-content::-webkit-scrollbar{width:0;height:0}
+.sidebar-scroll-indicator{
+  position:absolute;z-index:3;top:calc(28 * var(--figma-unit));right:calc(24 * var(--figma-unit));
+  bottom:calc(111 * var(--figma-unit));width:calc(7 * var(--figma-unit));pointer-events:none
+}
+.sidebar-scroll-indicator span{
+  position:absolute;top:0;left:0;width:100%;height:min(calc(371.707 * var(--figma-unit)),100%);
+  border-radius:calc(5 * var(--figma-unit));background:#eee
+}
+.side-section{
+  padding:0 0 calc(32 * var(--figma-unit));margin-bottom:calc(32 * var(--figma-unit));
+  border-bottom:1px solid var(--design-line);direction:rtl
+}
+.side-section:last-child{border-bottom:0;margin-bottom:0}
+.app.has-results:not(.has-visual-result) .narrator-section{padding-bottom:0;margin-bottom:0;border-bottom:0}
+.app.has-visual-result .narrator-section{margin-bottom:0;border-bottom:0}
+.app.has-visual-result .pictogram-section{
+  padding-top:calc(32 * var(--figma-unit));border-top:1px solid var(--design-line)
+}
+.side-heading-row{
+  width:100%;display:flex;align-items:flex-start;justify-content:space-between;gap:calc(16 * var(--figma-unit));
+  margin-bottom:calc(16 * var(--figma-unit))
+}
+.side-heading,.rep-count{
+  margin:0;font-family:var(--font-display);font-size:calc(27 * var(--figma-unit));font-weight:700;
+  line-height:calc(28 * var(--figma-unit));color:#000
+}
+.rep-count{direction:ltr;white-space:nowrap}
+.rep-chips{display:flex;justify-content:flex-start;gap:calc(12 * var(--figma-unit)) calc(10 * var(--figma-unit));flex-wrap:wrap}
+.rep-chip{
+  display:inline-flex;align-items:center;gap:calc(6 * var(--figma-unit));
+  padding:calc(4 * var(--figma-unit)) calc(8 * var(--figma-unit));
+  border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));background:#fff;
+  font-family:var(--font-body);font-size:calc(19 * var(--figma-unit));font-weight:400;line-height:calc(20 * var(--figma-unit));
+  cursor:grab;user-select:none
+}
+.rep-chip.is-dragging{opacity:.45}
+.rep-chip button{width:calc(11.018 * var(--figma-unit));height:calc(11.018 * var(--figma-unit));border:0;background:none;cursor:pointer;padding:0}
+.rep-chip button img{display:block;width:100%;height:100%}
+.add-word-row{display:flex;align-items:center;gap:calc(6 * var(--figma-unit));margin-top:calc(12 * var(--figma-unit))}
+.add-word-btn{
+  display:flex;align-items:center;gap:calc(6 * var(--figma-unit));border:1px solid #b2d4ff;background:#e9f3ff;
+  color:#0365dd;border-radius:calc(8 * var(--figma-unit));padding:calc(4 * var(--figma-unit)) calc(8 * var(--figma-unit));
+  font-family:var(--font-body);font-size:calc(19 * var(--figma-unit));line-height:calc(20 * var(--figma-unit));cursor:pointer
+}
+.add-word-btn img{
+  width:calc(9.916 * var(--figma-unit));height:calc(9.916 * var(--figma-unit));display:block;
+  transform:rotate(45deg)
+}
+.add-word-input{
+  display:none;width:calc(180 * var(--figma-unit));border:1px solid var(--design-blue);border-radius:calc(8 * var(--figma-unit));
+  padding:calc(4 * var(--figma-unit)) calc(8 * var(--figma-unit));font-family:var(--font-body);
+  font-size:calc(19 * var(--figma-unit));line-height:calc(20 * var(--figma-unit))
+}
+.add-word-row.is-editing .add-word-input{display:block}
+.side-copy{
+  width:100%;font-family:var(--font-body);font-size:calc(14 * var(--figma-unit));font-weight:400;
+  line-height:calc(18 * var(--figma-unit));color:#000;margin:calc(16 * var(--figma-unit)) 0
+}
+.narrator-gender-picker{
+  width:max-content;margin:0;display:flex;align-items:center;gap:calc(8 * var(--figma-unit));direction:rtl;
+  padding:calc(8 * var(--figma-unit));border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));background:#fff
+}
+.narrator-gender-picker .gender-lbl{font-size:11px;font-weight:400;margin-left:8px}
+.narrator-gender-picker label{
+  position:relative;padding:calc(4 * var(--figma-unit)) calc(8 * var(--figma-unit));color:#000;border:1px solid transparent;
+  border-radius:calc(8 * var(--figma-unit));font-family:var(--font-body);font-size:calc(19 * var(--figma-unit));line-height:calc(20 * var(--figma-unit))
+}
+.narrator-gender-picker label:has(input:checked){color:#0365dd;border-color:#0365dd;background:#e9f3ff}
+.narrator-gender-picker input{position:absolute;opacity:0;pointer-events:none}
+.visual-settings{display:none}
+.app.has-visual-result .visual-settings{display:block}
+.pictogram-strip{
+  width:100%;display:flex;flex-wrap:wrap;
+  justify-content:flex-start;align-content:flex-start;align-items:flex-end;
+  gap:calc(16 * var(--figma-unit));direction:rtl
+}
+.pictogram-strip .pictogram-placeholder{
+  width:calc(64 * var(--figma-unit));height:calc(58 * var(--figma-unit));
+  border:1px solid #bbb;border-radius:3px;opacity:.75
+}
+.pictogram-strip svg{
+  width:calc(64 * var(--figma-unit));height:calc(58 * var(--figma-unit));
+  display:block;color:#111;overflow:visible
+}
+.source-toggle{
+  width:max-content;display:flex;align-items:center;gap:calc(8 * var(--figma-unit));
+  padding:calc(8 * var(--figma-unit));border:1px solid var(--design-line);
+  border-radius:calc(8 * var(--figma-unit));background:#fff
+}
+.source-toggle button{
+  border:1px solid transparent;background:#fff;padding:calc(4 * var(--figma-unit)) calc(8 * var(--figma-unit));
+  border-radius:calc(8 * var(--figma-unit));font-family:var(--font-body);
+  font-size:calc(19 * var(--figma-unit));line-height:calc(20 * var(--figma-unit));cursor:pointer
+}
+.source-toggle button.active{border-color:var(--design-blue);color:var(--design-blue);background:#e9f3ff}
+.mediated-relation{
+  display:none;align-items:center;justify-content:flex-start;gap:calc(16 * var(--figma-unit));
+  margin-top:calc(12 * var(--figma-unit));font-family:var(--font-body);
+  font-size:calc(19 * var(--figma-unit));line-height:calc(20 * var(--figma-unit))
+}
+.mediated-relation.is-visible{display:flex}
+.mediated-relation label{display:flex;align-items:center;gap:calc(4 * var(--figma-unit));cursor:pointer}
+.mediated-relation input{position:absolute;opacity:0;pointer-events:none}
+.relation-box{
+  width:calc(16 * var(--figma-unit));height:calc(16 * var(--figma-unit));display:block;
+  background:url("/memory-processor/assets/icons/checkbox-default.svg") center/100% 100% no-repeat
+}
+.mediated-relation label:has(input:checked) .relation-box{
+  background-image:url("/memory-processor/assets/icons/checkbox-checked.svg")
+}
+.range-row{width:calc(320 * var(--figma-unit));margin:0}
+.range-row label{
+  display:block;margin-bottom:calc(16 * var(--figma-unit));font-family:var(--font-display);
+  font-size:calc(27 * var(--figma-unit));font-weight:700;line-height:calc(28 * var(--figma-unit))
+}
+.range-control input[type=range]{
+  appearance:none;-webkit-appearance:none;width:100%;height:calc(20 * var(--figma-unit));display:block;
+  margin:0;border:0;background:transparent;direction:rtl
+}
+.range-control input[type=range]:focus-visible{outline:none}
+.range-control input[type=range]::-webkit-slider-runnable-track{
+  width:100%;height:calc(11.511 * var(--figma-unit));border:1px solid var(--design-line);
+  border-radius:calc(5.755 * var(--figma-unit));
+  background:linear-gradient(to right,#fff 0 var(--slider-position,100%),#e9f3ff var(--slider-position,100%) 100%)
+}
+.range-control input[type=range]::-webkit-slider-thumb{
+  appearance:none;-webkit-appearance:none;width:calc(19.184 * var(--figma-unit));height:calc(20 * var(--figma-unit));
+  margin-top:calc(-4.245 * var(--figma-unit));border:0;border-radius:50%;background:var(--design-blue);cursor:pointer
+}
+.range-control input[type=range]:active::-webkit-slider-runnable-track{border-color:var(--design-blue)}
+.range-control input[type=range]::-moz-range-track{
+  width:100%;height:calc(11.511 * var(--figma-unit));border:1px solid var(--design-line);
+  border-radius:calc(5.755 * var(--figma-unit));
+  background:linear-gradient(to right,#fff 0 var(--slider-position,100%),#e9f3ff var(--slider-position,100%) 100%)
+}
+.range-control input[type=range]::-moz-range-thumb{
+  width:calc(19.184 * var(--figma-unit));height:calc(20 * var(--figma-unit));
+  border:0;border-radius:50%;background:var(--design-blue);cursor:pointer
+}
+.range-control input[type=range]:active::-moz-range-track{border-color:var(--design-blue)}
+.range-ends{
+  display:flex;justify-content:space-between;margin-top:calc(8 * var(--figma-unit));direction:ltr;
+  font-family:var(--font-body);font-size:calc(14 * var(--figma-unit));line-height:calc(17 * var(--figma-unit))
+}
+.range-ends span{direction:rtl}
+.sidebar-action{
+  position:absolute;z-index:2;left:-1px;right:-1px;bottom:-1px;height:calc(87 * var(--figma-unit));
+  margin:0;border:1px solid var(--design-line);border-radius:0 0 calc(8 * var(--figma-unit)) calc(8 * var(--figma-unit));
+  padding:calc(24 * var(--figma-unit));display:flex;align-items:flex-end;justify-content:center;background:#fff
+}
+.create-visual-btn{
+  width:calc(237 * var(--figma-unit));height:calc(39 * var(--figma-unit));border:0;border-radius:calc(8 * var(--figma-unit));
+  padding:calc(10 * var(--figma-unit)) calc(24 * var(--figma-unit));background:var(--design-blue);color:#fff;
+  font-family:var(--font-body);font-size:calc(19 * var(--figma-unit));line-height:calc(20 * var(--figma-unit));cursor:pointer
+}
+.create-visual-btn:disabled{background:#eaf4ff;color:#aaa}
+
+.utility-drawer{
+  position:fixed;z-index:20;inset:64px 20px 20px auto;width:min(460px,calc(100vw - 40px));overflow:auto;
+  border:1px solid #d8d8d8;border-radius:8px;background:#fff;box-shadow:0 16px 60px rgba(0,0,0,.15);padding:18px
+}
+.utility-drawer[hidden]{display:none}
+.utility-drawer-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.utility-drawer-title{font-size:15px;font-weight:700}
+.utility-close{border:0;background:none;font-size:20px;cursor:pointer}
+.utility-drawer .bank-upload,.utility-drawer .settings-panel{margin-bottom:14px}
+.processor-details{margin-top:14px;border-top:1px solid var(--b3);padding-top:14px}
+.processor-details summary{cursor:pointer;font-size:11px;color:var(--t3)}
+.processor-details #results{margin-top:20px}
+
+@media(max-width:760px){
+  .app{padding:0 16px 20px}
+  .site-header{height:72px;padding-top:26px;gap:28px}
+  .site-brand,.utility-toggle{font-size:16px;line-height:18px}
+  .workspace{display:flex;flex-direction:column;min-height:auto}
+  .memory-main{width:100%;height:auto}
+  .memory-entry{width:100%;height:auto}
+  .entry-heading,.app.has-results .entry-heading{height:auto;font-size:24px;line-height:28px;margin-bottom:4px}
+  .entry-count,.app.has-results .entry-count{min-height:18px;font-size:14px;line-height:18px;margin-bottom:16px}
+  .memory-input-wrap{height:79px;margin-bottom:16px}
+  textarea#memory-input{font-size:18px;line-height:22px;padding:16px 20px;border-radius:8px}
+  .input-footer{height:39px}
+  .analyze-btn,.generate-vrp-btn{width:237px;height:39px;font-size:18px;line-height:20px;border-radius:8px;padding:9px 20px}
+  .memory-stage,.app.has-results .memory-stage{width:100%;height:360px;min-height:360px;margin-top:16px;border-radius:8px;padding:16px}
+  .app.has-visual-result .memory-stage{padding:0}
+  .app.has-visual-result .visual-output>svg{left:11%;top:20%;width:72%}
+  .app.parameters-active .visual-output>svg{left:20%;top:25%;width:58%}
+  .visual-memory-text{top:auto;right:12%;bottom:10%;width:42%;font-size:18px;line-height:22px}
+  .design-sidebar,.app.has-results .design-sidebar{width:100%;height:auto;min-height:620px;max-height:none;border-radius:8px}
+  .app.has-results .design-sidebar{display:flex}
+  .app.has-results .edit-memory-btn{position:static;margin-bottom:4px;font-size:18px;line-height:20px;padding:6px 8px;gap:6px}
+  .app.has-results .edit-memory-btn img{width:20px;height:20px}
+  .sidebar-content{padding:24px 47px 111px 24px}
+  .sidebar-scroll-indicator{top:28px;right:24px;bottom:111px;width:7px}
+  .sidebar-scroll-indicator span{height:min(371.707px,100%);border-radius:5px}
+  .side-section{padding-bottom:32px;margin-bottom:32px}
+  .app.has-visual-result .pictogram-section{padding-top:32px}
+  .side-heading-row{gap:16px;margin-bottom:16px}
+  .side-heading,.rep-count{font-size:27px;line-height:28px}
+  .rep-chips{gap:12px 10px}
+  .rep-chip,.add-word-btn{padding:4px 8px;gap:6px;border-radius:8px;font-size:19px;line-height:20px}
+  .rep-chip button{width:11px;height:11px}
+  .add-word-btn img{width:10px;height:10px}
+  .add-word-row{gap:6px;margin-top:12px}
+  .add-word-input{width:180px;padding:4px 8px;border-radius:8px;font-size:19px;line-height:20px}
+  .side-copy{font-size:14px;line-height:18px;margin:16px 0}
+  .narrator-gender-picker{gap:8px;padding:8px;border-radius:8px}
+  .narrator-gender-picker label{padding:4px 8px;border-radius:8px;font-size:19px;line-height:20px}
+  .pictogram-strip{gap:16px}
+  .pictogram-strip svg,.pictogram-strip .pictogram-placeholder{width:64px;height:58px}
+  .source-toggle{gap:8px;padding:8px;border-radius:8px}
+  .source-toggle button{padding:4px 8px;border-radius:8px;font-size:19px;line-height:20px}
+  .mediated-relation{gap:16px;margin-top:12px;font-size:19px;line-height:20px}
+  .relation-box{width:16px;height:16px}
+  .range-row label{margin-bottom:16px;font-size:27px;line-height:28px}
+  .range-row{width:min(320px,100%)}
+  .range-control input[type=range]{height:20px}
+  .range-control input[type=range]::-webkit-slider-runnable-track{height:11.511px;border-radius:5.755px}
+  .range-control input[type=range]::-webkit-slider-thumb{width:19.184px;height:20px;margin-top:-4.245px}
+  .range-control input[type=range]::-moz-range-track{height:11.511px;border-radius:5.755px}
+  .range-control input[type=range]::-moz-range-thumb{width:19.184px;height:20px}
+  .range-ends{margin-top:8px;font-size:14px;line-height:17px}
+  .sidebar-action{height:87px;padding:24px;border-radius:0 0 8px 8px}
+  .create-visual-btn{width:237px;height:39px;padding:10px 24px;border-radius:8px;font-size:19px;line-height:20px}
+}
+
 </style>
 </head>
 <body>
-<div class="app">
+<div class="app" id="app">
+  <header class="site-header">
+    <a href="#" class="site-brand">מחולל זיכרונות</a>
+    <button type="button" class="utility-toggle" id="utility-toggle">ארכיון</button>
+  </header>
 
-  <!-- Pictogram bank (view only) -->
-  <div class="bank-upload" id="bank-upload-panel">
-    <div class="bank-upload-hdr">
-      <span class="bank-upload-title">Pictogram bank</span>
-      <button type="button" class="bank-upload-refresh" id="bank-upload-refresh">Refresh</button>
+  <div class="utility-drawer" id="utility-drawer" hidden>
+    <div class="utility-drawer-header">
+      <span class="utility-drawer-title">כלי עיבוד וארכיון</span>
+      <button type="button" class="utility-close" id="utility-close" aria-label="סגירה">×</button>
     </div>
-    <div class="bank-upload-body">
-      <div class="bank-upload-section">
-        <div class="bank-upload-section-lbl" id="bank-list-label">In the bank</div>
-        <div class="bank-list" id="bank-list">
-          <div class="bank-list-empty">Loading…</div>
+
+    <!-- Pictogram bank (view only) -->
+    <div class="bank-upload" id="bank-upload-panel">
+      <div class="bank-upload-hdr">
+        <span class="bank-upload-title">Pictogram bank</span>
+        <button type="button" class="bank-upload-refresh" id="bank-upload-refresh">Refresh</button>
+      </div>
+      <div class="bank-upload-body">
+        <div class="bank-upload-section">
+          <div class="bank-upload-section-lbl" id="bank-list-label">In the bank</div>
+          <div class="bank-list" id="bank-list">
+            <div class="bank-list-empty">Loading…</div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Settings -->
-  <div class="settings-panel">
-    <button class="settings-toggle" id="settings-toggle">
-      <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--t3)">Settings</span>
-      </div>
-      <span class="chevron" id="settings-chevron">&#9662;</span>
-    </button>
-    <div id="settings-content" class="settings-content" hidden>
-      <div>
-        <label class="input-lbl">Processor Mode</label>
-        <div class="mode-toggle">
-          <button class="mode-btn active" data-mode="bank-test" id="mode-bank-test">Bank test</button>
-          <button class="mode-btn" data-mode="ai-words" id="mode-ai-words">AI Words</button>
-          <button class="mode-btn" data-mode="local" id="mode-local">Local</button>
-          <button class="mode-btn" data-mode="mock" id="mode-mock">Mock</button>
-          <button class="mode-btn mode-btn-secondary" data-mode="hybrid" id="mode-hybrid" title="Local first, then minimal AI words">Hybrid</button>
-          <button class="mode-btn mode-btn-secondary" data-mode="anthropic" id="mode-anthropic" title="PROMPT_R1 Rule 1 + Streamline pictogram preview">Full API</button>
+    <!-- Settings -->
+    <div class="settings-panel">
+      <button class="settings-toggle" id="settings-toggle">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--t3)">Settings</span>
         </div>
-        <div style="font-size:11px;color:var(--t3);line-height:1.55" id="mode-desc">
-          Bank test: pick a sample sentence — translates words to English, then fetches pictograms from Streamline (mapping first).
+        <span class="chevron" id="settings-chevron">&#9662;</span>
+      </button>
+      <div id="settings-content" class="settings-content" hidden>
+        <div>
+          <label class="input-lbl">Processor Mode</label>
+          <div class="mode-toggle">
+            <button class="mode-btn" data-mode="bank-test" id="mode-bank-test">Bank test</button>
+            <button class="mode-btn" data-mode="ai-words" id="mode-ai-words">AI Words</button>
+            <button class="mode-btn" data-mode="local" id="mode-local">Local</button>
+            <button class="mode-btn" data-mode="mock" id="mode-mock">Mock</button>
+            <button class="mode-btn mode-btn-secondary" data-mode="hybrid" id="mode-hybrid" title="Local first, then minimal AI words">Hybrid</button>
+            <button class="mode-btn mode-btn-secondary active" data-mode="anthropic" id="mode-anthropic" title="PROMPT_R1 Rule 1 + Streamline pictogram preview">Full API</button>
+          </div>
+          <div style="font-size:11px;color:var(--t3);line-height:1.55" id="mode-desc">
+            Full API: PROMPT_R1 Rule 1 → Representative Words (Hebrew + English) → Streamline pictogram preview.
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Header -->
-  <div class="mb28">
-    <div class="hdr-meta">Memory Processor &middot; Validation Build</div>
-    <h1>Memory Processor</h1>
-  </div>
-
-  <!-- Input -->
-  <div class="input-section" id="input-section">
-    <label class="input-lbl" for="memory-input">Written memory <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--t3)">— max 20 words for API modes</span></label>
     <div id="bank-test-picker" class="mb28">
       <div class="input-lbl" style="margin-bottom:8px">Sample sentences <span style="font-weight:400;text-transform:none;letter-spacing:0">— click to load (Bank test mode)</span></div>
       <div class="bank-test-chips" id="bank-test-chips"></div>
     </div>
-    <textarea id="memory-input" dir="auto" rows="5" placeholder="Write your memory in Hebrew or English…"></textarea>
-    <div class="narrator-gender-picker" dir="rtl" id="narrator-gender-picker">
-      <span class="gender-lbl">אני:</span>
-      <label><input type="radio" name="narrator-gender" value="male" checked> זכר</label>
-      <label><input type="radio" name="narrator-gender" value="female"> נקבה</label>
-    </div>
-    <div class="input-footer">
-      <span class="word-count" id="word-count"></span>
-      <button class="analyze-btn" id="analyze-btn">Preview pictograms</button>
-    </div>
+    <details class="processor-details">
+      <summary>פרטי העיבוד המלאים</summary>
+      <div id="results"></div>
+    </details>
   </div>
 
-  <div class="error-card" id="error-card" hidden></div>
-  <div id="results"></div>
+  <main class="workspace">
+    <section class="memory-main">
+      <div class="input-section memory-entry" id="input-section">
+        <button type="button" class="edit-memory-btn" id="edit-memory-btn"><span>עריכת הזיכרון</span><img src="/memory-processor/assets/icons/edit-memory.svg" alt=""></button>
+        <h1 class="entry-heading" id="entry-heading">איזה זיכרון היית רוצה לשמר?</h1>
+        <span class="entry-count" id="entry-count">0/20 מילים</span>
+        <div class="memory-input-wrap">
+          <textarea id="memory-input" dir="rtl" rows="2" maxlength="500" placeholder="הכניסו זיכרון עד 20 מילים"></textarea>
+        </div>
+        <div class="input-footer">
+          <span class="word-count" id="word-count"></span>
+          <button class="analyze-btn" id="analyze-btn" disabled>חילוץ מילים מייצגות</button>
+        </div>
+      </div>
+      <div class="error-card" id="error-card" hidden></div>
+      <div class="memory-stage" id="memory-stage">
+        <div class="visual-output" id="visual-output" aria-live="polite"></div>
+      </div>
+    </section>
 
+    <aside class="design-sidebar" id="design-sidebar" aria-label="הגדרות ייצוג חזותי">
+      <div class="sidebar-content">
+        <section class="side-section">
+          <div class="side-heading-row">
+            <h2 class="side-heading">מילים מייצגות</h2>
+            <span class="rep-count" id="rep-count">[0/10]</span>
+          </div>
+          <div class="rep-chips" id="rep-chips"></div>
+          <div class="add-word-row" id="add-word-row">
+            <button type="button" class="add-word-btn" id="add-word-btn"><img src="/memory-processor/assets/icons/add-word.svg" alt=""><span>הוספת מילה</span></button>
+            <input class="add-word-input" id="add-word-input" type="text" dir="rtl" maxlength="30" placeholder="הקלד מילה">
+          </div>
+        </section>
+
+        <section class="side-section narrator-section">
+          <h2 class="side-heading">ייצוג המספר.ת</h2>
+          <p class="side-copy">כדי שהמערכת תוכל לייצג את המספר.ת בצורה נאמנה בעזרת פיקטוגרמות, יש לבחור את אופן הייצוג.</p>
+          <div class="narrator-gender-picker" dir="rtl" id="narrator-gender-picker">
+            <label><input type="radio" name="narrator-gender" value="female"> נקבה</label>
+            <label><input type="radio" name="narrator-gender" value="male" checked> זכר</label>
+          </div>
+        </section>
+
+        <section class="side-section visual-settings pictogram-section">
+          <h2 class="side-heading" id="visual-settings-heading" style="margin-bottom:calc(16 * var(--figma-unit))">פיקטוגרמות</h2>
+          <div class="pictogram-strip" id="pictogram-strip"></div>
+        </section>
+
+        <section class="side-section visual-settings">
+          <h2 class="side-heading" style="margin-bottom:calc(16 * var(--figma-unit))">מקור הזיכרון</h2>
+          <div class="source-toggle" id="design-source">
+            <button type="button" data-source="0">זיכרון אישי</button>
+            <button type="button" data-source="1">זיכרון מתווך</button>
+          </div>
+          <div class="mediated-relation" id="mediated-relation" aria-label="הקשר למספר.ת">
+            <label><input type="radio" name="mediated-relation" value="1" checked><span class="relation-box" aria-hidden="true"></span><span>בן משפחה</span></label>
+            <label><input type="radio" name="mediated-relation" value="2"><span class="relation-box" aria-hidden="true"></span><span>מכר</span></label>
+          </div>
+        </section>
+
+        <section class="side-section visual-settings">
+          <div class="range-row">
+            <label for="design-frequency">באיזו תדירות הזיכרון חוזר?</label>
+            <div class="range-control"><input type="range" id="design-frequency" min="0" max="100" value="100"></div>
+            <div class="range-ends"><span>לעיתים קרובות</span><span>לעיתים רחוקות</span></div>
+          </div>
+        </section>
+
+        <section class="side-section visual-settings">
+          <div class="range-row">
+            <label for="design-clarity">עד כמה הזיכרון עדיין ברור?</label>
+            <div class="range-control"><input type="range" id="design-clarity" min="0" max="100" value="100"></div>
+            <div class="range-ends"><span>חד</span><span>עמום</span></div>
+          </div>
+        </section>
+
+        <section class="side-section visual-settings">
+          <div class="range-row">
+            <label for="design-impact">עד כמה הזיכרון השפיע עלייך?</label>
+            <div class="range-control"><input type="range" id="design-impact" min="0" max="100" value="0"></div>
+            <div class="range-ends"><span>הרבה</span><span>מעט</span></div>
+          </div>
+        </section>
+
+      </div>
+      <div class="sidebar-scroll-indicator" id="sidebar-scroll-indicator" aria-hidden="true"><span></span></div>
+      <div class="sidebar-action">
+        <button type="button" class="create-visual-btn" id="create-visual-btn">יצירת ייצוג חזותי</button>
+      </div>
+    </aside>
+  </main>
 </div>
 <script src="/memory-processor/engine/logger.js"></script>
 <script src="/memory-processor/engine/config.js"></script>
@@ -400,7 +838,10 @@ textarea:focus{border-color:var(--b1)}
 <script>
 
 let currentResult=null,currentVrpResult=null,currentAraResult=null,currentFilter='all';
-let processorMode='bank-test';
+let designRepresentativeWords=[];
+let processorMode='anthropic';
+let visualCloneSerial=0;
+let currentCatalogPromise=Promise.resolve();
 let lastEngineSource=null;
 let cachedBaseSequenceSvg='';
 let cachedSequenceBuild=null; // { kind:'bank'|'vrp', slots, rtl?, vrpResult? }
@@ -1067,6 +1508,7 @@ async function renderBankTest(sentence){
   if(!container)return;
   resetExpressiveParams();
   const words=sentence.words||[];
+  designRepresentativeWords=words.map(word=>typeof word==='string'?word:(word.hebrew||word.word||'')).filter(Boolean);
   container.innerHTML=`<div class="mem-banner"><div class="mem-banner-lbl">Test sentence</div><div dir="rtl">${esc(sentence.text)}</div></div>${translationLoadingHTML()}`;
   const{translations,slots}=await MemoryEngineCatalogTranslate.resolvePictogramWords(words,{memoryText:sentence.text,narratorGender:getNarratorGender()});
   const hits=slots.filter(s=>!s.duplicateOf&&s.status==='hit').length;
@@ -1093,6 +1535,7 @@ async function renderBankTest(sentence){
   `;
   bindExpressivePanel();
   loadBankList();
+  syncDesignUI();
 }
 
 async function previewFullApiPictograms(){
@@ -1440,7 +1883,7 @@ async function renderCatalogSection(vrpResult){
   loadBankList();
 }
 
-function analyzeBtnLabel(){return processorMode==='bank-test'?'Preview pictograms':'Analyze memory';}
+function analyzeBtnLabel(){return currentResult?'עדכון מילים מייצגות':'חילוץ מילים מייצגות';}
 
 /* ─── Analyze ─── */
 async function analyze(){
@@ -1448,14 +1891,17 @@ async function analyze(){
   const text=typedText||MOCK_MEMORY;
   if(!text)return;
   if(usesApiMode()&&typedText&&typedText.split(/\s+/).filter(Boolean).length>20){
-    throw new Error('Memory must be at most 20 words.');
+    updateWordCount();
+    return;
   }
   const btn=document.getElementById('analyze-btn');
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Analyzing';
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> מעבד את הזיכרון';
   document.getElementById('error-card').hidden=true;
   document.getElementById('results').innerHTML='';
+  document.getElementById('visual-output').innerHTML='';
+  document.getElementById('app')?.classList.remove('has-results','has-visual-result','parameters-active');
   MemoryEngineStreamlineSession?.cleanup?.();
-  currentResult=null;currentVrpResult=null;currentAraResult=null;currentRule3Result=null;currentPipelineTrace=null;currentFilter='all';
+  currentResult=null;currentVrpResult=null;currentAraResult=null;currentRule3Result=null;currentPipelineTrace=null;currentFilter='all';designRepresentativeWords=[];currentCatalogPromise=Promise.resolve();
   // Mock scripted data only for the built-in example when explicitly in mock mode
   const useMockData=processorMode==='mock'&&text===MOCK_MEMORY;
   try{
@@ -1535,7 +1981,7 @@ async function analyze(){
     el.textContent=e.message;
     el.hidden=false;
   }finally{
-    btn.disabled=false;btn.innerHTML=analyzeBtnLabel();updateWordCount();
+    btn.disabled=false;btn.innerHTML=analyzeBtnLabel();updateWordCount();syncDesignUI();
   }
 }
 
@@ -1547,18 +1993,18 @@ async function generateVrp(){
   try{
     if(useMock){
       await new Promise(r=>setTimeout(r,600));
-      renderVrp(MOCK_VRP);
+      await renderVrp(MOCK_VRP);
     }else if(lastEngineSource==='local'||lastEngineSource==='ai-words'){
       if(currentVrpResult){
-        renderVrp(currentVrpResult);
+        await renderVrp(currentVrpResult);
       }else{
         const vrp=MemoryEngine.runVRPLocal(currentResult,(w)=>CAT.lookup(w));
-        renderVrp(vrp);
+        await renderVrp(vrp);
       }
     }else{
       const ctx={memoryLanguage:currentResult.memoryLanguage,coreNarrative:currentResult.coreNarrative,semanticSummary:currentResult.semanticStructure?.summary,mustPreserve:currentResult.semanticStructure?.mustPreserve,representativeWords:currentResult.representativeWords};
       const raw=await callAPI(VRP_PROMPT,'Input:\n\n'+JSON.stringify(ctx,null,2),8000);
-      renderVrp(extractJSON(raw));
+      await renderVrp(extractJSON(raw));
     }
   }catch(e){
     if(vrpInner)vrpInner.innerHTML=`<div class="error-card" style="margin-bottom:12px">${esc(e.message)}</div><button class="generate-vrp-btn" id="generate-vrp-btn">Retry</button>`;
@@ -1671,6 +2117,7 @@ function renderResults(result){
   const representative=consideration.filter(c=>c.decision==='representative');
   const semanticOnly=consideration.filter(c=>c.decision==='semantic-only');
   const repWords=result.representativeWords||[];
+  designRepresentativeWords=repWords.map(rw=>rw.word).filter(Boolean);
   const translations=result._translations||[];
   let html=`<div class="divider"></div><div class="lang-meta"><span class="lang-badge">${esc(result.memoryLanguage)}</span><span class="meta-counts">${sf.length} semantic fields &middot; ${representative.length} representative &middot; ${semanticOnly.length} semantic-only</span></div>`;
   html+=`<div class="mb28">${sectionLabel('Core Narrative')}<div class="narrative-card" dir="${rtl?'rtl':'ltr'}">${esc(result.coreNarrative)}</div></div>`;
@@ -1711,6 +2158,7 @@ function renderResults(result){
   }else{
     document.getElementById('generate-vrp-btn')?.addEventListener('click',generateVrp);
   }
+  syncDesignUI();
 }
 
 function renderConsiderationRows(consideration,repWords,rtl){
@@ -1807,7 +2255,8 @@ function renderVrp(vrpResult){
   // Catalog section (always shown after VRP)
   let catSection=document.getElementById('catalog-section');
   if(!catSection){catSection=document.createElement('div');catSection.id='catalog-section';araZone.parentNode.insertBefore(catSection,araZone.nextSibling);}
-  void renderCatalogSection(vrpResult);
+  currentCatalogPromise=renderCatalogSection(vrpResult);
+  return currentCatalogPromise;
 }
 
 function renderAra(araResult){
@@ -1917,6 +2366,278 @@ async function generateAra(){
 }
 
 
+/* ─── Designed interface adapters ─── */
+function cloneSequenceSvg(source){
+  const clone=source.cloneNode(true);
+  const prefix=`visual-${++visualCloneSerial}-`;
+  const idMap=new Map();
+  clone.querySelectorAll('[id]').forEach(element=>{
+    const oldId=element.id;
+    const nextId=prefix+oldId;
+    idMap.set(oldId,nextId);
+    element.id=nextId;
+  });
+  const rewrite=value=>{
+    let next=value;
+    idMap.forEach((newId,oldId)=>{
+      next=next.replaceAll(`url(#${oldId})`,`url(#${newId})`);
+      if(next===`#${oldId}`)next=`#${newId}`;
+    });
+    return next;
+  };
+  [clone,...clone.querySelectorAll('*')].forEach(element=>{
+    [...element.attributes].forEach(attribute=>{
+      const next=rewrite(attribute.value);
+      if(next!==attribute.value)element.setAttribute(attribute.name,next);
+    });
+  });
+  return clone;
+}
+
+function syncVisualOutput(){
+  const source=document.querySelector('#results .seq-display svg');
+  const output=document.getElementById('visual-output');
+  if(!output)return;
+  if(!document.getElementById('app')?.classList.contains('has-visual-result')){
+    output.innerHTML='';
+    return;
+  }
+  if(source){
+    const memory=document.createElement('p');
+    memory.className='visual-memory-text';
+    memory.textContent=currentResult?.coreNarrative||document.getElementById('memory-input')?.value.trim()||'';
+    output.replaceChildren(cloneSequenceSvg(source),memory);
+  }else output.innerHTML='';
+}
+
+function syncPictogramStrip(){
+  const strip=document.getElementById('pictogram-strip');
+  if(!strip)return;
+  const svgs=[...document.querySelectorAll('#results .cat-svg-wrap svg')].slice(0,10);
+  if(svgs.length){
+    strip.replaceChildren(...svgs.map(svg=>cloneSequenceSvg(svg)));
+    return;
+  }
+  const count=Math.min(Math.max(designRepresentativeWords.length,4),8);
+  strip.innerHTML=Array.from({length:count},()=>'<span class="pictogram-placeholder" aria-hidden="true"></span>').join('');
+}
+
+function syncRangeVisual(input){
+  if(!input)return;
+  const min=Number(input.min)||0;
+  const max=Number(input.max)||100;
+  const value=Number(input.value)||0;
+  const progress=((value-min)/(max-min))*100;
+  const position=100-Math.max(0,Math.min(100,progress));
+  input.style.setProperty('--slider-position',`${position}%`);
+}
+
+function syncSidebarScrollIndicator(){
+  const content=document.querySelector('.sidebar-content');
+  const indicator=document.getElementById('sidebar-scroll-indicator');
+  const thumb=indicator?.querySelector('span');
+  if(!content||!indicator||!thumb)return;
+  const trackHeight=indicator.clientHeight;
+  const viewportHeight=content.clientHeight;
+  const totalHeight=content.scrollHeight;
+  const scrollable=Math.max(0,totalHeight-viewportHeight);
+  const thumbHeight=Math.min(trackHeight,thumb.offsetHeight||trackHeight);
+  const travel=Math.max(0,trackHeight-thumbHeight);
+  const top=scrollable?(content.scrollTop/scrollable)*travel:0;
+  thumb.style.transform=`translateY(${top}px)`;
+}
+
+function markParameterInteraction(){
+  const app=document.getElementById('app');
+  app?.classList.add('parameters-active');
+}
+
+function syncDesignUI(){
+  const results=document.getElementById('results');
+  const error=document.getElementById('error-card');
+  const hasResults=!!results?.innerHTML.trim()&&error?.hidden!==false;
+  const app=document.getElementById('app');
+  app?.classList.toggle('has-results',hasResults);
+  if(!hasResults)app?.classList.remove('has-visual-result','parameters-active');
+  const heading=document.getElementById('entry-heading');
+  if(heading)heading.textContent=hasResults?'הזיכרון שלך':'איזה זיכרון היית רוצה לשמר?';
+  const chips=document.getElementById('rep-chips');
+  if(chips){
+    chips.innerHTML=designRepresentativeWords.map((word,index)=>`<span class="rep-chip" draggable="true" data-word-index="${index}"><button type="button" data-remove-word="${index}" aria-label="הסרת ${esc(word)}"><img src="/memory-processor/assets/icons/remove-word.svg" alt=""></button><span>${esc(word)}</span></span>`).join('');
+  }
+  const count=document.getElementById('rep-count');
+  if(count)count.textContent=`[${designRepresentativeWords.length}/10]`;
+  const memoryCount=document.getElementById('entry-count');
+  if(memoryCount&&hasResults)memoryCount.style.color='var(--design-muted)';
+  const create=document.getElementById('create-visual-btn');
+  if(create){
+    create.disabled=!hasResults;
+    create.textContent=app?.classList.contains('has-visual-result')?'הדפסת זיכרון':'יצירת ייצוג חזותי';
+  }
+  const params=getExpressiveParams();
+  document.querySelectorAll('#design-source button').forEach(button=>{
+    const source=Number(button.dataset.source);
+    button.classList.toggle('active',source===0?params.memorySource===0:params.memorySource>0);
+  });
+  const relation=document.getElementById('mediated-relation');
+  relation?.classList.toggle('is-visible',params.memorySource>0);
+  const relationInput=document.querySelector(`input[name="mediated-relation"][value="${params.memorySource===2?2:1}"]`);
+  if(relationInput)relationInput.checked=true;
+  const visualHeading=document.getElementById('visual-settings-heading');
+  if(visualHeading)visualHeading.textContent='פיקטוגרמות';
+  [['design-frequency','memoryFrequency'],['design-clarity','memoryClarity'],['design-impact','memoryImpact']].forEach(([id,key])=>{
+    const input=document.getElementById(id);
+    if(input){
+      input.value=String(params[key]);
+      syncRangeVisual(input);
+    }
+  });
+  if(!app?.classList.contains('has-visual-result'))syncPictogramStrip();
+  syncVisualOutput();
+  requestAnimationFrame(syncSidebarScrollIndicator);
+}
+
+async function createDesignedVisual(){
+  const btn=document.getElementById('create-visual-btn');
+  if(!btn)return;
+  const app=document.getElementById('app');
+  if(app?.classList.contains('has-visual-result')){
+    window.print();
+    return;
+  }
+  const old=btn.textContent;
+  const chosenParams=Object.assign({},expressiveParams);
+  btn.disabled=true;btn.textContent='יוצר ייצוג חזותי…';
+  try{
+    if(processorMode==='anthropic'&&currentResult){
+      await previewFullApiPictograms();
+    }else if(document.getElementById('generate-vrp-btn')){
+      await generateVrp();
+    }else{
+      await currentCatalogPromise;
+    }
+    expressiveParams=chosenParams;
+    refreshExpressiveSequenceDisplay();
+    const source=document.querySelector('#results .seq-display svg');
+    if(!source)return;
+    app?.classList.add('has-visual-result');
+    app?.classList.remove('parameters-active');
+    syncPictogramStrip();
+    syncVisualOutput();
+    requestAnimationFrame(syncSidebarScrollIndicator);
+  }finally{
+    btn.disabled=false;
+    btn.textContent=app?.classList.contains('has-visual-result')?'הדפסת זיכרון':old;
+  }
+}
+
+function bindDesignedInterface(){
+  const drawer=document.getElementById('utility-drawer');
+  const setDrawer=open=>{if(drawer)drawer.hidden=!open;};
+  document.getElementById('utility-toggle')?.addEventListener('click',()=>setDrawer(drawer?.hidden));
+  document.getElementById('utility-close')?.addEventListener('click',()=>setDrawer(false));
+  document.getElementById('edit-memory-btn')?.addEventListener('click',()=>{
+    const input=document.getElementById('memory-input');input?.focus();input?.select();
+  });
+  document.getElementById('create-visual-btn')?.addEventListener('click',createDesignedVisual);
+  const sidebarContent=document.querySelector('.sidebar-content');
+  sidebarContent?.addEventListener('scroll',syncSidebarScrollIndicator,{passive:true});
+  if(sidebarContent&&window.ResizeObserver)new ResizeObserver(syncSidebarScrollIndicator).observe(sidebarContent);
+  window.addEventListener('resize',syncSidebarScrollIndicator);
+  requestAnimationFrame(syncSidebarScrollIndicator);
+
+  const addRow=document.getElementById('add-word-row');
+  const addInput=document.getElementById('add-word-input');
+  document.getElementById('add-word-btn')?.addEventListener('click',()=>{
+    if(!addRow?.classList.contains('is-editing')){addRow?.classList.add('is-editing');addInput?.focus();return;}
+    const word=addInput?.value.trim();
+    if(!word||designRepresentativeWords.length>=10)return;
+    designRepresentativeWords.push(word);
+    if(currentResult?.representativeWords){
+      currentResult.representativeWords.push({word,sourceText:word,category:'other'});
+    }
+    addInput.value='';addRow.classList.remove('is-editing');syncDesignUI();
+  });
+  addInput?.addEventListener('keydown',event=>{
+    if(event.key==='Enter'){event.preventDefault();document.getElementById('add-word-btn')?.click();}
+  });
+  const repChips=document.getElementById('rep-chips');
+  repChips?.addEventListener('click',event=>{
+    const remove=event.target.closest('[data-remove-word]');if(!remove)return;
+    const index=Number(remove.dataset.removeWord);
+    designRepresentativeWords.splice(index,1);
+    if(currentResult?.representativeWords)currentResult.representativeWords.splice(index,1);
+    syncDesignUI();
+  });
+  let draggedWordIndex=null;
+  repChips?.addEventListener('dragstart',event=>{
+    const chip=event.target.closest('.rep-chip');if(!chip)return;
+    draggedWordIndex=Number(chip.dataset.wordIndex);
+    event.dataTransfer.effectAllowed='move';
+    event.dataTransfer.setData('text/plain',String(draggedWordIndex));
+    requestAnimationFrame(()=>chip.classList.add('is-dragging'));
+  });
+  repChips?.addEventListener('dragover',event=>{
+    if(draggedWordIndex==null)return;
+    event.preventDefault();event.dataTransfer.dropEffect='move';
+  });
+  repChips?.addEventListener('drop',event=>{
+    if(draggedWordIndex==null)return;
+    event.preventDefault();
+    const target=event.target.closest('.rep-chip');
+    const targetIndex=target?Number(target.dataset.wordIndex):designRepresentativeWords.length-1;
+    if(Number.isNaN(targetIndex)||targetIndex===draggedWordIndex)return;
+    const[word]=designRepresentativeWords.splice(draggedWordIndex,1);
+    designRepresentativeWords.splice(targetIndex,0,word);
+    if(currentResult?.representativeWords){
+      const[item]=currentResult.representativeWords.splice(draggedWordIndex,1);
+      currentResult.representativeWords.splice(targetIndex,0,item);
+    }
+    draggedWordIndex=null;syncDesignUI();
+  });
+  repChips?.addEventListener('dragend',()=>{
+    draggedWordIndex=null;
+    repChips.querySelectorAll('.is-dragging').forEach(chip=>chip.classList.remove('is-dragging'));
+  });
+
+  document.querySelectorAll('#design-source button').forEach(button=>{
+    button.addEventListener('click',()=>{
+      const source=Number(button.dataset.source)||0;
+      const currentSource=getExpressiveParams().memorySource;
+      if((source===0&&currentSource===0)||(source===1&&currentSource>0))return;
+      if(source===0){
+        expressiveParams.memorySource=0;
+      }else{
+        const relation=document.querySelector('input[name="mediated-relation"]:checked');
+        expressiveParams.memorySource=Number(relation?.value)||1;
+      }
+      markParameterInteraction();
+      syncDesignUI();
+      refreshExpressiveSequenceDisplay();syncVisualOutput();
+    });
+  });
+  document.querySelectorAll('input[name="mediated-relation"]').forEach(input=>{
+    input.addEventListener('change',()=>{
+      if(!input.checked)return;
+      expressiveParams.memorySource=Number(input.value)||1;
+      markParameterInteraction();
+      syncDesignUI();
+      refreshExpressiveSequenceDisplay();syncVisualOutput();
+    });
+  });
+  const bindRange=(id,key)=>{
+    document.getElementById(id)?.addEventListener('input',event=>{
+      expressiveParams[key]=Number(event.target.value);
+      syncRangeVisual(event.target);
+      markParameterInteraction();
+      refreshExpressiveSequenceDisplay();syncVisualOutput();
+    });
+  };
+  bindRange('design-frequency','memoryFrequency');
+  bindRange('design-clarity','memoryClarity');
+  bindRange('design-impact','memoryImpact');
+}
+
 /* ─── Init ─── */
 CAT.init();
 
@@ -1924,8 +2645,16 @@ function updateWordCount(){
   const text=document.getElementById('memory-input').value.trim();
   const n=text?text.split(/\s+/).filter(Boolean).length:0;
   const wcEl=document.getElementById('word-count');
+  const designCount=document.getElementById('entry-count');
   const overLimit=usesApiMode()&&n>20;
   wcEl.textContent=text?(n+' word'+(n!==1?'s':'')+(overLimit?' — max 20 for API modes':'')):'';
+  if(designCount){
+    designCount.textContent=overLimit?`20/20 מילים - על מנת להמשיך הלאה יש לוודא כי הזיכרון אינו חורג מ-20 מילים`:`${n}/20 מילים`;
+    designCount.style.color=overLimit?'var(--design-error)':text?'#000':'var(--design-muted)';
+  }
+  const heading=document.getElementById('entry-heading');
+  if(heading)heading.textContent=document.getElementById('app')?.classList.contains('has-results')?'הזיכרון שלך':'איזה זיכרון היית רוצה לשמר?';
+  document.getElementById('memory-input')?.setAttribute('aria-invalid',overLimit?'true':'false');
   wcEl.style.color=overLimit?'#9B3010':'';
   document.getElementById('analyze-btn').disabled=!text||overLimit;
 }
@@ -1967,6 +2696,15 @@ document.querySelectorAll('.mode-btn').forEach(btn=>{
 });
 
 /* ─── Textarea ─── */
+document.getElementById('memory-input').addEventListener('beforeinput',event=>{
+  if(!event.inputType.startsWith('insert')||event.inputType==='insertFromPaste'||event.inputType==='insertFromDrop')return;
+  const input=event.currentTarget;
+  const start=input.selectionStart??input.value.length;
+  const end=input.selectionEnd??start;
+  const next=input.value.slice(0,start)+(event.data||'')+input.value.slice(end);
+  const nextCount=next.trim()?next.trim().split(/\s+/).filter(Boolean).length:0;
+  if(nextCount>20)event.preventDefault();
+});
 document.getElementById('memory-input').addEventListener('input',e=>{
   updateWordCount();
   e.target.dir=e.target.value.match(/[\u0590-\u05FF]/)?'rtl':'auto';
@@ -2062,11 +2800,14 @@ function initBankUpload(){
 (()=>{
   initBankUpload();
   initBankTestChips();
+  bindDesignedInterface();
 window.addEventListener('beforeunload',()=>MemoryEngineStreamlineSession?.cleanup?.());
   const first=MemoryEngineTestSentencesApi.all()[0];
-  if(first)selectTestSentence(first,false);
+  if(first&&processorMode==='bank-test')selectTestSentence(first,false);
   const picker=document.getElementById('bank-test-picker');
   if(picker)picker.style.display=processorMode==='bank-test'?'block':'none';
+  updateWordCount();
+  syncDesignUI();
 })();
 </script>
 </body>

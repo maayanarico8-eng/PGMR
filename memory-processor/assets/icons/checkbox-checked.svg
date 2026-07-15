@@ -1,0 +1,6 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="checkbox">
+<path id="Background" d="M8 2C4.68629 2 2 4.68629 2 8C2 11.3137 4.68629 14 8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2Z" fill="var(--fill-0, white)" stroke="var(--stroke-0, #D9D9D9)"/>
+<path id="Background_2" d="M8 4.48796C6.06035 4.48796 4.48796 6.06035 4.48796 8C4.48796 9.93965 6.06035 11.512 8 11.512C9.93965 11.512 11.512 9.93965 11.512 8C11.512 6.06035 9.93965 4.48796 8 4.48796Z" fill="var(--fill-0, #0676FE)" stroke="var(--stroke-0, #0676FE)"/>
+</g>
+</svg>
