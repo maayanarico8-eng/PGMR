@@ -12,6 +12,7 @@
   const DOT_CLEARANCE = 1.6;
   const BASE_STROKE = 0.5;
   const MAX_STROKE = 30;
+  const IMPACT_SCALE = 0.45;
   const STROKE_COLOR = '#000000';
   const GRAPHIC_SEL = 'path,rect,circle,ellipse,line,polyline,polygon';
 
@@ -42,15 +43,18 @@
 
   function computeStrokeWidth(impact) {
     const v = clamp(Number(impact), 0, 100);
-    return BASE_STROKE + (MAX_STROKE - BASE_STROKE) * (v / 100);
+    // The full slider now covers the former 0–45% impact range.
+    return BASE_STROKE + (MAX_STROKE - BASE_STROKE) * (v / 100) * IMPACT_SCALE;
   }
 
-  function computeDash(freq, strokeWidth) {
+  function computeDash(freq) {
     const f100 = clamp(Number(freq), 0, 100);
     if (f100 === 100) return { solid: true, dasharray: null, dashoffset: 0 };
     const f = f100 / 100;
     const dash = Math.max(0.01, 12 * Math.pow(f, 1.6));
-    const gap = Math.max(0.6 + 6.8 * (1 - f), DOT_CLEARANCE * (strokeWidth || BASE_STROKE));
+    // Frequency alone controls the dash pattern. Impact may thicken the stroke,
+    // but must not move its visible segments by changing their spacing.
+    const gap = Math.max(0.6 + 6.8 * (1 - f), DOT_CLEARANCE * BASE_STROKE);
     return {
       solid: false,
       dasharray: `${formatNum(dash)} ${formatNum(gap)}`,
@@ -488,7 +492,7 @@
     const p = normalizeParams(params);
     const level = p.memorySource;
     const strokeWidth = computeStrokeWidth(p.memoryImpact);
-    const dash = computeDash(p.memoryFrequency, strokeWidth);
+    const dash = computeDash(p.memoryFrequency);
     const collapseScale = computeCollapseScale(p.memoryClarity);
     const stripsPer = FRAG_STRIPS[level] || 1;
     const maxFrag = FRAG_DIST[level] || 0;
