@@ -117,6 +117,18 @@ console.log('expressive-render tests…');
   assert(low.state.strokeWidth === 0.5 && high.state.strokeWidth === 30, 'stroke still scales');
 }
 
+// Memory source must not resize the displayed sequence
+{
+  const base = sampleSequence(2);
+  const mine = api.applyExpressiveRendering(base, { ...api.DEFAULT_PARAMS, memorySource: 0 });
+  const family = api.applyExpressiveRendering(base, { ...api.DEFAULT_PARAMS, memorySource: 1 });
+  const acquaintance = api.applyExpressiveRendering(base, { ...api.DEFAULT_PARAMS, memorySource: 2 });
+  const vb = (svg) => (svg.match(/viewBox="([^"]+)"/) || [])[1];
+  assert(vb(mine.svg) === vb(family.svg), 'personal and family sources share viewBox');
+  assert(vb(mine.svg) === vb(acquaintance.svg), 'personal and acquaintance sources share viewBox');
+  assert(mine.state.pad === family.state.pad && mine.state.pad === acquaintance.state.pad, 'source padding remains stable');
+}
+
 // apply — family fragmentation
 {
   const { svg, state } = api.applyExpressiveRendering(sampleSequence(2), {

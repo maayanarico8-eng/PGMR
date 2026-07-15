@@ -521,10 +521,9 @@
       return newCenterX - centerX;
     });
 
-    // ViewBox padding must NOT depend on current stroke width — otherwise raising
-    // Impact expands the canvas and pictograms appear to shift. Use frag slide
-    // room only; thick strokes may paint into the fixed pad / overflow.
-    const pad = Math.max(12, maxFrag);
+    // Keep the viewBox stable across every parameter. Source changes may add
+    // fragmentation, but must not resize the displayed pictogram sequence.
+    const pad = Math.max(12, ...FRAG_DIST);
     let maxAbsClarity = 0;
     for (const d of clarityDxList) maxAbsClarity = Math.max(maxAbsClarity, Math.abs(d));
 
