@@ -336,7 +336,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 }
 .memory-main{width:calc(1342 * var(--figma-unit));height:calc(898 * var(--figma-unit));min-width:0;display:flex;flex-direction:column}
 .memory-entry{
-  width:calc(926 * var(--figma-unit));height:calc(204 * var(--figma-unit));margin:0 0 0 auto;
+  width:calc(926 * var(--figma-unit));min-height:calc(204 * var(--figma-unit));margin:0 0 0 auto;
   display:flex;flex-direction:column;align-items:flex-end;direction:rtl
 }
 .entry-heading{
@@ -349,6 +349,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
   color:var(--design-muted);font-family:var(--font-body);font-size:calc(14 * var(--figma-unit));
   font-weight:400;line-height:calc(18 * var(--figma-unit));text-align:right;white-space:nowrap
 }
+.entry-count.is-at-limit{color:var(--design-error);white-space:normal}
 .memory-input-wrap{position:relative;width:100%;height:calc(79 * var(--figma-unit));margin-bottom:calc(16 * var(--figma-unit))}
 textarea#memory-input{
   width:100%;height:100%;min-height:0;max-height:none;padding:calc(16 * var(--figma-unit)) calc(20 * var(--figma-unit));
@@ -359,7 +360,11 @@ textarea#memory-input{
 textarea#memory-input::placeholder{color:var(--design-muted);opacity:1}
 textarea#memory-input:hover:not(:focus):not([aria-invalid="true"]){border-color:var(--design-muted)}
 textarea#memory-input:focus{border-color:var(--design-blue);outline:none}
-textarea#memory-input[aria-invalid="true"]{border-color:var(--design-error)}
+textarea#memory-input[aria-invalid="true"],
+textarea#memory-input[aria-invalid="true"]:focus,
+textarea#memory-input[aria-invalid="true"]:hover{
+  border-color:var(--design-error)
+}
 .input-footer{width:100%;height:calc(39 * var(--figma-unit));display:flex;justify-content:flex-start;align-items:center;margin:0}
 .word-count{display:none}
 .analyze-btn,.generate-vrp-btn{
@@ -393,9 +398,13 @@ textarea#memory-input[aria-invalid="true"]{border-color:var(--design-error)}
 }
 .app.is-editing-memory .edit-memory-btn{display:none}
 .app.is-editing-memory .input-footer{visibility:visible}
-.app.is-editing-memory .entry-count{color:#000}
-.app.is-editing-memory textarea#memory-input{border-color:var(--design-blue);cursor:text}
-.app.is-editing-memory textarea#memory-input:focus{border-color:var(--design-blue);outline:none}
+.app.is-editing-memory .entry-count:not(.is-at-limit){color:#000}
+.app.is-editing-memory textarea#memory-input:not([aria-invalid="true"]){border-color:var(--design-blue);cursor:text}
+.app.is-editing-memory textarea#memory-input:not([aria-invalid="true"]):focus{border-color:var(--design-blue);outline:none}
+.app.is-editing-memory textarea#memory-input[aria-invalid="true"],
+.app.is-editing-memory textarea#memory-input[aria-invalid="true"]:focus{
+  border-color:var(--design-error);cursor:text
+}
 .app.is-editing-memory .design-sidebar{pointer-events:none}
 .app.is-editing-memory .design-sidebar .side-heading,
 .app.is-editing-memory .design-sidebar .rep-count,
@@ -1954,7 +1963,7 @@ function enterEditMemory(){
   const heading=document.getElementById('entry-heading');
   if(heading)heading.textContent='איזה זיכרון היית רוצה לשמר?';
   const memoryCount=document.getElementById('entry-count');
-  if(memoryCount&&!memoryCount.textContent.includes('על מנת להמשיך'))memoryCount.style.color='#000';
+  if(memoryCount&&!memoryCount.classList.contains('is-at-limit'))memoryCount.style.color='#000';
   const btn=document.getElementById('analyze-btn');
   if(btn&&!btn.querySelector('.spinner'))btn.textContent='חילוץ מילים מייצגות';
   syncMemoryInputEditable();
@@ -1982,7 +1991,7 @@ async function analyze(){
   const typedText=document.getElementById('memory-input').value.trim();
   const text=typedText||MOCK_MEMORY;
   if(!text)return;
-  if(usesApiMode()&&typedText&&typedText.split(/\s+/).filter(Boolean).length>20){
+  if(usesApiMode()&&typedText&&countMemoryWords(typedText)>MAX_MEMORY_WORDS){
     updateWordCount();
     return;
   }
@@ -2574,7 +2583,7 @@ function syncDesignUI(){
   const count=document.getElementById('rep-count');
   if(count)count.textContent=`[${designRepresentativeWords.length}/10]`;
   const memoryCount=document.getElementById('entry-count');
-  if(memoryCount&&hasResults&&!memoryCount.textContent.includes('על מנת להמשיך')){
+  if(memoryCount&&hasResults&&!memoryCount.classList.contains('is-at-limit')){
     memoryCount.style.color='var(--design-muted)';
   }
   syncMemoryInputEditable();
@@ -2744,21 +2753,50 @@ function bindDesignedInterface(){
 /* ─── Init ─── */
 CAT.init();
 
+const MAX_MEMORY_WORDS=20;
+const MEMORY_WORD_LIMIT_MSG='20/20 מילים - על מנת להמשיך הלאה יש לוודא כי הזיכרון אינו חורג מ-20 מילים';
+
+function countMemoryWords(text){
+  const trimmed=(text||'').trim();
+  return trimmed?trimmed.split(/\s+/).filter(Boolean).length:0;
+}
+
+/** True if next text would exceed 20 words, or add trailing space once already at 20. */
+function exceedsMemoryWordLimit(next){
+  const n=countMemoryWords(next);
+  if(n>MAX_MEMORY_WORDS)return true;
+  if(n===MAX_MEMORY_WORDS&&/\s$/.test(next))return true;
+  return false;
+}
+
+function clampMemoryToWordLimit(text){
+  const trimmed=(text||'').trim();
+  if(!trimmed)return '';
+  const words=trimmed.split(/\s+/).filter(Boolean);
+  if(words.length<=MAX_MEMORY_WORDS)return words.join(' ');
+  return words.slice(0,MAX_MEMORY_WORDS).join(' ');
+}
+
 function updateWordCount(){
-  const text=document.getElementById('memory-input').value.trim();
-  const n=text?text.split(/\s+/).filter(Boolean).length:0;
+  const raw=document.getElementById('memory-input').value;
+  const text=raw.trim();
+  const n=countMemoryWords(raw);
   const wcEl=document.getElementById('word-count');
   const designCount=document.getElementById('entry-count');
-  const overLimit=usesApiMode()&&n>20;
+  const atLimit=n>=MAX_MEMORY_WORDS;
+  const overLimit=n>MAX_MEMORY_WORDS;
   const editing=isEditingMemory();
   const hasResults=document.getElementById('app')?.classList.contains('has-results');
-  wcEl.textContent=text?(n+' word'+(n!==1?'s':'')+(overLimit?' — max 20 for API modes':'')):'';
+  wcEl.textContent=text?(n+' word'+(n!==1?'s':'')+(atLimit?' — max 20':'')):'';
   if(designCount){
-    designCount.textContent=overLimit?`20/20 מילים - על מנת להמשיך הלאה יש לוודא כי הזיכרון אינו חורג מ-20 מילים`:`${n}/20 מילים`;
-    if(overLimit)designCount.style.color='var(--design-error)';
-    else if(editing)designCount.style.color='#000';
-    else if(hasResults)designCount.style.color='var(--design-muted)';
-    else designCount.style.color=text?'#000':'var(--design-muted)';
+    designCount.textContent=atLimit?MEMORY_WORD_LIMIT_MSG:`${n}/20 מילים`;
+    designCount.classList.toggle('is-at-limit',atLimit);
+    designCount.style.color='';
+    if(!atLimit){
+      if(editing)designCount.style.color='#000';
+      else if(hasResults)designCount.style.color='var(--design-muted)';
+      else designCount.style.color=text?'#000':'var(--design-muted)';
+    }
   }
   const heading=document.getElementById('entry-heading');
   if(heading){
@@ -2766,9 +2804,10 @@ function updateWordCount(){
       ?'איזה זיכרון היית רוצה לשמר?'
       :(hasResults?(designRepresentativeWords.slice(0,3).join(', ')||'הזיכרון שלך'):'איזה זיכרון היית רוצה לשמר?');
   }
-  document.getElementById('memory-input')?.setAttribute('aria-invalid',overLimit?'true':'false');
-  wcEl.style.color=overLimit?'#9B3010':'';
+  document.getElementById('memory-input')?.setAttribute('aria-invalid',atLimit?'true':'false');
+  wcEl.style.color=atLimit?'#9B3010':'';
   const analyzeBtn=document.getElementById('analyze-btn');
+  // 20 words is allowed; only block submit when somehow over (e.g. paste race).
   analyzeBtn.disabled=!text||overLimit;
   if(analyzeBtn&&!analyzeBtn.querySelector('.spinner'))analyzeBtn.textContent=analyzeBtnLabel();
 }
@@ -2811,17 +2850,41 @@ document.querySelectorAll('.mode-btn').forEach(btn=>{
 
 /* ─── Textarea ─── */
 document.getElementById('memory-input').addEventListener('beforeinput',event=>{
-  if(!event.inputType.startsWith('insert')||event.inputType==='insertFromPaste'||event.inputType==='insertFromDrop')return;
+  if(!event.inputType.startsWith('insert'))return;
   const input=event.currentTarget;
   const start=input.selectionStart??input.value.length;
   const end=input.selectionEnd??start;
-  const next=input.value.slice(0,start)+(event.data||'')+input.value.slice(end);
-  const nextCount=next.trim()?next.trim().split(/\s+/).filter(Boolean).length:0;
-  if(nextCount>20)event.preventDefault();
+  const inserted=event.data??(event.inputType==='insertFromPaste'||event.inputType==='insertFromDrop'
+    ?(event.dataTransfer?.getData('text/plain')||'')
+    :'');
+  // Paste/drop: allow the event, then clamp in `input` (clipboard data is unreliable here).
+  if(event.inputType==='insertFromPaste'||event.inputType==='insertFromDrop')return;
+  const next=input.value.slice(0,start)+inserted+input.value.slice(end);
+  if(exceedsMemoryWordLimit(next))event.preventDefault();
+});
+document.getElementById('memory-input').addEventListener('paste',event=>{
+  event.preventDefault();
+  const input=event.currentTarget;
+  const pasted=(event.clipboardData||window.clipboardData)?.getData('text')||'';
+  const start=input.selectionStart??input.value.length;
+  const end=input.selectionEnd??start;
+  const next=clampMemoryToWordLimit(input.value.slice(0,start)+pasted+input.value.slice(end));
+  input.setRangeText(next,0,input.value.length,'end');
+  input.dispatchEvent(new Event('input',{bubbles:true}));
 });
 document.getElementById('memory-input').addEventListener('input',e=>{
+  const input=e.target;
+  if(exceedsMemoryWordLimit(input.value)){
+    const clamped=clampMemoryToWordLimit(input.value);
+    if(clamped!==input.value){
+      const pos=input.selectionStart;
+      input.value=clamped;
+      const caret=Math.min(pos??clamped.length,clamped.length);
+      input.setSelectionRange(caret,caret);
+    }
+  }
   updateWordCount();
-  e.target.dir=e.target.value.match(/[\u0590-\u05FF]/)?'rtl':'auto';
+  input.dir=input.value.match(/[\u0590-\u05FF]/)?'rtl':'auto';
 });
 document.getElementById('analyze-btn').addEventListener('click',analyze);
 document.getElementById('memory-input').addEventListener('keydown',e=>{
