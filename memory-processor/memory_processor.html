@@ -371,10 +371,11 @@ textarea#memory-input[aria-invalid="true"]{border-color:var(--design-error)}
 .analyze-btn:not(:disabled),.generate-vrp-btn:not(:disabled){border-color:var(--design-blue);background:var(--design-blue);color:#fff}
 .analyze-btn:disabled,.generate-vrp-btn:disabled{background:#e9f3ff;color:var(--design-muted)}
 .edit-memory-btn{
-  display:none;border:0;background:none;color:var(--design-blue);padding:calc(6 * var(--figma-unit)) calc(8 * var(--figma-unit));
+  display:none;border:0;background:none;color:#0365dd;padding:calc(6 * var(--figma-unit)) calc(8 * var(--figma-unit));
   font-family:var(--font-body);font-size:calc(19 * var(--figma-unit));font-weight:400;line-height:calc(20 * var(--figma-unit));
   cursor:pointer;align-items:center;justify-content:center;gap:calc(6 * var(--figma-unit));direction:ltr;border-radius:calc(8 * var(--figma-unit))
 }
+.edit-memory-btn:hover{color:#004db8}
 .edit-memory-btn img{width:calc(20 * var(--figma-unit));height:calc(20 * var(--figma-unit));display:block}
 .app.has-results .entry-heading{font-size:calc(27 * var(--figma-unit))}
 .app.has-results .edit-memory-btn{display:flex;position:absolute;left:0;top:1px}
@@ -383,6 +384,49 @@ textarea#memory-input[aria-invalid="true"]{border-color:var(--design-error)}
 .app.has-results textarea#memory-input{height:100%;resize:none}
 .app.has-results .input-footer{visibility:hidden}
 .app.has-results .memory-stage{margin-top:calc(16 * var(--figma-unit))}
+.app.has-results:not(.is-editing-memory) textarea#memory-input{
+  cursor:default;border-color:var(--design-line)
+}
+.app.has-results:not(.is-editing-memory) textarea#memory-input:hover:not([aria-invalid="true"]),
+.app.has-results:not(.is-editing-memory) textarea#memory-input:focus{
+  border-color:var(--design-line);outline:none
+}
+.app.is-editing-memory .edit-memory-btn{display:none}
+.app.is-editing-memory .input-footer{visibility:visible}
+.app.is-editing-memory .entry-count{color:#000}
+.app.is-editing-memory textarea#memory-input{border-color:var(--design-blue);cursor:text}
+.app.is-editing-memory textarea#memory-input:focus{border-color:var(--design-blue);outline:none}
+.app.is-editing-memory .design-sidebar{pointer-events:none}
+.app.is-editing-memory .design-sidebar .side-heading,
+.app.is-editing-memory .design-sidebar .rep-count,
+.app.is-editing-memory .design-sidebar .side-copy,
+.app.is-editing-memory .design-sidebar .rep-chip,
+.app.is-editing-memory .design-sidebar .range-row label,
+.app.is-editing-memory .design-sidebar .range-ends,
+.app.is-editing-memory .design-sidebar .mediated-relation{
+  color:var(--design-muted)
+}
+.app.is-editing-memory .design-sidebar .rep-chip,
+.app.is-editing-memory .design-sidebar .add-word-btn img,
+.app.is-editing-memory .design-sidebar .rep-chip button img{
+  opacity:.55
+}
+.app.is-editing-memory .design-sidebar .add-word-btn{
+  background:var(--design-blue-soft);border-color:var(--design-line);color:var(--design-muted);opacity:1
+}
+.app.is-editing-memory .design-sidebar .narrator-gender-picker label,
+.app.is-editing-memory .design-sidebar .narrator-gender-picker label:has(input:checked),
+.app.is-editing-memory .design-sidebar .source-toggle button,
+.app.is-editing-memory .design-sidebar .source-toggle button.active{
+  color:var(--design-muted);border-color:var(--design-line);background:transparent
+}
+.app.is-editing-memory .design-sidebar .narrator-gender-picker label:has(input:checked){
+  background:var(--design-blue-soft)
+}
+.app.is-editing-memory .design-sidebar .create-visual-btn,
+.app.is-editing-memory .design-sidebar .create-visual-btn:disabled{
+  background:#e9f3ff;border:1px solid var(--design-line);color:var(--design-muted);cursor:default
+}
 .memory-stage{
   width:100%;height:calc(678 * var(--figma-unit));min-height:0;flex:none;margin-top:calc(16 * var(--figma-unit));
   border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));
@@ -1880,7 +1924,58 @@ async function renderCatalogSection(vrpResult){
   loadBankList();
 }
 
-function analyzeBtnLabel(){return currentResult?'עדכון מילים מייצגות':'חילוץ מילים מייצגות';}
+function analyzeBtnLabel(){
+  if(document.getElementById('app')?.classList.contains('is-editing-memory'))return 'חילוץ מילים מייצגות';
+  return currentResult?'עדכון מילים מייצגות':'חילוץ מילים מייצגות';
+}
+
+function isEditingMemory(){return !!document.getElementById('app')?.classList.contains('is-editing-memory');}
+
+function syncMemoryInputEditable(){
+  const app=document.getElementById('app');
+  const input=document.getElementById('memory-input');
+  if(!input)return;
+  const lock=!!app?.classList.contains('has-results')&&!app?.classList.contains('is-editing-memory');
+  input.readOnly=lock;
+}
+
+function setSidebarInert(inert){
+  const sidebar=document.getElementById('design-sidebar');
+  if(!sidebar)return;
+  if(inert)sidebar.setAttribute('inert','');
+  else sidebar.removeAttribute('inert');
+}
+
+function enterEditMemory(){
+  const app=document.getElementById('app');
+  if(!app?.classList.contains('has-results'))return;
+  app.classList.add('is-editing-memory');
+  setSidebarInert(true);
+  const heading=document.getElementById('entry-heading');
+  if(heading)heading.textContent='איזה זיכרון היית רוצה לשמר?';
+  const memoryCount=document.getElementById('entry-count');
+  if(memoryCount&&!memoryCount.textContent.includes('על מנת להמשיך'))memoryCount.style.color='#000';
+  const btn=document.getElementById('analyze-btn');
+  if(btn&&!btn.querySelector('.spinner'))btn.textContent='חילוץ מילים מייצגות';
+  syncMemoryInputEditable();
+  const input=document.getElementById('memory-input');
+  if(input){
+    input.focus();
+    const len=input.value.length;
+    input.setSelectionRange(len,len);
+  }
+  updateWordCount();
+}
+
+function exitEditMemory(){
+  const app=document.getElementById('app');
+  if(!app?.classList.contains('is-editing-memory'))return;
+  app.classList.remove('is-editing-memory');
+  setSidebarInert(false);
+  syncMemoryInputEditable();
+  const btn=document.getElementById('analyze-btn');
+  if(btn&&!btn.querySelector('.spinner'))btn.textContent=analyzeBtnLabel();
+}
 
 /* ─── Analyze ─── */
 async function analyze(){
@@ -2468,6 +2563,8 @@ function syncDesignUI(){
   const app=document.getElementById('app');
   app?.classList.toggle('has-results',hasResults);
   if(!hasResults)app?.classList.remove('has-visual-result');
+  // Leaving edit mode whenever results sync (commit success, failure, or fresh load).
+  exitEditMemory();
   const heading=document.getElementById('entry-heading');
   if(heading)heading.textContent=hasResults?(designRepresentativeWords.slice(0,3).join(', ')||'הזיכרון שלך'):'איזה זיכרון היית רוצה לשמר?';
   const chips=document.getElementById('rep-chips');
@@ -2477,7 +2574,10 @@ function syncDesignUI(){
   const count=document.getElementById('rep-count');
   if(count)count.textContent=`[${designRepresentativeWords.length}/10]`;
   const memoryCount=document.getElementById('entry-count');
-  if(memoryCount&&hasResults)memoryCount.style.color='var(--design-muted)';
+  if(memoryCount&&hasResults&&!memoryCount.textContent.includes('על מנת להמשיך')){
+    memoryCount.style.color='var(--design-muted)';
+  }
+  syncMemoryInputEditable();
   const create=document.getElementById('create-visual-btn');
   if(create){
     create.disabled=!hasResults;
@@ -2544,9 +2644,7 @@ function bindDesignedInterface(){
   const setDrawer=open=>{if(drawer)drawer.hidden=!open;};
   document.getElementById('utility-toggle')?.addEventListener('click',()=>setDrawer(drawer?.hidden));
   document.getElementById('utility-close')?.addEventListener('click',()=>setDrawer(false));
-  document.getElementById('edit-memory-btn')?.addEventListener('click',()=>{
-    const input=document.getElementById('memory-input');input?.focus();input?.select();
-  });
+  document.getElementById('edit-memory-btn')?.addEventListener('click',enterEditMemory);
   document.getElementById('create-visual-btn')?.addEventListener('click',createDesignedVisual);
   const sidebarContent=document.querySelector('.sidebar-content');
   sidebarContent?.addEventListener('scroll',syncSidebarScrollIndicator,{passive:true});
@@ -2652,19 +2750,27 @@ function updateWordCount(){
   const wcEl=document.getElementById('word-count');
   const designCount=document.getElementById('entry-count');
   const overLimit=usesApiMode()&&n>20;
+  const editing=isEditingMemory();
+  const hasResults=document.getElementById('app')?.classList.contains('has-results');
   wcEl.textContent=text?(n+' word'+(n!==1?'s':'')+(overLimit?' — max 20 for API modes':'')):'';
   if(designCount){
     designCount.textContent=overLimit?`20/20 מילים - על מנת להמשיך הלאה יש לוודא כי הזיכרון אינו חורג מ-20 מילים`:`${n}/20 מילים`;
-    designCount.style.color=overLimit?'var(--design-error)':text?'#000':'var(--design-muted)';
+    if(overLimit)designCount.style.color='var(--design-error)';
+    else if(editing)designCount.style.color='#000';
+    else if(hasResults)designCount.style.color='var(--design-muted)';
+    else designCount.style.color=text?'#000':'var(--design-muted)';
   }
   const heading=document.getElementById('entry-heading');
   if(heading){
-    const hasResults=document.getElementById('app')?.classList.contains('has-results');
-    heading.textContent=hasResults?(designRepresentativeWords.slice(0,3).join(', ')||'הזיכרון שלך'):'איזה זיכרון היית רוצה לשמר?';
+    heading.textContent=editing
+      ?'איזה זיכרון היית רוצה לשמר?'
+      :(hasResults?(designRepresentativeWords.slice(0,3).join(', ')||'הזיכרון שלך'):'איזה זיכרון היית רוצה לשמר?');
   }
   document.getElementById('memory-input')?.setAttribute('aria-invalid',overLimit?'true':'false');
   wcEl.style.color=overLimit?'#9B3010':'';
-  document.getElementById('analyze-btn').disabled=!text||overLimit;
+  const analyzeBtn=document.getElementById('analyze-btn');
+  analyzeBtn.disabled=!text||overLimit;
+  if(analyzeBtn&&!analyzeBtn.querySelector('.spinner'))analyzeBtn.textContent=analyzeBtnLabel();
 }
 
 /* ─── Settings panel ─── */
