@@ -18,8 +18,9 @@ Discard every candidate that fails any gate.
 ## Selection among valid candidates
 
 3. Select the one that best matches the meaning of the word and enables reliable, immediate recognition.
+4. Uniqueness within one memory — never choose a hash listed as already used for another representative word in this memory. Prefer the next-best valid candidate instead.
 
-If exactly one candidate is valid, choose it. If several are valid, choose the strongest on rule 3. If none are fully valid, choose the least-bad among the provided set (never invent an icon outside the set) and briefly note which gates failed.
+If exactly one candidate is valid, choose it. If several are valid, choose the strongest on rule 3 (subject to rule 4). If none are fully valid, choose the least-bad among the provided set (never invent an icon outside the set) and briefly note which gates failed.
 
 ## Output
 Return ONLY valid JSON (no markdown):

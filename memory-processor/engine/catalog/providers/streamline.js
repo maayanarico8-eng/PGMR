@@ -511,24 +511,42 @@
     return { svg: out, source, hash, english: term };
   }
 
+  function collectExcludeHashes(selectOpts) {
+    const fromOpts = selectOpts?.excludeHashes || [];
+    const fromSession = root.MemoryEngineStreamlineSession?.getUsedHashes?.() || [];
+    return [...new Set([...fromOpts, ...fromSession].map((h) => String(h || '').trim()).filter(Boolean))];
+  }
+
+  function isHashExcluded(hash, excludeSet) {
+    return !!(hash && excludeSet?.has(String(hash)));
+  }
+
   async function resolveFromSearch(term, searchParams, selectOpts) {
     const searchResult = await searchIcons(term, searchParams);
     const sp = { ...DEFAULT_SEARCH_PARAMS, ...(searchParams || {}) };
     const rawResults = searchResult?.results || [];
     if (!rawResults.length) return null;
 
+    const excludeList = collectExcludeHashes(selectOpts);
+    const excludeSet = new Set(excludeList);
+    const available = rawResults.filter((r) => r?.hash && !excludeSet.has(String(r.hash)));
+    if (!available.length) return null;
+
     const downloadParams = { ...DEFAULT_DOWNLOAD_PARAMS };
-    const selectionPool = candidatesForSelection(rawResults);
+    const selectionPool = candidatesForSelection(available);
     let ordered = [];
 
     const selectFn = root.MemoryEngineSelectPictogram?.selectPictogramFromCandidates;
     if (selectFn && selectionPool.length) {
       try {
-        const pick = await selectFn(term, selectionPool, selectOpts || {});
-        if (pick?.winnerHash) {
-          const winner = rawResults.find((r) => r.hash === pick.winnerHash);
-          const rest = rawResults.filter((r) => r.hash !== pick.winnerHash);
-          ordered = winner ? [winner, ...rest] : rawResults;
+        const pick = await selectFn(term, selectionPool, {
+          ...(selectOpts || {}),
+          excludeHashes: excludeList,
+        });
+        if (pick?.winnerHash && !excludeSet.has(String(pick.winnerHash))) {
+          const winner = available.find((r) => r.hash === pick.winnerHash);
+          const rest = available.filter((r) => r.hash !== pick.winnerHash);
+          ordered = winner ? [winner, ...rest] : available;
         }
       } catch (err) {
         console.warn('pictogram AI selection failed, using fallback order:', err.message);
@@ -536,7 +554,7 @@
     }
 
     if (!ordered.length) {
-      ordered = rankIconCandidates(rawResults, term, sp.familySlug);
+      ordered = rankIconCandidates(available, term, sp.familySlug);
     }
 
     const { svg, icon } = await tryDownloadCandidates(ordered, downloadParams);
@@ -561,8 +579,12 @@
     const term = normalizeEnglish(english);
     if (!term) return null;
 
+    const excludeList = collectExcludeHashes(selectOpts);
+    const excludeSet = new Set(excludeList);
+    const selectOptsWithExclude = { ...(selectOpts || {}), excludeHashes: excludeList };
+
     const sessionCached = root.MemoryEngineStreamlineSession?.getByEnglish?.(term);
-    if (sessionCached?.svg) {
+    if (sessionCached?.svg && !isHashExcluded(sessionCached.meta?.hash, excludeSet)) {
       return {
         svg: sessionCached.svg,
         source: sessionCached.meta?.source || 'cache',
@@ -572,21 +594,21 @@
     }
 
     const cached = await getCachedEntry(term);
-    if (cached?.svg) {
+    if (cached?.svg && !isHashExcluded(cached.hash, excludeSet)) {
       return returnSvg(term, cached.svg, cached.hash, 'cache');
     }
 
     await loadMapping();
     const mapped = getMappedEntry(term);
 
-    if (mapped) {
+    if (mapped && !isHashExcluded(mapped.hash, excludeSet)) {
       const legacySvg = await migrateLegacyInlineSvg(term, mapped);
       if (legacySvg) {
         return returnSvg(term, legacySvg, mapped.hash, 'cache');
       }
     }
 
-    if (mapped?.hash) {
+    if (mapped?.hash && !isHashExcluded(mapped.hash, excludeSet)) {
       try {
         const svg = await downloadSvg(mapped.hash, mapped.downloadParams || DEFAULT_DOWNLOAD_PARAMS);
         await saveCacheEntry(term, { svg, hash: mapped.hash });
@@ -597,7 +619,7 @@
       }
     }
 
-    return resolveFromSearch(term, DEFAULT_SEARCH_PARAMS, selectOpts);
+    return resolveFromSearch(term, DEFAULT_SEARCH_PARAMS, selectOptsWithExclude);
   }
 
   async function fetchPictogram({ english, canonicalReferent, englishWord, hebrew, context }) {

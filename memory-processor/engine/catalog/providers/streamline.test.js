@@ -545,12 +545,127 @@ async function testEnsureBankedIconsBatchSkipsExisting() {
   console.log('PASS ensureBankedIcons skips existing and batch-saves missing');
 }
 
+/** Unit tests must never hit live Anthropic — selection is a local stub only. */
+function assertNoAnthropic(anthropicCalls) {
+  assert(anthropicCalls === 0, 'unit test must not call Anthropic /api/anthropic');
+}
+
+async function testExcludeHashesSkipsAlreadyUsedIcon() {
+  await withEmptyBank(async () => {
+    const searchResults = [
+      {
+        hash: 'ico_shared',
+        name: 'picture frame',
+        isFree: true,
+        imagePreviewUrl: 'https://assets.streamlinehq.com/image/private/a.png?_a=1',
+      },
+      {
+        hash: 'ico_alt',
+        name: 'assemble furniture',
+        isFree: true,
+        imagePreviewUrl: 'https://assets.streamlinehq.com/image/private/b.png?_a=1',
+      },
+    ];
+    // Local stub always prefers ico_shared; exclusion must force the alternate. No Anthropic.
+    const SL = load({ searchResults, selectWinnerHash: 'ico_shared' });
+    SL.clearMappingCache();
+    globalThis.MemoryEngineStreamlineSession?.cleanup?.();
+    globalThis.MemoryEngineAnthropic = {
+      callClaudeJSON: async () => {
+        throw new Error('unit test must not call Anthropic');
+      },
+    };
+
+    let anthropicFetches = 0;
+    const orig = globalThis.fetch;
+    globalThis.fetch = async (url) => {
+      if (String(url).includes('/api/anthropic')) anthropicFetches++;
+      return orig(url);
+    };
+
+    const first = await SL.resolveIcon('picture frame');
+    assert(first?.hash === 'ico_shared', 'first word takes shared hash');
+    assert(
+      globalThis.MemoryEngineStreamlineSession.getUsedHashes().includes('ico_shared'),
+      'session tracks used hash'
+    );
+
+    const second = await SL.resolveIcon('assemble furniture', {
+      excludeHashes: globalThis.MemoryEngineStreamlineSession.getUsedHashes(),
+    });
+    globalThis.fetch = orig;
+    assertNoAnthropic(anthropicFetches);
+    assert(second?.hash === 'ico_alt', 'second word must not reuse shared hash');
+    assert(second?.hash !== first.hash, 'hashes unique within run');
+    console.log('PASS excludeHashes prevents duplicate pictogram in one run');
+  })();
+}
+
+async function testCachedHashExcludedForcesResearch() {
+  await withEmptyBank(async ({ cachePath }) => {
+    const searchResults = [
+      {
+        hash: 'ico_cached',
+        name: 'hang picture',
+        isFree: true,
+        imagePreviewUrl: 'https://assets.streamlinehq.com/image/private/a.png?_a=1',
+      },
+      {
+        hash: 'ico_other',
+        name: 'hang coat',
+        isFree: true,
+        imagePreviewUrl: 'https://assets.streamlinehq.com/image/private/b.png?_a=1',
+      },
+    ];
+    // Local stub only — no Anthropic.
+    const SL = load({ searchResults, selectWinnerHash: 'ico_other' });
+    SL.clearMappingCache();
+    globalThis.MemoryEngineStreamlineSession?.cleanup?.();
+    globalThis.MemoryEngineAnthropic = {
+      callClaudeJSON: async () => {
+        throw new Error('unit test must not call Anthropic');
+      },
+    };
+
+    let anthropicFetches = 0;
+    const orig = globalThis.fetch;
+    globalThis.fetch = async (url) => {
+      if (String(url).includes('/api/anthropic')) anthropicFetches++;
+      return orig(url);
+    };
+
+    fs.writeFileSync(
+      cachePath,
+      JSON.stringify(
+        {
+          version: 1,
+          icons: {
+            'hang picture': { svg: '<svg id="ico_cached"></svg>', hash: 'ico_cached' },
+          },
+        },
+        null,
+        2
+      ) + '\n',
+      'utf8'
+    );
+
+    const result = await SL.resolveIcon('hang picture', { excludeHashes: ['ico_cached'] });
+    globalThis.fetch = orig;
+    assertNoAnthropic(anthropicFetches);
+    assert(result?.hash === 'ico_other', 'excluded cache hash forces new search pick');
+    assert(result?.source === 'streamline-new', 'expected search path');
+    console.log('PASS excluded cache hash forces re-search');
+  })();
+}
+
 async function run() {
   await testCachedSvgSkipsDownload();
   await testHashOnlyMappingDownloadsOnce();
   await testSecondResolveUsesCache();
   await testMappingMiss();
   await testAiSelectsNonFirstHash();
+  await testExcludeHashesSkipsAlreadyUsedIcon();
+  await testCachedHashExcludedForcesResearch();
   await testRankDoesNotPreferFree();
   await testSelectErrorFallsBack();
   await testResolvePreviewUrl();

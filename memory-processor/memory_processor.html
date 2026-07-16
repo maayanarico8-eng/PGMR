@@ -417,10 +417,12 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .app.is-editing-memory .design-sidebar .rep-chip,
 .app.is-editing-memory .design-sidebar .add-word-btn img,
+.app.is-editing-memory .design-sidebar .add-word-confirm img,
 .app.is-editing-memory .design-sidebar .rep-chip button img{
   opacity:.55
 }
-.app.is-editing-memory .design-sidebar .add-word-btn{
+.app.is-editing-memory .design-sidebar .add-word-btn,
+.app.is-editing-memory .design-sidebar .add-word-confirm{
   background:var(--design-blue-soft);border-color:var(--design-line);color:var(--design-muted);opacity:1
 }
 .app.is-editing-memory .design-sidebar .narrator-gender-picker label,
@@ -508,25 +510,65 @@ textarea#memory-input[aria-invalid="true"]:hover{
   font-family:var(--font-body);font-size:calc(19 * var(--figma-unit));font-weight:400;line-height:calc(20 * var(--figma-unit));
   cursor:grab;user-select:none
 }
-.rep-chip.is-dragging{opacity:.45}
+.rep-chip:hover{border-color:var(--design-muted)}
+.rep-chip:has([data-remove-word]:hover){border-style:dashed;border-color:var(--design-muted)}
+.rep-chip.is-dragging{color:var(--design-muted)}
+.rep-chip.is-dragging button img{opacity:.33;filter:grayscale(1)}
 .rep-chip button{width:calc(11.018 * var(--figma-unit));height:calc(11.018 * var(--figma-unit));border:0;background:none;cursor:pointer;padding:0}
 .rep-chip button img{display:block;width:100%;height:100%}
-.add-word-row{display:flex;align-items:center;gap:calc(6 * var(--figma-unit));margin-top:calc(12 * var(--figma-unit))}
+.add-word-row{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;
+  gap:calc(12 * var(--figma-unit));margin-top:calc(12 * var(--figma-unit))
+}
 .add-word-btn{
   display:flex;align-items:center;gap:calc(6 * var(--figma-unit));border:1px solid #b2d4ff;background:#e9f3ff;
   color:#0365dd;border-radius:calc(8 * var(--figma-unit));padding:calc(4 * var(--figma-unit)) calc(8 * var(--figma-unit));
   font-family:var(--font-body);font-size:calc(19 * var(--figma-unit));line-height:calc(20 * var(--figma-unit));cursor:pointer
 }
+.add-word-btn:hover:not(:disabled){border-color:var(--design-blue)}
+.add-word-btn:disabled{
+  background:var(--design-blue-soft);border-color:var(--design-line);color:var(--design-muted);cursor:not-allowed
+}
 .add-word-btn img{
   width:calc(9.916 * var(--figma-unit));height:calc(9.916 * var(--figma-unit));display:block;
   transform:rotate(45deg)
 }
+.add-word-btn:disabled img{opacity:.55;filter:grayscale(1)}
 .add-word-input{
-  display:none;width:calc(180 * var(--figma-unit));border:1px solid var(--design-blue);border-radius:calc(8 * var(--figma-unit));
-  padding:calc(4 * var(--figma-unit)) calc(8 * var(--figma-unit));font-family:var(--font-body);
-  font-size:calc(19 * var(--figma-unit));line-height:calc(20 * var(--figma-unit))
+  display:none;width:calc(145 * var(--figma-unit));border:1px solid var(--design-blue);border-radius:calc(8 * var(--figma-unit));
+  padding:calc(4 * var(--figma-unit)) calc(8 * var(--figma-unit));font-family:var(--font-body);background:#fff;color:#000;
+  font-size:calc(19 * var(--figma-unit));line-height:calc(20 * var(--figma-unit));
+  outline:none;box-shadow:none
 }
+.add-word-input::placeholder{color:var(--design-muted);opacity:1}
+.add-word-input:focus,.add-word-input:focus-visible{
+  outline:none!important;box-shadow:none;border-color:var(--design-blue)
+}
+.add-word-confirm{
+  display:none;align-items:center;justify-content:center;
+  width:calc(30.024 * var(--figma-unit));height:calc(28 * var(--figma-unit));padding:0;
+  border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));
+  background:var(--design-blue-soft);cursor:not-allowed;outline:none;box-shadow:none
+}
+.add-word-confirm img{
+  width:calc(9.916 * var(--figma-unit));height:calc(9.916 * var(--figma-unit));display:block;
+  transform:rotate(45deg);opacity:.55;filter:grayscale(1)
+}
+.add-word-confirm:focus,.add-word-confirm:focus-visible{outline:none!important;box-shadow:none}
+.add-word-confirm:not(:disabled){
+  background:#e9f3ff;border-color:var(--design-blue);cursor:pointer
+}
+.add-word-confirm:not(:disabled) img{opacity:1;filter:none}
+.add-word-confirm:hover:not(:disabled){background:#b2d4ff}
+.add-word-row.is-editing .add-word-btn{display:none}
 .add-word-row.is-editing .add-word-input{display:block}
+.add-word-row.is-editing .add-word-confirm{display:flex}
+.add-word-row.is-editing{direction:ltr;justify-content:flex-end}
+.add-word-limit-hint{
+  width:100%;margin:0;font-family:var(--font-body);font-size:calc(14 * var(--figma-unit));
+  font-weight:400;line-height:calc(18 * var(--figma-unit));color:#000;text-align:right
+}
+.add-word-limit-hint[hidden]{display:none!important}
 .side-copy{
   width:100%;font-family:var(--font-body);font-size:calc(14 * var(--figma-unit));font-weight:400;
   line-height:calc(18 * var(--figma-unit));color:#000;margin:calc(16 * var(--figma-unit)) 0
@@ -796,6 +838,8 @@ textarea#memory-input[aria-invalid="true"]:hover{
           <div class="add-word-row" id="add-word-row">
             <button type="button" class="add-word-btn" id="add-word-btn"><img src="/memory-processor/assets/icons/add-word.svg" alt=""><span>הוספת מילה</span></button>
             <input class="add-word-input" id="add-word-input" type="text" dir="rtl" maxlength="30" placeholder="הקלד מילה">
+            <button type="button" class="add-word-confirm" id="add-word-confirm" disabled aria-label="אישור הוספת מילה"><img src="/memory-processor/assets/icons/add-word.svg" alt=""></button>
+            <p class="add-word-limit-hint" id="add-word-limit-hint" hidden>ניתן לבחור עד 10 מילים מייצגות</p>
           </div>
         </section>
 
@@ -2582,6 +2626,19 @@ function syncDesignUI(){
   }
   const count=document.getElementById('rep-count');
   if(count)count.textContent=`[${designRepresentativeWords.length}/10]`;
+  const atWordLimit=designRepresentativeWords.length>=10;
+  const addRow=document.getElementById('add-word-row');
+  const addBtn=document.getElementById('add-word-btn');
+  const addInput=document.getElementById('add-word-input');
+  const addConfirm=document.getElementById('add-word-confirm');
+  const addHint=document.getElementById('add-word-limit-hint');
+  if(addBtn)addBtn.disabled=atWordLimit;
+  if(addHint)addHint.hidden=!atWordLimit;
+  if(atWordLimit&&addRow?.classList.contains('is-editing')){
+    addRow.classList.remove('is-editing');
+    if(addInput)addInput.value='';
+    if(addConfirm)addConfirm.disabled=true;
+  }
   const memoryCount=document.getElementById('entry-count');
   if(memoryCount&&hasResults&&!memoryCount.classList.contains('is-at-limit')){
     memoryCount.style.color='var(--design-muted)';
@@ -2663,18 +2720,35 @@ function bindDesignedInterface(){
 
   const addRow=document.getElementById('add-word-row');
   const addInput=document.getElementById('add-word-input');
-  document.getElementById('add-word-btn')?.addEventListener('click',()=>{
-    if(!addRow?.classList.contains('is-editing')){addRow?.classList.add('is-editing');addInput?.focus();return;}
+  const addConfirm=document.getElementById('add-word-confirm');
+  const exitAddWordEditing=()=>{
+    addRow?.classList.remove('is-editing');
+    if(addInput)addInput.value='';
+    if(addConfirm)addConfirm.disabled=true;
+  };
+  const submitAddWord=()=>{
     const word=addInput?.value.trim();
     if(!word||designRepresentativeWords.length>=10)return;
     designRepresentativeWords.push(word);
     if(currentResult?.representativeWords){
       currentResult.representativeWords.push({word,sourceText:word,category:'other'});
     }
-    addInput.value='';addRow.classList.remove('is-editing');syncDesignUI();
+    exitAddWordEditing();
+    syncDesignUI();
+  };
+  document.getElementById('add-word-btn')?.addEventListener('click',()=>{
+    if(designRepresentativeWords.length>=10)return;
+    addRow?.classList.add('is-editing');
+    if(addInput){addInput.value='';addInput.focus();}
+    if(addConfirm)addConfirm.disabled=true;
+  });
+  addConfirm?.addEventListener('click',submitAddWord);
+  addInput?.addEventListener('input',()=>{
+    if(addConfirm)addConfirm.disabled=!addInput.value.trim();
   });
   addInput?.addEventListener('keydown',event=>{
-    if(event.key==='Enter'){event.preventDefault();document.getElementById('add-word-btn')?.click();}
+    if(event.key==='Enter'){event.preventDefault();submitAddWord();}
+    if(event.key==='Escape'){event.preventDefault();exitAddWordEditing();}
   });
   const repChips=document.getElementById('rep-chips');
   repChips?.addEventListener('click',event=>{
@@ -2685,11 +2759,61 @@ function bindDesignedInterface(){
     syncDesignUI();
   });
   let draggedWordIndex=null;
+  function setRepChipDragImage(event,chip){
+    const rect=chip.getBoundingClientRect();
+    const cs=getComputedStyle(chip);
+    const radius=parseFloat(cs.borderRadius)||8;
+    const dpr=window.devicePixelRatio||1;
+    const w=Math.max(1,Math.ceil(rect.width));
+    const h=Math.max(1,Math.ceil(rect.height));
+    const canvas=document.createElement('canvas');
+    canvas.width=Math.ceil(w*dpr);
+    canvas.height=Math.ceil(h*dpr);
+    const ctx=canvas.getContext('2d');
+    if(!ctx)return;
+    ctx.scale(dpr,dpr);
+    ctx.clearRect(0,0,w,h);
+    ctx.beginPath();
+    if(typeof ctx.roundRect==='function')ctx.roundRect(0,0,w,h,radius);
+    else{
+      ctx.moveTo(radius,0);ctx.arcTo(w,0,w,h,radius);ctx.arcTo(w,h,0,h,radius);
+      ctx.arcTo(0,h,0,0,radius);ctx.arcTo(0,0,w,0,radius);ctx.closePath();
+    }
+    ctx.clip();
+    ctx.fillStyle='#fff';
+    ctx.fillRect(0,0,w,h);
+    ctx.beginPath();
+    if(typeof ctx.roundRect==='function')ctx.roundRect(0.5,0.5,w-1,h-1,Math.max(0,radius-0.5));
+    else{
+      const r=Math.max(0,radius-0.5);
+      ctx.moveTo(0.5+r,0.5);ctx.arcTo(w-0.5,0.5,w-0.5,h-0.5,r);ctx.arcTo(w-0.5,h-0.5,0.5,h-0.5,r);
+      ctx.arcTo(0.5,h-0.5,0.5,0.5,r);ctx.arcTo(0.5,0.5,w-0.5,0.5,r);ctx.closePath();
+    }
+    ctx.strokeStyle=cs.borderColor||'#d9d9d9';
+    ctx.lineWidth=1;
+    ctx.stroke();
+    const label=chip.querySelector(':scope > span');
+    if(label){
+      const lr=label.getBoundingClientRect();
+      ctx.fillStyle='#000';
+      ctx.font=`${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      ctx.textBaseline='middle';
+      ctx.textAlign='left';
+      ctx.fillText(label.textContent||'',lr.left-rect.left,lr.top-rect.top+lr.height/2);
+    }
+    const img=chip.querySelector('button img');
+    if(img?.complete&&img.naturalWidth){
+      const ir=img.getBoundingClientRect();
+      ctx.drawImage(img,ir.left-rect.left,ir.top-rect.top,ir.width,ir.height);
+    }
+    event.dataTransfer.setDragImage(canvas,event.clientX-rect.left,event.clientY-rect.top);
+  }
   repChips?.addEventListener('dragstart',event=>{
     const chip=event.target.closest('.rep-chip');if(!chip)return;
     draggedWordIndex=Number(chip.dataset.wordIndex);
     event.dataTransfer.effectAllowed='move';
     event.dataTransfer.setData('text/plain',String(draggedWordIndex));
+    setRepChipDragImage(event,chip);
     requestAnimationFrame(()=>chip.classList.add('is-dragging'));
   });
   repChips?.addEventListener('dragover',event=>{

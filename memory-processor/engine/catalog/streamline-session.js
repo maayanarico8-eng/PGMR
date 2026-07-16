@@ -1,12 +1,17 @@
 /**
  * Session-scoped Streamline SVG cache — cleared when a new analysis starts.
+ * Also tracks pictogram hashes already used in the current analyze run so
+ * two different representative words cannot share the same icon.
  */
 (function (root) {
   const active = [];
   const blobUrls = [];
+  const usedHashes = new Set();
 
   function register(svg, meta) {
-    active.push({ svg, meta: meta || {}, at: Date.now() });
+    const m = meta || {};
+    active.push({ svg, meta: m, at: Date.now() });
+    if (m.hash) usedHashes.add(String(m.hash));
   }
 
   function trackBlobUrl(url) {
@@ -27,8 +32,18 @@
     return null;
   }
 
+  /** Hashes already assigned to a word in this analyze session. */
+  function getUsedHashes() {
+    return Array.from(usedHashes);
+  }
+
+  function isHashUsed(hash) {
+    return !!(hash && usedHashes.has(String(hash)));
+  }
+
   function cleanup() {
     active.length = 0;
+    usedHashes.clear();
     if (typeof URL !== 'undefined' && URL.revokeObjectURL) {
       blobUrls.forEach((url) => URL.revokeObjectURL(url));
     }
@@ -40,6 +55,8 @@
     trackBlobUrl,
     getActive,
     getByEnglish,
+    getUsedHashes,
+    isHashUsed,
     cleanup,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

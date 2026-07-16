@@ -264,22 +264,24 @@ Non-verbs (person, object, place): use a visually specific noun (grandfather, ne
     if (!resolve) throw new Error('MemoryEngineCatalogResolve.resolveForWord is not available');
 
     const resolvedByEnglish = {};
-    await Promise.all(
-      uniqueTranslations.map(async (t) => {
-        const english = t.english || null;
-        if (!english || resolvedByEnglish[normalizeEnglish(english)]) return;
-        const resolved = await resolve(t.hebrew, {
-          english,
-          englishWord: english,
-          canonicalReferent: english,
-          catalog: opts.catalog,
-          local: opts.local,
-          external: opts.external,
-          narratorGender: opts.narratorGender,
-        });
-        resolvedByEnglish[normalizeEnglish(english)] = resolved;
-      })
-    );
+    // Sequential so each word can exclude hashes already picked in this run.
+    for (const t of uniqueTranslations) {
+      const english = t.english || null;
+      if (!english || resolvedByEnglish[normalizeEnglish(english)]) continue;
+      const excludeHashes = root.MemoryEngineStreamlineSession?.getUsedHashes?.() || [];
+      const resolved = await resolve(t.hebrew, {
+        english,
+        englishWord: english,
+        canonicalReferent: english,
+        catalog: opts.catalog,
+        local: opts.local,
+        external: opts.external,
+        narratorGender: opts.narratorGender,
+        context: opts.memoryText || opts.context || null,
+        excludeHashes,
+      });
+      resolvedByEnglish[normalizeEnglish(english)] = resolved;
+    }
 
     const slots = await Promise.all(
       (hebrewWords || []).map(async (hebrew) => {

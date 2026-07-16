@@ -264,6 +264,47 @@ async function testResolvePictogramWords() {
   console.log('PASS resolvePictogramWords returns hebrew + english slots');
 }
 
+async function testResolvePictogramWordsPassesExcludeHashesSequentially() {
+  const Translate = load();
+  const seenExclude = [];
+  // No Anthropic at all — English comes from canonicalMap; resolve is stubbed.
+  const mockClient = {
+    callClaudeJSON: async () => {
+      throw new Error('unit test must not call Anthropic');
+    },
+  };
+  globalThis.MemoryEngineAnthropic = mockClient;
+  globalThis.MemoryEngineStreamlineSession = {
+    getUsedHashes() {
+      return seenExclude.length ? ['hash-a'] : [];
+    },
+  };
+  const mockResolve = async (hebrew, opts) => {
+    seenExclude.push([...(opts.excludeHashes || [])]);
+    return {
+      hebrew,
+      english: opts.english,
+      status: 'hit',
+      svg: '<svg></svg>',
+      hash: opts.english === 'picture frame' ? 'hash-a' : 'hash-b',
+      source: 'streamline-new',
+    };
+  };
+  await Translate.resolvePictogramWords(['תמונה', 'מרכיב'], {
+    client: mockClient,
+    // No memoryText → no translation AI; pass-through from canonical map only.
+    canonicalMap: {
+      תמונה: 'picture frame',
+      מרכיב: 'assemble furniture',
+    },
+    resolve: mockResolve,
+  });
+  assert(seenExclude.length === 2, 'two unique resolves');
+  assert(seenExclude[0].length === 0, 'first word has no exclusions');
+  assert(seenExclude[1].includes('hash-a'), 'second word excludes first hash');
+  console.log('PASS resolvePictogramWords passes excludeHashes sequentially');
+}
+
 async function run() {
   await testPassThrough();
   await testBatchAi();
@@ -277,6 +318,7 @@ async function run() {
   await testDedupeByEnglish();
   await testResolvePictogramWordsDedupesResolve();
   await testResolvePictogramWords();
+  await testResolvePictogramWordsPassesExcludeHashesSequentially();
   console.log('\nAll translate-words tests passed.');
 }
 

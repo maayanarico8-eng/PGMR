@@ -38,6 +38,7 @@
       const result = await sl.resolveIcon(english, {
         hebrew,
         context: options?.context || options?.memory || null,
+        excludeHashes: options?.excludeHashes,
       });
       if (result?.svg) {
         return withPair(

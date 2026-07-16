@@ -67,12 +67,21 @@
     };
   }
 
+  function excludedHashSet(opts) {
+    return new Set((opts?.excludeHashes || []).map((h) => String(h || '').trim()).filter(Boolean));
+  }
+
   function buildUserContent(english, imaged, opts) {
     const lines = [
       `English pictogram term: ${english}`,
     ];
     if (opts?.hebrew) lines.push(`Hebrew word: ${opts.hebrew}`);
     if (opts?.context) lines.push(`Memory context: ${opts.context}`);
+    if (opts?.excludeHashes?.length) {
+      lines.push(
+        `Already used in this memory (do not pick these hashes): ${opts.excludeHashes.join(', ')}`
+      );
+    }
     lines.push('', 'Candidates (each image follows its label):');
     imaged.forEach((c, i) => {
       lines.push(`${i}. hash=${c.hash} name=${JSON.stringify(c.name || '')} index=${c.index}`);
@@ -99,7 +108,11 @@
     if (!anthropic?.callClaudeJSON || !promptMod?.SELECT_PICTOGRAM_PROMPT) return null;
     if (!english || !candidates?.length) return null;
 
-    const imaged = await loadCandidateImages(candidates);
+    const excluded = excludedHashSet(opts);
+    const eligible = candidates.filter((c) => c?.hash && !excluded.has(String(c.hash)));
+    if (!eligible.length) return null;
+
+    const imaged = await loadCandidateImages(eligible);
     if (!imaged.length) return null;
 
     const allowed = new Set(imaged.map((c) => c.hash));
@@ -111,9 +124,9 @@
     });
 
     const winnerHash = String(parsed?.winnerHash || '').trim();
-    if (!winnerHash || !allowed.has(winnerHash)) {
+    if (!winnerHash || !allowed.has(winnerHash) || excluded.has(winnerHash)) {
       const byIndex = imaged[parsed?.winnerIndex];
-      if (byIndex?.hash && allowed.has(byIndex.hash)) {
+      if (byIndex?.hash && allowed.has(byIndex.hash) && !excluded.has(byIndex.hash)) {
         return {
           winnerHash: byIndex.hash,
           winnerIndex: byIndex.index,
