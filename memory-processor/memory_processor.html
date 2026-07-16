@@ -504,7 +504,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .rep-count{direction:ltr;white-space:nowrap}
 .rep-chips{display:flex;justify-content:flex-start;gap:calc(12 * var(--figma-unit)) calc(10 * var(--figma-unit));flex-wrap:wrap}
 .rep-chip{
-  display:inline-flex;align-items:center;gap:calc(6 * var(--figma-unit));
+  display:inline-flex;align-items:center;gap:calc(6 * var(--figma-unit));direction:rtl;
   padding:calc(4 * var(--figma-unit)) calc(8 * var(--figma-unit));
   border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));background:#fff;
   font-family:var(--font-body);font-size:calc(19 * var(--figma-unit));font-weight:400;line-height:calc(20 * var(--figma-unit));
@@ -2760,6 +2760,9 @@ function bindDesignedInterface(){
     syncDesignUI();
   });
   let draggedWordIndex=null;
+  let dragOrderSnapshot=null;
+  let dragItemsSnapshot=null;
+  let chipDidDrop=false;
   function setRepChipDragImage(event,chip){
     const rect=chip.getBoundingClientRect();
     const radius=getComputedStyle(chip).borderRadius||'8px';
@@ -2777,6 +2780,7 @@ function bindDesignedInterface(){
       'left:0',
       'margin:0',
       'pointer-events:none',
+      'direction:rtl',
       'color:#000',
       'background:#fff',
       'border:1px solid var(--design-line)',
@@ -2794,37 +2798,67 @@ function bindDesignedInterface(){
     event.dataTransfer.setDragImage(clone,event.clientX-rect.left,event.clientY-rect.top);
     requestAnimationFrame(()=>clone.remove());
   }
+  function commitRepChipOrderFromDom(){
+    if(!repChips||!dragOrderSnapshot)return;
+    const chips=[...repChips.querySelectorAll('.rep-chip')];
+    const newWords=chips.map(chip=>dragOrderSnapshot[Number(chip.dataset.wordIndex)]);
+    designRepresentativeWords.splice(0,designRepresentativeWords.length,...newWords.filter(w=>w!=null));
+    if(currentResult?.representativeWords&&dragItemsSnapshot){
+      const newItems=chips.map(chip=>dragItemsSnapshot[Number(chip.dataset.wordIndex)]).filter(item=>item!=null);
+      currentResult.representativeWords.splice(0,currentResult.representativeWords.length,...newItems);
+    }
+  }
+  function moveDraggingChip(event){
+    const dragging=repChips.querySelector('.rep-chip.is-dragging');
+    if(!dragging)return;
+    const target=event.target.closest('.rep-chip');
+    if(!target||target===dragging)return;
+    const rect=target.getBoundingClientRect();
+    const midX=rect.left+rect.width/2;
+    // RTL chips: right half → earlier in DOM, left half → later in DOM
+    if(event.clientX>=midX)repChips.insertBefore(dragging,target);
+    else repChips.insertBefore(dragging,target.nextSibling);
+  }
   repChips?.addEventListener('dragstart',event=>{
     if(event.target.closest('[data-remove-word]')){event.preventDefault();return;}
     const chip=event.target.closest('.rep-chip');if(!chip)return;
     draggedWordIndex=Number(chip.dataset.wordIndex);
+    dragOrderSnapshot=[...designRepresentativeWords];
+    dragItemsSnapshot=currentResult?.representativeWords?[...currentResult.representativeWords]:null;
+    chipDidDrop=false;
     event.dataTransfer.effectAllowed='move';
     event.dataTransfer.setData('application/x-rep-word-index',String(draggedWordIndex));
     event.dataTransfer.setData('text/plain',String(draggedWordIndex));
     setRepChipDragImage(event,chip);
-    requestAnimationFrame(()=>chip.classList.add('is-dragging'));
+    chip.classList.add('is-dragging');
   });
   repChips?.addEventListener('dragover',event=>{
     if(draggedWordIndex==null)return;
     event.preventDefault();event.dataTransfer.dropEffect='move';
+    moveDraggingChip(event);
   });
   repChips?.addEventListener('drop',event=>{
     if(draggedWordIndex==null)return;
     event.preventDefault();
-    const target=event.target.closest('.rep-chip');
-    const targetIndex=target?Number(target.dataset.wordIndex):designRepresentativeWords.length-1;
-    if(Number.isNaN(targetIndex)||targetIndex===draggedWordIndex)return;
-    const[word]=designRepresentativeWords.splice(draggedWordIndex,1);
-    designRepresentativeWords.splice(targetIndex,0,word);
-    if(currentResult?.representativeWords){
-      const[item]=currentResult.representativeWords.splice(draggedWordIndex,1);
-      currentResult.representativeWords.splice(targetIndex,0,item);
-    }
-    draggedWordIndex=null;syncDesignUI();
+    chipDidDrop=true;
+    moveDraggingChip(event);
+    commitRepChipOrderFromDom();
+    draggedWordIndex=null;
+    dragOrderSnapshot=null;
+    dragItemsSnapshot=null;
+    syncDesignUI();
   });
   repChips?.addEventListener('dragend',()=>{
+    if(!chipDidDrop&&dragOrderSnapshot){
+      designRepresentativeWords.splice(0,designRepresentativeWords.length,...dragOrderSnapshot);
+      syncDesignUI();
+    }else{
+      repChips.querySelectorAll('.is-dragging').forEach(chip=>chip.classList.remove('is-dragging'));
+    }
     draggedWordIndex=null;
-    repChips.querySelectorAll('.is-dragging').forEach(chip=>chip.classList.remove('is-dragging'));
+    dragOrderSnapshot=null;
+    dragItemsSnapshot=null;
+    chipDidDrop=false;
   });
 
   document.querySelectorAll('#design-source button').forEach(button=>{
