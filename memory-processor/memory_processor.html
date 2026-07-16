@@ -2755,6 +2755,8 @@ CAT.init();
 
 const MAX_MEMORY_WORDS=20;
 const MEMORY_WORD_LIMIT_MSG='20/20 מילים - על מנת להמשיך הלאה יש לוודא כי הזיכרון אינו חורג מ-20 מילים';
+/** Set when the user tries to start a 21st word (space/paste over the cap). Cleared when under 20. */
+let memoryWordLimitError=false;
 
 function countMemoryWords(text){
   const trimmed=(text||'').trim();
@@ -2783,16 +2785,17 @@ function updateWordCount(){
   const n=countMemoryWords(raw);
   const wcEl=document.getElementById('word-count');
   const designCount=document.getElementById('entry-count');
-  const atLimit=n>=MAX_MEMORY_WORDS;
+  if(n<MAX_MEMORY_WORDS)memoryWordLimitError=false;
+  const showError=memoryWordLimitError||n>MAX_MEMORY_WORDS;
   const overLimit=n>MAX_MEMORY_WORDS;
   const editing=isEditingMemory();
   const hasResults=document.getElementById('app')?.classList.contains('has-results');
-  wcEl.textContent=text?(n+' word'+(n!==1?'s':'')+(atLimit?' — max 20':'')):'';
+  wcEl.textContent=text?(n+' word'+(n!==1?'s':'')+(showError?' — max 20':'')):'';
   if(designCount){
-    designCount.textContent=atLimit?MEMORY_WORD_LIMIT_MSG:`${n}/20 מילים`;
-    designCount.classList.toggle('is-at-limit',atLimit);
+    designCount.textContent=showError?MEMORY_WORD_LIMIT_MSG:`${n}/20 מילים`;
+    designCount.classList.toggle('is-at-limit',showError);
     designCount.style.color='';
-    if(!atLimit){
+    if(!showError){
       if(editing)designCount.style.color='#000';
       else if(hasResults)designCount.style.color='var(--design-muted)';
       else designCount.style.color=text?'#000':'var(--design-muted)';
@@ -2804,8 +2807,8 @@ function updateWordCount(){
       ?'איזה זיכרון היית רוצה לשמר?'
       :(hasResults?(designRepresentativeWords.slice(0,3).join(', ')||'הזיכרון שלך'):'איזה זיכרון היית רוצה לשמר?');
   }
-  document.getElementById('memory-input')?.setAttribute('aria-invalid',atLimit?'true':'false');
-  wcEl.style.color=atLimit?'#9B3010':'';
+  document.getElementById('memory-input')?.setAttribute('aria-invalid',showError?'true':'false');
+  wcEl.style.color=showError?'#9B3010':'';
   const analyzeBtn=document.getElementById('analyze-btn');
   // 20 words is allowed; only block submit when somehow over (e.g. paste race).
   analyzeBtn.disabled=!text||overLimit;
@@ -2860,7 +2863,11 @@ document.getElementById('memory-input').addEventListener('beforeinput',event=>{
   // Paste/drop: allow the event, then clamp in `input` (clipboard data is unreliable here).
   if(event.inputType==='insertFromPaste'||event.inputType==='insertFromDrop')return;
   const next=input.value.slice(0,start)+inserted+input.value.slice(end);
-  if(exceedsMemoryWordLimit(next))event.preventDefault();
+  if(exceedsMemoryWordLimit(next)){
+    event.preventDefault();
+    memoryWordLimitError=true;
+    updateWordCount();
+  }
 });
 document.getElementById('memory-input').addEventListener('paste',event=>{
   event.preventDefault();
@@ -2868,13 +2875,18 @@ document.getElementById('memory-input').addEventListener('paste',event=>{
   const pasted=(event.clipboardData||window.clipboardData)?.getData('text')||'';
   const start=input.selectionStart??input.value.length;
   const end=input.selectionEnd??start;
-  const next=clampMemoryToWordLimit(input.value.slice(0,start)+pasted+input.value.slice(end));
+  const combined=input.value.slice(0,start)+pasted+input.value.slice(end);
+  if(exceedsMemoryWordLimit(combined)||countMemoryWords(combined)>MAX_MEMORY_WORDS){
+    memoryWordLimitError=true;
+  }
+  const next=clampMemoryToWordLimit(combined);
   input.setRangeText(next,0,input.value.length,'end');
   input.dispatchEvent(new Event('input',{bubbles:true}));
 });
 document.getElementById('memory-input').addEventListener('input',e=>{
   const input=e.target;
   if(exceedsMemoryWordLimit(input.value)){
+    memoryWordLimitError=true;
     const clamped=clampMemoryToWordLimit(input.value);
     if(clamped!==input.value){
       const pos=input.selectionStart;
