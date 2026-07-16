@@ -52,7 +52,7 @@ console.log('expressive-render tests…');
   assert(approx(api.computeStrokeWidth(50), 7.1375), 'impact 50 → half of rescaled range');
 }
 
-// Frequency
+// Frequency — slider 0–100 maps onto former 8–100% range
 {
   const solid = api.computeDash(100, 1);
   assert(solid.solid === true, 'freq 100 solid');
@@ -65,6 +65,11 @@ console.log('expressive-render tests…');
   const low = api.computeDash(0);
   assert(low.solid === false, 'freq 0 dashed');
   assert(low.dash >= 0.01, 'dash floor');
+  // New 0% must match the former 8% look: f=0.08 → dash = 12 * 0.08^1.6
+  const former8Dash = 12 * Math.pow(0.08, 1.6);
+  assert(approx(low.dash, former8Dash), 'freq 0 ≡ former freq 8 dash');
+  const former8Gap = Math.max(0.6 + 6.8 * (1 - 0.08), 1.6 * 0.5);
+  assert(approx(low.gap, former8Gap), 'freq 0 ≡ former freq 8 gap');
 
   const sameFrequencyThin = api.applyExpressiveRendering(sampleSequence(1), {
     ...api.DEFAULT_PARAMS,

@@ -16,6 +16,9 @@ function loadEngine() {
     'catalog/normalize-pictogram-svg.js',
     'catalog/providers/local.js',
     'catalog/streamline-session.js',
+    'anthropic-client.js',
+    'catalog/select-pictogram-prompt.js',
+    'catalog/select-pictogram.js',
     'catalog/providers/streamline.js',
     'catalog/providers/external.js',
     'catalog/resolve.js',
@@ -54,8 +57,31 @@ async function testStreamlineResolution() {
         },
       };
     }
+    if (u.includes('action=preview')) {
+      return {
+        ok: true,
+        async json() {
+          return { hash: 'ico_grandfather', mediaType: 'image/png', data: 'aa' };
+        },
+      };
+    }
     if (u.includes('action=download')) {
       return { ok: true, async json() { return { svg: '<svg></svg>' }; } };
+    }
+    if (u.includes('/api/anthropic')) {
+      return {
+        ok: true,
+        async json() {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: '{"winnerHash":"ico_grandfather","winnerIndex":0,"rationale":"test"}',
+              },
+            ],
+          };
+        },
+      };
     }
     if (u.includes('/api/streamline-mapping')) {
       return { ok: true, async json() { return { ok: true }; } };

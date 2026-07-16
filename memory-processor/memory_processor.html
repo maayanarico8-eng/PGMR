@@ -811,11 +811,13 @@ textarea#memory-input[aria-invalid="true"]{border-color:var(--design-error)}
 <script src="/memory-processor/engine/catalog/normalize-pictogram-svg.js"></script>
 <script src="/memory-processor/engine/catalog/providers/local.js"></script>
 <script src="/memory-processor/engine/catalog/streamline-session.js"></script>
+<script src="/memory-processor/engine/anthropic-client.js"></script>
+<script src="/memory-processor/engine/catalog/select-pictogram-prompt.js"></script>
+<script src="/memory-processor/engine/catalog/select-pictogram.js"></script>
 <script src="/memory-processor/engine/catalog/providers/streamline.js"></script>
 <script src="/memory-processor/engine/catalog/providers/external.js"></script>
 <script src="/memory-processor/engine/catalog/resolve.js"></script>
 <script src="/memory-processor/engine/test-sentences.js"></script>
-<script src="/memory-processor/engine/anthropic-client.js"></script>
 <script src="/memory-processor/engine/catalog/narrator-gender.js"></script>
 <script src="/memory-processor/engine/catalog/translate-words.js"></script>
 <script src="/memory-processor/engine/rule1/extract-event-model.js"></script>
@@ -2467,7 +2469,7 @@ function syncDesignUI(){
   app?.classList.toggle('has-results',hasResults);
   if(!hasResults)app?.classList.remove('has-visual-result');
   const heading=document.getElementById('entry-heading');
-  if(heading)heading.textContent=hasResults?'הזיכרון שלך':'איזה זיכרון היית רוצה לשמר?';
+  if(heading)heading.textContent=hasResults?(designRepresentativeWords.slice(0,3).join(', ')||'הזיכרון שלך'):'איזה זיכרון היית רוצה לשמר?';
   const chips=document.getElementById('rep-chips');
   if(chips){
     chips.innerHTML=designRepresentativeWords.map((word,index)=>`<span class="rep-chip" draggable="true" data-word-index="${index}"><button type="button" data-remove-word="${index}" aria-label="הסרת ${esc(word)}"><img src="/memory-processor/assets/icons/remove-word.svg" alt=""></button><span>${esc(word)}</span></span>`).join('');
@@ -2656,7 +2658,10 @@ function updateWordCount(){
     designCount.style.color=overLimit?'var(--design-error)':text?'#000':'var(--design-muted)';
   }
   const heading=document.getElementById('entry-heading');
-  if(heading)heading.textContent=document.getElementById('app')?.classList.contains('has-results')?'הזיכרון שלך':'איזה זיכרון היית רוצה לשמר?';
+  if(heading){
+    const hasResults=document.getElementById('app')?.classList.contains('has-results');
+    heading.textContent=hasResults?(designRepresentativeWords.slice(0,3).join(', ')||'הזיכרון שלך'):'איזה זיכרון היית רוצה לשמר?';
+  }
   document.getElementById('memory-input')?.setAttribute('aria-invalid',overLimit?'true':'false');
   wcEl.style.color=overLimit?'#9B3010':'';
   document.getElementById('analyze-btn').disabled=!text||overLimit;

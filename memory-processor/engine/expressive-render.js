@@ -13,6 +13,8 @@
   const BASE_STROKE = 0.5;
   const MAX_STROKE = 30;
   const IMPACT_SCALE = 0.45;
+  /** Slider 0–100 maps onto the former 8–100% frequency range (new 0% = old 8%). */
+  const FREQ_MIN = 8;
   const STROKE_COLOR = '#000000';
   const GRAPHIC_SEL = 'path,rect,circle,ellipse,line,polyline,polygon';
 
@@ -48,8 +50,10 @@
   }
 
   function computeDash(freq) {
-    const f100 = clamp(Number(freq), 0, 100);
-    if (f100 === 100) return { solid: true, dasharray: null, dashoffset: 0 };
+    const ui = clamp(Number(freq), 0, 100);
+    // Full slider covers the former FREQ_MIN–100% range.
+    const f100 = FREQ_MIN + (ui / 100) * (100 - FREQ_MIN);
+    if (f100 >= 100) return { solid: true, dasharray: null, dashoffset: 0 };
     const f = f100 / 100;
     const dash = Math.max(0.01, 12 * Math.pow(f, 1.6));
     // Frequency alone controls the dash pattern. Impact may thicken the stroke,

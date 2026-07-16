@@ -35,7 +35,10 @@
     }
 
     try {
-      const result = await sl.resolveIcon(english, options);
+      const result = await sl.resolveIcon(english, {
+        hebrew,
+        context: options?.context || options?.memory || null,
+      });
       if (result?.svg) {
         return withPair(
           {

@@ -1,5 +1,5 @@
 /**
- * Anthropic API client — claude-sonnet-5 only, 429 backoff, robust JSON parse.
+ * Anthropic API client — default claude-sonnet-5, optional model override, 429 backoff, JSON parse.
  */
 (function (root) {
   const MODEL = 'claude-sonnet-5';
@@ -62,7 +62,8 @@
   }
 
   async function callClaude(body) {
-    const payload = { ...body, model: MODEL };
+    const requestedModel = body?.model;
+    const payload = { ...body, model: requestedModel || MODEL };
     let lastError;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       const res = await fetch('/api/anthropic', {

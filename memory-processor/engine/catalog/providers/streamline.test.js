@@ -20,8 +20,15 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-function load() {
+function load(opts) {
   const g = globalThis;
+  delete g.MemoryEngineCatalogStreamlineProvider;
+  delete g.MemoryEngineSelectPictogram;
+  delete g.MemoryEngineSelectPictogramPrompt;
+  delete g.MemoryEngineAnthropic;
+  delete g.MemoryEngineStreamlineSession;
+  delete g.MemoryEngineNormalizePictogramSvg;
+
   g.fetch = async (url) => {
     const u = String(url);
     if (u.includes('/api/streamline-mapping') && !u.includes('action=')) {
@@ -55,31 +62,105 @@ function load() {
     if (u.includes('/api/pictogram-cache') && !u.includes('english=')) {
       return { ok: true, async json() { return { version: 1, icons: {} }; } };
     }
+    if (u.includes('action=preview')) {
+      return {
+        ok: true,
+        async json() {
+          return { hash: 'preview', mediaType: 'image/png', data: 'aaa' };
+        },
+      };
+    }
     if (u.includes('action=download')) {
-      return { ok: true, async json() { return { svg: '<svg id="downloaded"></svg>' }; } };
+      const hashMatch = /[?&]hash=([^&]+)/.exec(u);
+      const hash = hashMatch ? decodeURIComponent(hashMatch[1]) : 'unknown';
+      return {
+        ok: true,
+        async json() {
+          return { svg: `<svg id="downloaded-${hash}"></svg>` };
+        },
+      };
     }
     if (u.includes('action=family-search')) {
       return {
         ok: true,
         async json() {
-          return { results: [{ hash: 'ico_new', name: 'dog' }] };
+          return {
+            results: opts?.searchResults || [
+              {
+                hash: 'ico_new',
+                name: 'dog',
+                isFree: true,
+                imagePreviewUrl: 'https://assets.streamlinehq.com/image/private/dog.png?_a=1',
+              },
+            ],
+          };
         },
       };
     }
     if (u.includes('/api/streamline-mapping') || u.includes('/api/pictogram-cache')) {
       return { ok: true, async json() { return { ok: true }; } };
     }
+    if (u.includes('/api/anthropic')) {
+      throw new Error('anthropic should be mocked via MemoryEngineAnthropic');
+    }
     throw new Error('unexpected fetch: ' + u);
   };
 
   eval(fs.readFileSync(path.join(__dirname, '../normalize-pictogram-svg.js'), 'utf8'));
   eval(fs.readFileSync(path.join(__dirname, '../streamline-session.js'), 'utf8'));
+  eval(fs.readFileSync(path.join(__dirname, '../../anthropic-client.js'), 'utf8'));
+  eval(fs.readFileSync(path.join(__dirname, '../select-pictogram-prompt.js'), 'utf8'));
+  eval(fs.readFileSync(path.join(__dirname, '../select-pictogram.js'), 'utf8'));
   eval(fs.readFileSync(path.join(__dirname, 'streamline.js'), 'utf8'));
+
+  if (opts?.selectWinnerHash) {
+    g.MemoryEngineSelectPictogram = {
+      selectPictogramFromCandidates: async () => ({
+        winnerHash: opts.selectWinnerHash,
+        winnerIndex: 1,
+        rationale: 'test',
+      }),
+    };
+  }
+  if (opts?.selectError) {
+    g.MemoryEngineSelectPictogram = {
+      selectPictogramFromCandidates: async () => {
+        throw new Error(opts.selectError);
+      },
+    };
+  }
+  if (opts?.disableSelect) {
+    delete g.MemoryEngineSelectPictogram;
+  }
+
   return g.MemoryEngineCatalogStreamlineProvider;
 }
 
+function withEmptyBank(fn) {
+  return async () => {
+    const mappingPath = path.join(__dirname, '../../../pictograms/streamline-mapping.json');
+    const cachePath = path.join(__dirname, '../../../pictograms/pictogram-cache.json');
+    const mappingBackup = fs.existsSync(mappingPath) ? fs.readFileSync(mappingPath, 'utf8') : null;
+    const cacheBackup = fs.existsSync(cachePath) ? fs.readFileSync(cachePath, 'utf8') : null;
+    fs.writeFileSync(
+      mappingPath,
+      JSON.stringify({ version: 2, meta: { searchMode: 'family', familySlug: FAMILY }, icons: {} }, null, 2) + '\n',
+      'utf8'
+    );
+    fs.writeFileSync(cachePath, JSON.stringify({ version: 1, icons: {} }, null, 2) + '\n', 'utf8');
+    try {
+      await fn({ mappingPath, cachePath });
+    } finally {
+      if (mappingBackup != null) fs.writeFileSync(mappingPath, mappingBackup, 'utf8');
+      else if (fs.existsSync(mappingPath)) fs.unlinkSync(mappingPath);
+      if (cacheBackup != null) fs.writeFileSync(cachePath, cacheBackup, 'utf8');
+      else if (fs.existsSync(cachePath)) fs.unlinkSync(cachePath);
+    }
+  };
+}
+
 async function testCachedSvgSkipsDownload() {
-  const SL = load();
+  const SL = load({ disableSelect: true });
   SL.clearMappingCache();
   const mappingPath = path.join(__dirname, '../../../pictograms/streamline-mapping.json');
   const cachePath = path.join(__dirname, '../../../pictograms/pictogram-cache.json');
@@ -131,7 +212,7 @@ async function testCachedSvgSkipsDownload() {
 }
 
 async function testHashOnlyMappingDownloadsOnce() {
-  const SL = load();
+  const SL = load({ disableSelect: true });
   SL.clearMappingCache();
   const mappingPath = path.join(__dirname, '../../../pictograms/streamline-mapping.json');
   const cachePath = path.join(__dirname, '../../../pictograms/pictogram-cache.json');
@@ -174,7 +255,7 @@ async function testHashOnlyMappingDownloadsOnce() {
 }
 
 async function testSecondResolveUsesCache() {
-  const SL = load();
+  const SL = load({ disableSelect: true });
   SL.clearMappingCache();
   const mappingPath = path.join(__dirname, '../../../pictograms/streamline-mapping.json');
   const cachePath = path.join(__dirname, '../../../pictograms/pictogram-cache.json');
@@ -225,41 +306,183 @@ async function testSecondResolveUsesCache() {
 }
 
 async function testMappingMiss() {
-  const SL = load();
-  SL.clearMappingCache();
-  globalThis.MemoryEngineStreamlineSession?.cleanup?.();
-  const mappingPath = path.join(__dirname, '../../../pictograms/streamline-mapping.json');
-  const cachePath = path.join(__dirname, '../../../pictograms/pictogram-cache.json');
-  const mappingBackup = fs.existsSync(mappingPath) ? fs.readFileSync(mappingPath, 'utf8') : null;
-  const cacheBackup = fs.existsSync(cachePath) ? fs.readFileSync(cachePath, 'utf8') : null;
-  fs.writeFileSync(
-    mappingPath,
-    JSON.stringify({ version: 2, meta: { searchMode: 'family', familySlug: FAMILY }, icons: {} }, null, 2) + '\n',
-    'utf8'
+  await withEmptyBank(async () => {
+    const SL = load({ disableSelect: true });
+    SL.clearMappingCache();
+    globalThis.MemoryEngineStreamlineSession?.cleanup?.();
+    const calls = [];
+    const orig = globalThis.fetch;
+    globalThis.fetch = async (url) => {
+      calls.push(String(url));
+      return orig(url);
+    };
+
+    const result = await SL.resolveIcon('dog');
+    SL.clearMappingCache();
+    assert(result?.svg, 'expected svg');
+    assert(result.source === 'streamline-new', 'expected new source');
+    assert(calls.some((c) => c.includes('action=family-search')), 'search should run on miss');
+    assert(calls.some((c) => c.includes('action=download')), 'download should run on miss');
+    console.log('PASS mapping miss searches and saves');
+  })();
+}
+
+async function testAiSelectsNonFirstHash() {
+  await withEmptyBank(async () => {
+    const searchResults = [
+      {
+        hash: 'ico_first',
+        name: 'pool table',
+        isFree: true,
+        imagePreviewUrl: 'https://assets.streamlinehq.com/image/private/a.png?_a=1',
+      },
+      {
+        hash: 'ico_winner',
+        name: 'swimming pool',
+        isFree: false,
+        imagePreviewUrl: 'https://assets.streamlinehq.com/image/private/b.png?_a=1',
+      },
+      {
+        hash: 'ico_third',
+        name: 'pool',
+        isFree: true,
+        imagePreviewUrl: 'https://assets.streamlinehq.com/image/private/c.png?_a=1',
+      },
+    ];
+    const SL = load({ searchResults, selectWinnerHash: 'ico_winner' });
+    SL.clearMappingCache();
+    globalThis.MemoryEngineStreamlineSession?.cleanup?.();
+
+    const downloadHashes = [];
+    const orig = globalThis.fetch;
+    globalThis.fetch = async (url) => {
+      const u = String(url);
+      if (u.includes('action=download')) {
+        const m = /[?&]hash=([^&]+)/.exec(u);
+        downloadHashes.push(m ? decodeURIComponent(m[1]) : '');
+      }
+      return orig(u);
+    };
+
+    const result = await SL.resolveIcon('swimming pool');
+    SL.clearMappingCache();
+    assert(result?.hash === 'ico_winner', 'expected AI-selected hash');
+    assert(result?.svg?.includes('ico_winner'), 'expected winner svg body');
+    assert(downloadHashes[0] === 'ico_winner', 'first download should be the AI winner');
+    assert(downloadHashes.length === 1, 'should download only the winner');
+    console.log('PASS AI selection downloads non-first hash');
+  })();
+}
+
+async function testRankDoesNotPreferFree() {
+  const SL = load({ disableSelect: true });
+  const ranked = SL.rankIconCandidates(
+    [
+      { hash: 'prem', name: 'cat sitting', isFree: false },
+      { hash: 'free', name: 'cat', isFree: true },
+    ],
+    'kitten',
+    FAMILY
   );
-  fs.writeFileSync(cachePath, JSON.stringify({ version: 1, icons: {} }, null, 2) + '\n', 'utf8');
-  const calls = [];
-  const orig = globalThis.fetch;
+  assert(ranked[0].hash === 'prem', 'premium first in API order is kept (no free filter)');
+  assert(ranked.length === 2, 'both candidates kept');
+
+  const exact = SL.rankIconCandidates(
+    [
+      { hash: 'prem', name: 'cat sitting', isFree: false },
+      { hash: 'exact', name: 'cat', isFree: true },
+    ],
+    'cat',
+    FAMILY
+  );
+  assert(exact[0].hash === 'exact', 'exact name still bumped for fallback');
+  console.log('PASS rankIconCandidates no longer prefers free');
+}
+
+async function testSelectErrorFallsBack() {
+  await withEmptyBank(async () => {
+    const searchResults = [
+      {
+        hash: 'ico_a',
+        name: 'dog',
+        isFree: false,
+        imagePreviewUrl: 'https://assets.streamlinehq.com/image/private/a.png?_a=1',
+      },
+      {
+        hash: 'ico_b',
+        name: 'puppy',
+        isFree: true,
+        imagePreviewUrl: 'https://assets.streamlinehq.com/image/private/b.png?_a=1',
+      },
+    ];
+    const SL = load({ searchResults, selectError: 'claude unavailable' });
+    SL.clearMappingCache();
+    globalThis.MemoryEngineStreamlineSession?.cleanup?.();
+
+    const result = await SL.resolveIcon('dog');
+    SL.clearMappingCache();
+    assert(result?.hash === 'ico_a', 'fallback should use exact-name / first ordered candidate');
+    assert(result.source === 'streamline-new', 'expected streamline-new');
+    console.log('PASS AI selection error falls back to ranked order');
+  })();
+}
+
+async function testResolvePreviewUrl() {
+  const SL = load({ disableSelect: true });
+  assert(
+    SL.resolvePreviewUrl('icons/foo.png/bar') === 'https://cdn-icons.streamlinehq.com/icons/foo.png/bar',
+    'relative path becomes CDN url'
+  );
+  assert(
+    SL.resolvePreviewUrl('https://assets.streamlinehq.com/image/private/w_68,h_68/x.png?_a=1') ===
+      'https://assets.streamlinehq.com/image/private/w_68,h_68/x.png?_a=1',
+    'absolute url preserved'
+  );
+  assert(SL.resolvePreviewUrl('') === null, 'empty → null');
+  console.log('PASS resolvePreviewUrl');
+}
+
+async function testLoadCandidateImagesPrefersUrl() {
+  const g = globalThis;
+  eval(fs.readFileSync(path.join(__dirname, '../select-pictogram.js'), 'utf8'));
+  const Select = g.MemoryEngineSelectPictogram;
+  let previewCalls = 0;
+  const prevFetch = globalThis.fetch;
   globalThis.fetch = async (url) => {
-    calls.push(String(url));
-    return orig(url);
+    const u = String(url);
+    if (u.includes('action=preview')) {
+      previewCalls++;
+      return {
+        ok: true,
+        async json() {
+          return { hash: 'ico_b', mediaType: 'image/png', data: 'bbb' };
+        },
+      };
+    }
+    throw new Error('unexpected fetch in prefer-url test: ' + u);
   };
 
-  const result = await SL.resolveIcon('dog');
-  if (mappingBackup != null) fs.writeFileSync(mappingPath, mappingBackup, 'utf8');
-  else if (fs.existsSync(mappingPath)) fs.unlinkSync(mappingPath);
-  if (cacheBackup != null) fs.writeFileSync(cachePath, cacheBackup, 'utf8');
-  else if (fs.existsSync(cachePath)) fs.unlinkSync(cachePath);
-  SL.clearMappingCache();
-  assert(result?.svg, 'expected svg');
-  assert(result.source === 'streamline-new', 'expected new source');
-  assert(calls.some((c) => c.includes('action=family-search')), 'search should run on miss');
-  assert(calls.some((c) => c.includes('action=download')), 'download should run on miss');
-  console.log('PASS mapping miss searches and saves');
+  const imaged = await Select.loadCandidateImages([
+    {
+      hash: 'ico_a',
+      name: 'Family Walk Park',
+      previewUrl:
+        'https://assets.streamlinehq.com/image/private/w_68,h_68,ar_1/f_auto/v1/icons/x.png?_a=1',
+    },
+    { hash: 'ico_b', name: 'no url' },
+  ]);
+
+  globalThis.fetch = prevFetch;
+  assert(imaged.length === 2, 'both candidates loaded');
+  assert(imaged[0].image.kind === 'url', 'first uses url kind');
+  assert(imaged[0].image.url.includes('assets.streamlinehq.com'), 'uses CDN preview url');
+  assert(imaged[1].image.kind === 'base64', 'missing url falls back to base64');
+  assert(previewCalls === 1, 'PNG download fallback only for missing url');
+  console.log('PASS loadCandidateImages prefers imagePreviewUrl');
 }
 
 async function testConcurrentBankSavesPersistAll() {
-  const SL = load();
+  const SL = load({ disableSelect: true });
   SL.clearMappingCache();
   const cachePath = path.join(__dirname, '../../../pictograms/pictogram-cache.json');
   const cacheBackup = fs.existsSync(cachePath) ? fs.readFileSync(cachePath, 'utf8') : null;
@@ -287,7 +510,7 @@ async function testConcurrentBankSavesPersistAll() {
 }
 
 async function testEnsureBankedIconsBatchSkipsExisting() {
-  const SL = load();
+  const SL = load({ disableSelect: true });
   SL.clearMappingCache();
   const cachePath = path.join(__dirname, '../../../pictograms/pictogram-cache.json');
   const cacheBackup = fs.existsSync(cachePath) ? fs.readFileSync(cachePath, 'utf8') : null;
@@ -327,6 +550,11 @@ async function run() {
   await testHashOnlyMappingDownloadsOnce();
   await testSecondResolveUsesCache();
   await testMappingMiss();
+  await testAiSelectsNonFirstHash();
+  await testRankDoesNotPreferFree();
+  await testSelectErrorFallsBack();
+  await testResolvePreviewUrl();
+  await testLoadCandidateImagesPrefersUrl();
   await testConcurrentBankSavesPersistAll();
   await testEnsureBankedIconsBatchSkipsExisting();
   console.log('\nAll streamline provider tests passed.');

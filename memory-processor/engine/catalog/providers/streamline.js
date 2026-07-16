@@ -413,16 +413,44 @@
     return mapped.svg;
   }
 
-  function rankIconCandidates(results, english, familySlug) {
-    const list = results || [];
+  /**
+   * Fallback ordering only (exact name first). No free/premium preference —
+   * primary selection is Claude vision over the top search results.
+   */
+  function rankIconCandidates(results, english, _familySlug) {
+    const list = (results || []).filter((r) => r?.hash);
     if (!list.length) return [];
     const key = normalizeEnglish(english);
-    const slug = familySlug || DEFAULT_FAMILY_SLUG;
-    const free = list.filter((r) => r.isFree);
-    const pool = isFreeFamily(slug) && free.length ? free : list;
-    const exact = pool.find((r) => normalizeEnglish(r.name) === key);
-    const rest = pool.filter((r) => r !== exact);
-    return exact ? [exact, ...rest] : pool;
+    const exact = list.find((r) => normalizeEnglish(r.name) === key);
+    const rest = list.filter((r) => r !== exact);
+    return exact ? [exact, ...rest] : list;
+  }
+
+  const PREVIEW_CDN_BASES = [
+    'https://cdn-icons.streamlinehq.com/',
+    'https://assets.streamlinehq.com/',
+  ];
+
+  /** Absolute HTTPS preview URL when Streamline gives a path or full URL. */
+  function resolvePreviewUrl(imagePreviewUrl) {
+    const raw = String(imagePreviewUrl || '').trim();
+    if (!raw) return null;
+    if (/^https?:\/\//i.test(raw)) return raw;
+    const path = raw.replace(/^\/+/, '');
+    return PREVIEW_CDN_BASES[0] + path;
+  }
+
+  function candidatesForSelection(results) {
+    return (results || [])
+      .filter((r) => r?.hash)
+      .map((r, index) => ({
+        index,
+        hash: r.hash,
+        name: r.name || '',
+        isFree: !!r.isFree,
+        previewUrl: resolvePreviewUrl(r.imagePreviewUrl),
+        imagePreviewUrl: r.imagePreviewUrl || null,
+      }));
   }
 
   function pickIcon(results, english, familySlug) {
@@ -483,14 +511,35 @@
     return { svg: out, source, hash, english: term };
   }
 
-  async function resolveFromSearch(term, searchParams) {
+  async function resolveFromSearch(term, searchParams, selectOpts) {
     const searchResult = await searchIcons(term, searchParams);
     const sp = { ...DEFAULT_SEARCH_PARAMS, ...(searchParams || {}) };
-    const candidates = rankIconCandidates(searchResult?.results, term, sp.familySlug);
-    if (!candidates.length) return null;
+    const rawResults = searchResult?.results || [];
+    if (!rawResults.length) return null;
 
     const downloadParams = { ...DEFAULT_DOWNLOAD_PARAMS };
-    const { svg, icon } = await tryDownloadCandidates(candidates, downloadParams);
+    const selectionPool = candidatesForSelection(rawResults);
+    let ordered = [];
+
+    const selectFn = root.MemoryEngineSelectPictogram?.selectPictogramFromCandidates;
+    if (selectFn && selectionPool.length) {
+      try {
+        const pick = await selectFn(term, selectionPool, selectOpts || {});
+        if (pick?.winnerHash) {
+          const winner = rawResults.find((r) => r.hash === pick.winnerHash);
+          const rest = rawResults.filter((r) => r.hash !== pick.winnerHash);
+          ordered = winner ? [winner, ...rest] : rawResults;
+        }
+      } catch (err) {
+        console.warn('pictogram AI selection failed, using fallback order:', err.message);
+      }
+    }
+
+    if (!ordered.length) {
+      ordered = rankIconCandidates(rawResults, term, sp.familySlug);
+    }
+
+    const { svg, icon } = await tryDownloadCandidates(ordered, downloadParams);
     if (!svg || !icon) return null;
 
     const mappingEntry = {
@@ -508,7 +557,7 @@
     return returnSvg(term, svg, icon.hash, 'streamline-new');
   }
 
-  async function resolveIcon(english) {
+  async function resolveIcon(english, selectOpts) {
     const term = normalizeEnglish(english);
     if (!term) return null;
 
@@ -548,13 +597,13 @@
       }
     }
 
-    return resolveFromSearch(term, DEFAULT_SEARCH_PARAMS);
+    return resolveFromSearch(term, DEFAULT_SEARCH_PARAMS, selectOpts);
   }
 
-  async function fetchPictogram({ english, canonicalReferent, englishWord }) {
+  async function fetchPictogram({ english, canonicalReferent, englishWord, hebrew, context }) {
     const term = english || englishWord || canonicalReferent;
     if (!term) return null;
-    return resolveIcon(term);
+    return resolveIcon(term, { hebrew, context });
   }
 
   function clearMappingCache() {
@@ -579,10 +628,13 @@
     deleteCacheEntry,
     pickIcon,
     rankIconCandidates,
+    candidatesForSelection,
+    resolvePreviewUrl,
     searchIcons,
     downloadSvg,
     tryDownloadCandidates,
     resolveIcon,
+    resolveFromSearch,
     fetchPictogram,
     clearMappingCache,
     DEFAULT_SEARCH_PARAMS,
