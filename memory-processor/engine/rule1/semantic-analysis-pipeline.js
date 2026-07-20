@@ -13,15 +13,25 @@
     return text.trim().split(/\s+/).filter(Boolean).length;
   }
 
-  /** Collapse multi-word RW labels to one token (UI must never show spaced labels). */
   function collapseToSingleToken(word, category) {
+    if (root.MemoryEngineRule1?.collapseToSingleToken
+      && root.MemoryEngineRule1.collapseToSingleToken !== collapseToSingleToken) {
+      return root.MemoryEngineRule1.collapseToSingleToken(word, category);
+    }
     const parts = (word || '').trim().split(/\s+/).filter(Boolean);
     if (parts.length <= 1) return (word || '').trim();
     const numeric = parts.find((p) => /\d/.test(p));
     if (numeric) return numeric;
     const cat = (category || '').toLowerCase();
-    if (cat === 'action' || cat === 'participant') return parts[0];
+    if (cat === 'action' || cat === 'participant' || cat === 'person') return parts[0];
     return parts[parts.length - 1];
+  }
+
+  function isAllowedCompoundPhrase(phrase) {
+    if (root.MemoryEngineRule1?.isAllowedCompoundPhrase) {
+      return root.MemoryEngineRule1.isAllowedCompoundPhrase(phrase);
+    }
+    return false;
   }
 
   function hasWhitespace(word) {
@@ -98,8 +108,8 @@
     });
     rws.forEach((r) => {
       const w = (r.word || '').trim();
-      if (w && hasWhitespace(w)) {
-        errors.push(`word "${w}" must be a single token with no spaces`);
+      if (w && hasWhitespace(w) && !isAllowedCompoundPhrase(w)) {
+        errors.push(`word "${w}" must be a single token or an allowed compound phrase`);
       }
       if (w && !memoryText.includes(w)) errors.push(`word "${w}" does not appear in the written memory`);
     });
@@ -202,7 +212,7 @@
         errors.map((e) => '- ' + e).join('\n') +
         '\n\nPrevious output was:\n' +
         JSON.stringify(parsed) +
-        '\n\nFix ALL the errors and return the corrected JSON. Remember the FINAL ASSEMBLY RULE. Every representativeWords.word must be a single token with NO spaces.';
+        '\n\nFix ALL the errors and return the corrected JSON. Remember the FINAL ASSEMBLY RULE and COMPOUND TEST: keep multi-token labels only when they name one lexicalized concept (בית ספר, מזג אוויר, …). Collapse grammar-linked phrases (verb phrases, אמא ואני, adj+noun, verb+destination, clock compounds).';
       parsed = enforceSingleTokenWords(await callRule1Anthropic(memoryText, promptR1, retrySuffix));
       errors = validateRule1Output(parsed, memoryText);
       if (errors.length) {
@@ -216,7 +226,10 @@
   root.MemoryEngineRule1.runSemanticAnalysisPipeline = runSemanticAnalysisPipeline;
   root.MemoryEngineRule1.assignSequence = assignSequence;
   root.MemoryEngineRule1.validateRule1Output = validateRule1Output;
-  root.MemoryEngineRule1.collapseToSingleToken = collapseToSingleToken;
+  // Prefer compound-phrases.js when loaded earlier; do not overwrite its collapse/allowlist.
+  if (typeof root.MemoryEngineRule1.isAllowedCompoundPhrase !== 'function') {
+    root.MemoryEngineRule1.collapseToSingleToken = collapseToSingleToken;
+  }
   root.MemoryEngineRule1.enforceSingleTokenWords = enforceSingleTokenWords;
   root.MemoryEngineRule1.inputGuard = inputGuard;
   root.MemoryEngineRule1.RULE1_LIMITS = { MIN_WORDS, MAX_WORDS, MAX_MEMORY_WORDS };

@@ -207,6 +207,26 @@ async function testDedupeByEnglish() {
   console.log('PASS dedupe by english pictogram term');
 }
 
+async function testBoyGirlAllowedAsDuplicates() {
+  const Translate = load();
+  const input = [
+    { hebrew: 'אחותי', english: 'girl', source: 'ai' },
+    { hebrew: 'אני', english: 'girl', source: 'narrator-gender' },
+    { hebrew: 'סבא', english: 'grandfather', source: 'ai' },
+    { hebrew: 'אח', english: 'boy', source: 'ai' },
+    { hebrew: 'הייתי', english: 'boy', source: 'narrator-gender' },
+  ];
+  const marked = Translate.markTranslationDuplicates(input);
+  assert(marked[0].duplicateOf == null, 'first girl kept');
+  assert(marked[1].duplicateOf == null, 'second girl allowed (narrator)');
+  assert(marked[2].duplicateOf == null, 'grandfather kept');
+  assert(marked[3].duplicateOf == null, 'first boy kept');
+  assert(marked[4].duplicateOf == null, 'second boy allowed (narrator)');
+  const unique = Translate.uniqueTranslationsByEnglish(marked);
+  assert(unique.length === 5, 'boy/girl repeats stay in unique set');
+  console.log('PASS boy/girl allowed as duplicate pictogram terms');
+}
+
 async function testResolvePictogramWordsDedupesResolve() {
   const Translate = load();
   let resolveCalls = 0;
@@ -231,6 +251,44 @@ async function testResolvePictogramWordsDedupesResolve() {
   assert(result.slots[1].duplicateOf === 'נסענו', 'duplicate slot marked');
   assert(result.sequenceSlots.length === 1, 'one sequence slot');
   console.log('PASS resolvePictogramWords dedupes icon lookup');
+}
+
+async function testResolveKeepsBoyGirlTwiceInSequence() {
+  const g = globalThis;
+  eval(fs.readFileSync(path.join(__dirname, 'narrator-gender.js'), 'utf8'));
+  const Translate = load();
+  let resolveCalls = 0;
+  const mockClient = {
+    callClaudeJSON: async () => ({
+      translations: [
+        { hebrew: 'אחותי', english: 'girl' },
+        { hebrew: 'הולכות', english: 'walk' },
+      ],
+    }),
+  };
+  const mockResolve = async (_hebrew, opts) => {
+    resolveCalls++;
+    return {
+      english: opts.english,
+      status: 'hit',
+      svg: `<svg id="${opts.english}"></svg>`,
+      source: 'bank',
+      hash: `bank:${opts.english}`,
+    };
+  };
+  const result = await Translate.resolvePictogramWords(['אחותי', 'אני', 'הולכות'], {
+    client: mockClient,
+    memoryText: 'אחותי ואני היינו הולכות',
+    narratorGender: 'female',
+    resolve: mockResolve,
+  });
+  assert(result.slots[0].english === 'girl', 'sister → girl');
+  assert(result.slots[1].english === 'girl', 'אני → girl');
+  assert(result.slots[0].duplicateOf == null, 'sister not duplicate');
+  assert(result.slots[1].duplicateOf == null, 'אני not duplicate');
+  assert(result.sequenceSlots.length === 3, 'girl appears twice in sequence');
+  assert(resolveCalls === 2, 'resolve once for girl + once for walk');
+  console.log('PASS girl pictogram kept twice in sequence');
 }
 
 async function testResolvePictogramWords() {
@@ -361,7 +419,9 @@ async function run() {
   await testNoMemoryFallback();
   await testBuildCanonicalMapIncludesSourceText();
   await testDedupeByEnglish();
+  await testBoyGirlAllowedAsDuplicates();
   await testResolvePictogramWordsDedupesResolve();
+  await testResolveKeepsBoyGirlTwiceInSequence();
   await testResolvePictogramWords();
   await testResolvePictogramWordsPassesExcludeHashesSequentially();
   await testBankNormalizationPromptAndNarratorGenderPayload();

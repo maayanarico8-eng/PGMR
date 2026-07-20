@@ -32,7 +32,7 @@ VERB RULE: If the Hebrew word is a verb or verb phrase, english MUST be a pictog
 - saw / seen → see; singing / sang → song; cooking / cooked → cooking
 - traveled / travelling in a car-trip memory → drive or car, not travel
 - נסענו באופניים → prefer אופניים→bicycle and נסענו→ride (NOT bicycle for both)
-DUPLICATE RULE: Each english term must be unique across words when possible. If a verb and its instrument/vehicle would share the same pictogram (e.g. both → bicycle), assign the specific noun to the instrument/object and a distinct action term to the verb (ride, drive). Only repeat the same english when no distinct pictogram exists.
+DUPLICATE RULE: Each english term must be unique across words when possible. If a verb and its instrument/vehicle would share the same pictogram (e.g. both → bicycle), assign the specific noun to the instrument/object and a distinct action term to the verb (ride, drive). Only repeat the same english when no distinct pictogram exists. EXCEPTION: boy and girl MAY repeat when distinct people (including the narrator) each need that pictogram — do not collapse two people into one term.
 
 BANK NORMALIZATION (internal pictogram search only — do NOT invent/change hebrew):
 - Weekday (monday, tuesday, שבת, יום ראשון, …) → day (not the specific day name)
@@ -123,11 +123,15 @@ Non-verbs: for objects and places use a visually specific noun (newspaper, fores
     return items.map((i) => byHebrew[i.hebrew] || normalizeEnglish(i.hebrew));
   }
 
+  /** boy/girl may appear twice when distinct people (e.g. sister + narrator) share that pictogram. */
+  const ALLOWED_DUPLICATE_ENGLISH = new Set(['boy', 'girl']);
+
   function markTranslationDuplicates(translations) {
     const seen = new Map();
     return (translations || []).map((t) => {
       const en = normalizeEnglish(t.english);
       if (!en) return { ...t };
+      if (ALLOWED_DUPLICATE_ENGLISH.has(en)) return { ...t };
       if (seen.has(en)) {
         return { ...t, duplicateOf: seen.get(en) };
       }

@@ -8,7 +8,7 @@ const fs = require('fs');
 function load() {
   const g = globalThis;
   g.fetch = async () => { throw new Error('fetch should not be called in unit tests'); };
-  ['../anthropic-client.js', 'semantic-analysis-pipeline.js'].forEach((f) => {
+  ['../anthropic-client.js', 'compound-phrases.js', 'semantic-analysis-pipeline.js'].forEach((f) => {
     eval(fs.readFileSync(path.join(__dirname, f), 'utf8'));
   });
   return g.MemoryEngineRule1;
@@ -73,24 +73,54 @@ function testValidation(rule1) {
     decisionPath: [{ verb: 'מכין', exitStep: 'V3-enters' }],
   };
   assert(
-    rule1.validateRule1Output(multiWord, memory).some((e) => e.includes('single token')),
-    'multi-word label must fail'
+    rule1.validateRule1Output(multiWord, memory).some((e) => e.includes('single token') || e.includes('compound')),
+    'multi-word verb phrase must fail'
   );
-  console.log('PASS: multi-word representative label fails validation');
+  console.log('PASS: multi-word verb phrase fails validation');
+
+  const schoolMemory = 'הלכתי לבית ספר עם סבא';
+  const compoundOk = {
+    representativeWords: [{ word: 'בית ספר' }, { word: 'סבא' }],
+    decisionPath: [],
+  };
+  assert(rule1.validateRule1Output(compoundOk, schoolMemory).length === 0, 'בית ספר allowed');
+  console.log('PASS: lexicalized compound בית ספר passes validation');
+
+  const adjNoun = {
+    representativeWords: [{ word: 'מכין לי' }, { word: 'סבא' }],
+    decisionPath: [{ verb: 'מכין', exitStep: 'V3-enters' }],
+  };
+  assert(
+    rule1.validateRule1Output(adjNoun, 'סבא היה מכין לי אורז').some((e) => e.includes('compound') || e.includes('single token')),
+    'verb+recipient must fail structural check'
+  );
+  console.log('PASS: verb+recipient multi-word fails validation');
 }
 
 function testCollapse(rule1) {
   assert(rule1.collapseToSingleToken('7 בבוקר', 'time') === '7', 'clock compound → numeric');
-  assert(rule1.collapseToSingleToken('שיעור ספרדית', 'object') === 'ספרדית', 'construct → last');
-  assert(rule1.collapseToSingleToken('מכין לי', 'action') === 'מכין', 'action → first');
+  assert(rule1.isAllowedCompoundPhrase('שיעור ספרדית') === true, 'lesson+subject left to model (not structural forbid)');
+  assert(rule1.collapseToSingleToken('שיעור ספרדית', 'object') === 'שיעור ספרדית', 'non-forbidden 2-word kept by code');
+  assert(rule1.collapseToSingleToken('מכין לי', 'action') === 'מכין', 'action+לי collapsed');
+  assert(rule1.collapseToSingleToken('בית ספר', 'place') === 'בית ספר', 'school compound kept');
+  assert(rule1.collapseToSingleToken('בית חולים', 'place') === 'בית חולים', 'hospital compound kept');
+  assert(rule1.collapseToSingleToken('מזג אוויר', 'object') === 'מזג אוויר', 'weather compound kept');
+  assert(rule1.collapseToSingleToken('אמא ואני', 'person') === 'אמא', 'conjunction collapsed');
+  assert(rule1.collapseToSingleToken('היה מצייר', 'action') === 'היה', 'aux+verb collapsed');
+  assert(rule1.collapseToSingleToken('קופץ על', 'action') === 'קופץ', 'verb+על collapsed');
+  assert(rule1.isForbiddenMultiWordLabel('בית יפה') === false, 'adj+noun left to model prompt');
   const enforced = rule1.enforceSingleTokenWords({
     representativeWords: [
       { word: '7 בבוקר', category: 'time' },
-      { word: 'שיעור ספרדית', category: 'object' },
+      { word: 'גן ילדים', category: 'place' },
+      { word: 'היה מצייר', category: 'action' },
+      { word: 'מכין לי', category: 'action' },
     ],
   });
   assert(enforced.representativeWords[0].word === '7', 'enforce clock');
-  assert(enforced.representativeWords[1].word === 'ספרדית', 'enforce language lesson');
+  assert(enforced.representativeWords[1].word === 'גן ילדים', 'enforce keeps kindergarten');
+  assert(enforced.representativeWords[2].word === 'היה', 'enforce collapses aux+verb');
+  assert(enforced.representativeWords[3].word === 'מכין', 'enforce collapses verb+לי');
   console.log('PASS: collapseToSingleToken + enforceSingleTokenWords');
 }
 

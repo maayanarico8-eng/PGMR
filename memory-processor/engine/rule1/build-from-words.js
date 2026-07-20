@@ -30,8 +30,68 @@
     const numeric = parts.find((p) => /\d/.test(p));
     if (numeric) return numeric;
     const cat = (category || '').toLowerCase();
-    if (cat === 'action' || cat === 'participant') return parts[0];
+    if (cat === 'action' || cat === 'participant' || cat === 'person') return parts[0];
     return parts[parts.length - 1];
+  }
+
+  /** Explicit narrator-as-participant pronouns preferred over conjugated self-forms. */
+  const NARRATOR_PARTICIPANT_TOKENS = ['אני', 'לי', 'אותי', 'אלי'];
+  const NARRATOR_VERB_FORMS = new Set(['היינו', 'הייתי', 'היית']);
+
+  function memoryTokens(memoryText) {
+    const raw = (memoryText || '')
+      .trim()
+      .split(/\s+/)
+      .map((t) => t.replace(/^[^\u0590-\u05FFa-zA-Z0-9]+|[^\u0590-\u05FFa-zA-Z0-9]+$/g, ''))
+      .filter(Boolean);
+    const tokens = new Set(raw);
+    // Hebrew conjunctive vav: ואני → also index אני
+    raw.forEach((t) => {
+      if (t.startsWith('ו') && t.length > 1) tokens.add(t.slice(1));
+    });
+    return tokens;
+  }
+
+  /**
+   * Prefer אני/לי/… over היינו/הייתי when the pronoun appears in the memory.
+   * Also inject אני when it appears as a participant token but was omitted.
+   */
+  function preferNarratorParticipantTokens(words, memoryText) {
+    const tokens = memoryTokens(memoryText);
+    const preferred = NARRATOR_PARTICIPANT_TOKENS.find((t) => tokens.has(t));
+    if (!preferred) return words;
+
+    let next = words;
+    const hasPreferred = next.some((w) => w.word === preferred);
+    if (!hasPreferred) {
+      const verbIdx = next.findIndex((w) => NARRATOR_VERB_FORMS.has(w.word));
+      if (verbIdx >= 0) {
+        next = next.slice();
+        next[verbIdx] = {
+          ...next[verbIdx],
+          word: preferred,
+          sourceText: preferred,
+          category: 'person',
+          canonicalReferent: 'narrator',
+        };
+      } else if (preferred === 'אני') {
+        // Explicit אני participant omitted — inject after the first person word.
+        const personIdx = next.findIndex((w) => {
+          const c = (w.category || '').toLowerCase();
+          return c === 'person' || c === 'participant';
+        });
+        const insertAt = personIdx >= 0 ? personIdx + 1 : 0;
+        next = next.slice();
+        next.splice(insertAt, 0, {
+          word: 'אני',
+          sourceText: 'אני',
+          category: 'person',
+          canonicalReferent: 'narrator',
+        });
+        if (next.length > MAX_WORDS) next.splice(MAX_WORDS);
+      }
+    }
+    return next;
   }
 
   function normalizeAiWordsPayload(aiResponse) {
@@ -59,7 +119,7 @@
 
   function buildRule1FromWords(memoryText, aiResponse, logger) {
     const STAGES = root.MemoryEngineLogger?.STAGES || { REPRESENTATIVE: '1.6' };
-    const words = normalizeAiWordsPayload(aiResponse);
+    let words = preferNarratorParticipantTokens(normalizeAiWordsPayload(aiResponse), memoryText);
 
     if (logger) {
       logger.log('1.2', 'AI_WORDS_RECEIVED', { count: words.length }, 'Workflow_Grammar:1.6');
@@ -154,5 +214,6 @@
   root.MemoryEngineRule1 = root.MemoryEngineRule1 || {};
   root.MemoryEngineRule1.buildRule1FromWords = buildRule1FromWords;
   root.MemoryEngineRule1.normalizeAiWordsPayload = normalizeAiWordsPayload;
+  root.MemoryEngineRule1.preferNarratorParticipantTokens = preferNarratorParticipantTokens;
   root.MemoryEngineRule1.RW_WORD_LIMITS = { MIN_WORDS, MAX_WORDS };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
