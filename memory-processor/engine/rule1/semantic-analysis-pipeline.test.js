@@ -132,12 +132,41 @@ function testParse(g) {
   console.log('PASS T8: first JSON object from back-to-back');
 }
 
+function testFinalizePrefersAni(rule1) {
+  const memory = 'אחותי ואני היינו הולכות עם סבא לקניון לקנות מלפפון חמוץ';
+  const lean = {
+    representativeWords: [
+      { word: 'אחותי', category: 'person' },
+      { word: 'היינו', category: 'participant' },
+      { word: 'הולכות', category: 'action' },
+      { word: 'סבא', category: 'person' },
+      { word: 'קניון', category: 'place' },
+      { word: 'מלפפון חמוץ', category: 'object' },
+    ],
+    decisionPath: [],
+    temporalContext: 'singular',
+  };
+  // Mirror finalizeRule1 lean path without calling Anthropic.
+  rule1.enforceSingleTokenWords(lean);
+  const prefer = rule1.preferNarratorParticipantTokens;
+  assert(typeof prefer === 'function', 'preferNarratorParticipantTokens exported');
+  lean.representativeWords = prefer(lean.representativeWords, memory);
+  const words = lean.representativeWords.map((w) => w.word);
+  assert(words.includes('אני'), `expected אני in ${words.join(',')}`);
+  assert(!words.includes('היינו'), `היינו must be removed, got ${words.join(',')}`);
+  assert(words.includes('מלפפון חמוץ'), 'compound pickle kept');
+  console.log('PASS: finalize prefers אני over היינו');
+}
+
 function main() {
   const rule1 = load();
+  // build-from-words exports preferNarratorParticipantTokens
+  eval(fs.readFileSync(path.join(__dirname, 'build-from-words.js'), 'utf8'));
   testAssignSequence(rule1);
   testValidation(rule1);
   testCollapse(rule1);
   testParse(globalThis);
+  testFinalizePrefersAni(globalThis.MemoryEngineRule1);
   console.log('ALL TESTS PASSED');
 }
 main();

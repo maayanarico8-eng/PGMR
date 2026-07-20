@@ -55,13 +55,26 @@
   /**
    * Prefer אני/לי/… over היינו/הייתי when the pronoun appears in the memory.
    * Also inject אני when it appears as a participant token but was omitted.
+   * ואני counts as אני (conjunctive vav).
    */
   function preferNarratorParticipantTokens(words, memoryText) {
     const tokens = memoryTokens(memoryText);
     const preferred = NARRATOR_PARTICIPANT_TOKENS.find((t) => tokens.has(t));
     if (!preferred) return words;
 
-    let next = words;
+    const matchesPreferred = (word) => word === preferred || word === `ו${preferred}`;
+
+    let next = words.map((w) => {
+      if (!matchesPreferred(w.word) || w.word === preferred) return w;
+      return {
+        ...w,
+        word: preferred,
+        sourceText: preferred,
+        category: w.category === 'action' ? 'person' : (w.category || 'person'),
+        canonicalReferent: 'narrator',
+      };
+    });
+
     const hasPreferred = next.some((w) => w.word === preferred);
     if (!hasPreferred) {
       const verbIdx = next.findIndex((w) => NARRATOR_VERB_FORMS.has(w.word));
@@ -75,7 +88,6 @@
           canonicalReferent: 'narrator',
         };
       } else if (preferred === 'אני') {
-        // Explicit אני participant omitted — inject after the first person word.
         const personIdx = next.findIndex((w) => {
           const c = (w.category || '').toLowerCase();
           return c === 'person' || c === 'participant';
@@ -90,6 +102,11 @@
         });
         if (next.length > MAX_WORDS) next.splice(MAX_WORDS);
       }
+    }
+
+    // Drop conjugated narrator forms when אני (or equivalent) is already present.
+    if (next.some((w) => w.word === preferred)) {
+      next = next.filter((w) => !NARRATOR_VERB_FORMS.has(w.word));
     }
     return next;
   }

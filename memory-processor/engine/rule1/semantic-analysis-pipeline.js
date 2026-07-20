@@ -140,8 +140,16 @@
     return parsed;
   }
 
+  function applyNarratorParticipantPreference(parsed, memoryText) {
+    const prefer = root.MemoryEngineRule1?.preferNarratorParticipantTokens;
+    if (!prefer || !parsed || !Array.isArray(parsed.representativeWords)) return parsed;
+    parsed.representativeWords = prefer(parsed.representativeWords, memoryText);
+    return parsed;
+  }
+
   function finalizeRule1(parsed, memoryText) {
     enforceSingleTokenWords(parsed);
+    applyNarratorParticipantPreference(parsed, memoryText);
     if (isLeanSchema(parsed)) {
       const sequenced = assignSequence(parsed.representativeWords || [], memoryText);
       const build = root.MemoryEngineRule1.buildRule1FromWords;
@@ -151,13 +159,18 @@
         { representativeWords: sequenced, temporalContext: parsed.temporalContext },
         null
       );
-      result.representativeWords = sequenced.map((rw, i) => ({
-        ...result.representativeWords[i],
-        ...rw,
-        id: result.representativeWords[i]?.id || `rw_${String(i + 1).padStart(2, '0')}`,
-        sourceText: rw.sourceText || rw.word,
-        narrativePosition: rw.sequencePosition,
-      }));
+      // Prefer build output (includes אני→היינו swap) over the pre-build sequenced copy.
+      result.representativeWords = result.representativeWords.map((built, i) => {
+        const seq = sequenced[i] || {};
+        return {
+          ...seq,
+          ...built,
+          id: built.id || `rw_${String(i + 1).padStart(2, '0')}`,
+          sourceText: built.sourceText || seq.sourceText || built.word,
+          narrativePosition: seq.sequencePosition || built.narrativePosition || i + 1,
+          sequencePosition: seq.sequencePosition || built.sequencePosition || i + 1,
+        };
+      });
       if (parsed.temporalContext) {
         result.memoryFrame = result.memoryFrame || {};
         result.memoryFrame.temporalContext = parsed.temporalContext;
