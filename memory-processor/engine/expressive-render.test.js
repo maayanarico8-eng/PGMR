@@ -45,13 +45,13 @@ console.log('expressive-render tests…');
   assert(d.memoryImpact === 0, 'default impact 0');
 }
 
-// Impact — UI 0% = former 0%; UI 100% = former 120% (thicker max)
+// Impact — UI 0% = former 0%; UI 100% = former 180% (thicker max)
 {
   assert(api.BASE_STROKE === 0.93, 'base stroke unchanged at 0.93');
-  assert(api.IMPACT_UI_MAX === 120, 'UI maps onto former 0–120%');
+  assert(api.IMPACT_UI_MAX === 180, 'UI maps onto former 0–180%');
   assert(api.computeStrokeWidth(0) === 0.93, 'impact 0 → former 0% stroke');
-  assert(approx(api.computeStrokeWidth(100), 16.6278), 'impact 100 → former 120% stroke');
-  assert(approx(api.computeStrokeWidth(50), 8.7789), 'impact 50 → mid of expanded range');
+  assert(approx(api.computeStrokeWidth(100), 24.4767), 'impact 100 → former 180% stroke');
+  assert(approx(api.computeStrokeWidth(50), 12.70335), 'impact 50 → mid of expanded range');
 }
 
 // Frequency — slider 0–100 maps onto former 15–100% range
@@ -135,7 +135,7 @@ console.log('expressive-render tests…');
   const vb = (svg) => (svg.match(/viewBox="([^"]+)"/) || [])[1];
   assert(vb(low.svg) === vb(high.svg), 'impact 0 and 100 share viewBox');
   assert(low.state.pad === high.state.pad, 'pad stable across impact');
-  assert(low.state.strokeWidth === 0.93 && approx(high.state.strokeWidth, 16.6278), 'stroke still scales');
+  assert(low.state.strokeWidth === 0.93 && approx(high.state.strokeWidth, 24.4767), 'stroke still scales');
 }
 
 // Memory source must not resize the displayed sequence
@@ -189,7 +189,7 @@ console.log('expressive-render tests…');
   });
   assert(state.dasharray !== 'solid', 'dashed state');
   assert(svg.includes('stroke-dasharray='), 'dasharray in svg');
-  assert(approx(state.strokeWidth, 8.7789), 'rescaled impact mid stroke in state');
+  assert(approx(state.strokeWidth, 12.70335), 'rescaled impact mid stroke in state');
 }
 
 // apply — clarity collapse factor
@@ -275,9 +275,9 @@ console.log('expressive-render tests…');
     ...api.DEFAULT_PARAMS,
     memoryImpact: 14,
   });
-  assert(approx(state.strokeWidth, 3.127692), 'impact 14 → rescaled stroke');
-  assert(/stroke-width="3\.128"/.test(svg), 'presentation stroke-width applied');
-  assert(/stroke-width:3\.128/.test(svg), 'CSS stroke-width rewritten for Impact');
+  assert(approx(state.strokeWidth, 4.226538), 'impact 14 → rescaled stroke');
+  assert(/stroke-width="4\.227"/.test(svg), 'presentation stroke-width applied');
+  assert(/stroke-width:4\.227/.test(svg), 'CSS stroke-width rewritten for Impact');
   assert(!/stroke-width:0\.5/.test(svg), 'CSS no longer locks 0.5');
 }
 

@@ -13,9 +13,9 @@
   /** Match bank grandfather stroke (~0.93); Impact 0% keeps the former look. */
   const BASE_STROKE = 0.93;
   const MAX_STROKE = 30;
-  /** Former 0–100% impact span; UI 100% maps to 120% of that span (+20% thicker max). */
+  /** Former 0–100% impact span; UI 100% maps to 180% of that span (+80% thicker max). */
   const IMPACT_SCALE = 0.45;
-  const IMPACT_UI_MAX = 120;
+  const IMPACT_UI_MAX = 180;
   /** Slider 0–100 maps onto the former 15–100% frequency range (new 0% = old 15%). */
   const FREQ_MIN = 21.8;
   const STROKE_COLOR = '#000000';
@@ -48,7 +48,7 @@
 
   function computeStrokeWidth(impact) {
     const ui = clamp(Number(impact), 0, 100);
-    // UI 0% = former 0%; UI 100% = former 120% (20% more headroom at the thick end).
+    // UI 0% = former 0%; UI 100% = former 180% (thicker max headroom).
     const former = (ui / 100) * IMPACT_UI_MAX;
     return BASE_STROKE + (MAX_STROKE - BASE_STROKE) * (former / 100) * IMPACT_SCALE;
   }
