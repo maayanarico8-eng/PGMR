@@ -18,7 +18,7 @@ function assert(cond, msg) { if (!cond) throw new Error(msg); }
 
 function testAssignSequence(rule1) {
   const cases = [
-    { name: 'T1', memory: 'אחרי בית ספר סבא היה מכין לי לארוחת צהריים אורז עם אפונה וגזר במיקרוגל.', words: ['סבא', 'בית ספר', 'אורז', 'מכין', 'לי'], expected: ['בית ספר', 'סבא', 'מכין', 'לי', 'אורז'] },
+    { name: 'T1', memory: 'אחרי בית ספר סבא היה מכין לי לארוחת צהריים אורז עם אפונה וגזר במיקרוגל.', words: ['סבא', 'ספר', 'אורז', 'מכין', 'לי'], expected: ['ספר', 'סבא', 'מכין', 'לי', 'אורז'] },
     { name: 'T2', memory: 'סבא היה לוקח אותי כל שישי לשוק', words: ['סבא', 'אותי', 'שישי', 'שוק', 'לוקח'], expected: ['סבא', 'לוקח', 'אותי', 'שישי', 'שוק'] },
     { name: 'T3', memory: 'הלכנו לספרייה לחפש ספר על דינוזאורים', words: ['ספר', 'ספרייה', 'הלכנו', 'דינוזאורים'], expected: ['הלכנו', 'ספרייה', 'ספר', 'דינוזאורים'] },
     { name: 'T4', memory: 'סבא לקח אותי לשוק וסבא קנה לי בלון', words: ['סבא', 'שוק', 'בלון'], expected: ['סבא', 'שוק', 'בלון'] },
@@ -67,6 +67,31 @@ function testValidation(rule1) {
   };
   assert(rule1.validateRule1Output(tooMany, memory).some((e) => e.includes('maximum')), 'max');
   console.log('PASS T7: 11 words fails');
+
+  const multiWord = {
+    representativeWords: [{ word: 'סבא' }, { word: 'מכין לי' }, { word: 'אורז' }],
+    decisionPath: [{ verb: 'מכין', exitStep: 'V3-enters' }],
+  };
+  assert(
+    rule1.validateRule1Output(multiWord, memory).some((e) => e.includes('single token')),
+    'multi-word label must fail'
+  );
+  console.log('PASS: multi-word representative label fails validation');
+}
+
+function testCollapse(rule1) {
+  assert(rule1.collapseToSingleToken('7 בבוקר', 'time') === '7', 'clock compound → numeric');
+  assert(rule1.collapseToSingleToken('שיעור ספרדית', 'object') === 'ספרדית', 'construct → last');
+  assert(rule1.collapseToSingleToken('מכין לי', 'action') === 'מכין', 'action → first');
+  const enforced = rule1.enforceSingleTokenWords({
+    representativeWords: [
+      { word: '7 בבוקר', category: 'time' },
+      { word: 'שיעור ספרדית', category: 'object' },
+    ],
+  });
+  assert(enforced.representativeWords[0].word === '7', 'enforce clock');
+  assert(enforced.representativeWords[1].word === 'ספרדית', 'enforce language lesson');
+  console.log('PASS: collapseToSingleToken + enforceSingleTokenWords');
 }
 
 function testParse(g) {
@@ -81,6 +106,7 @@ function main() {
   const rule1 = load();
   testAssignSequence(rule1);
   testValidation(rule1);
+  testCollapse(rule1);
   testParse(globalThis);
   console.log('ALL TESTS PASSED');
 }

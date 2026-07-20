@@ -37,6 +37,10 @@ function main() {
     console.error('FAIL: expected 6 words');
     process.exit(1);
   }
+  if (words[1] !== 'מכין') {
+    console.error('FAIL: multi-word action must collapse to single token מכין, got', words[1]);
+    process.exit(1);
+  }
   if (result._engine?.stages !== 'ai-words') {
     console.error('FAIL: expected ai-words engine marker');
     process.exit(1);

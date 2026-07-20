@@ -13,6 +13,21 @@
     return text.trim().split(/\s+/).filter(Boolean).length;
   }
 
+  /** Collapse multi-word RW labels to one token (UI must never show spaced labels). */
+  function collapseToSingleToken(word, category) {
+    const parts = (word || '').trim().split(/\s+/).filter(Boolean);
+    if (parts.length <= 1) return (word || '').trim();
+    const numeric = parts.find((p) => /\d/.test(p));
+    if (numeric) return numeric;
+    const cat = (category || '').toLowerCase();
+    if (cat === 'action' || cat === 'participant') return parts[0];
+    return parts[parts.length - 1];
+  }
+
+  function hasWhitespace(word) {
+    return /\s/.test((word || '').trim());
+  }
+
   function inputGuard(memoryText) {
     const n = wordCount(memoryText);
     if (n > MAX_MEMORY_WORDS) throw new Error('Memory must be at most 20 words.');
@@ -83,6 +98,9 @@
     });
     rws.forEach((r) => {
       const w = (r.word || '').trim();
+      if (w && hasWhitespace(w)) {
+        errors.push(`word "${w}" must be a single token with no spaces`);
+      }
       if (w && !memoryText.includes(w)) errors.push(`word "${w}" does not appear in the written memory`);
     });
     if (rws.length < MIN_WORDS) errors.push(`only ${rws.length} representative words — minimum is ${MIN_WORDS}`);
@@ -97,7 +115,23 @@
     return Array.isArray(parsed.representativeWords) && !parsed.memoryLanguage;
   }
 
+  function enforceSingleTokenWords(parsed) {
+    if (!parsed || !Array.isArray(parsed.representativeWords)) return parsed;
+    parsed.representativeWords = parsed.representativeWords.map((rw) => {
+      const original = (rw.word || '').trim();
+      const word = collapseToSingleToken(original, rw.category);
+      if (!word || word === original) return { ...rw, word: word || original };
+      return {
+        ...rw,
+        word,
+        sourceText: rw.sourceText || original,
+      };
+    });
+    return parsed;
+  }
+
   function finalizeRule1(parsed, memoryText) {
+    enforceSingleTokenWords(parsed);
     if (isLeanSchema(parsed)) {
       const sequenced = assignSequence(parsed.representativeWords || [], memoryText);
       const build = root.MemoryEngineRule1.buildRule1FromWords;
@@ -160,7 +194,7 @@
     const promptR1 = options?.promptR1 || root.MemoryEngineRule1?.PROMPT_R1;
     if (!promptR1) throw new Error('PROMPT_R1 is not loaded');
     inputGuard(memoryText);
-    let parsed = await callRule1Anthropic(memoryText, promptR1);
+    let parsed = enforceSingleTokenWords(await callRule1Anthropic(memoryText, promptR1));
     let errors = validateRule1Output(parsed, memoryText);
     if (errors.length) {
       const retrySuffix =
@@ -168,8 +202,8 @@
         errors.map((e) => '- ' + e).join('\n') +
         '\n\nPrevious output was:\n' +
         JSON.stringify(parsed) +
-        '\n\nFix ALL the errors and return the corrected JSON. Remember the FINAL ASSEMBLY RULE.';
-      parsed = await callRule1Anthropic(memoryText, promptR1, retrySuffix);
+        '\n\nFix ALL the errors and return the corrected JSON. Remember the FINAL ASSEMBLY RULE. Every representativeWords.word must be a single token with NO spaces.';
+      parsed = enforceSingleTokenWords(await callRule1Anthropic(memoryText, promptR1, retrySuffix));
       errors = validateRule1Output(parsed, memoryText);
       if (errors.length) {
         throw new Error('Rule 1 validation failed:\n' + errors.map((e) => '- ' + e).join('\n'));
@@ -182,6 +216,8 @@
   root.MemoryEngineRule1.runSemanticAnalysisPipeline = runSemanticAnalysisPipeline;
   root.MemoryEngineRule1.assignSequence = assignSequence;
   root.MemoryEngineRule1.validateRule1Output = validateRule1Output;
+  root.MemoryEngineRule1.collapseToSingleToken = collapseToSingleToken;
+  root.MemoryEngineRule1.enforceSingleTokenWords = enforceSingleTokenWords;
   root.MemoryEngineRule1.inputGuard = inputGuard;
   root.MemoryEngineRule1.RULE1_LIMITS = { MIN_WORDS, MAX_WORDS, MAX_MEMORY_WORDS };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

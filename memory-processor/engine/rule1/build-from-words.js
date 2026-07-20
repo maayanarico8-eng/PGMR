@@ -21,6 +21,19 @@
     return 'English';
   }
 
+  function collapseToSingleToken(word, category) {
+    if (root.MemoryEngineRule1?.collapseToSingleToken) {
+      return root.MemoryEngineRule1.collapseToSingleToken(word, category);
+    }
+    const parts = (word || '').trim().split(/\s+/).filter(Boolean);
+    if (parts.length <= 1) return (word || '').trim();
+    const numeric = parts.find((p) => /\d/.test(p));
+    if (numeric) return numeric;
+    const cat = (category || '').toLowerCase();
+    if (cat === 'action' || cat === 'participant') return parts[0];
+    return parts[parts.length - 1];
+  }
+
   function normalizeAiWordsPayload(aiResponse) {
     if (!aiResponse) return [];
     const list = aiResponse.words || aiResponse.representativeWords || aiResponse;
@@ -28,13 +41,17 @@
     return list
       .map((item) => {
         if (typeof item === 'string') {
-          return { word: item, sourceText: item, category: 'object', canonicalReferent: item.toLowerCase() };
+          const word = collapseToSingleToken(item, 'object');
+          return { word, sourceText: item, category: 'object', canonicalReferent: word.toLowerCase() };
         }
+        const original = (item.word || item.field || '').trim();
+        const category = item.category || 'object';
+        const word = collapseToSingleToken(original, category);
         return {
-          word: (item.word || item.field || '').trim(),
-          sourceText: (item.sourceText || item.word || item.field || '').trim(),
-          category: item.category || 'object',
-          canonicalReferent: (item.canonicalReferent || item.word || '').toLowerCase().trim(),
+          word,
+          sourceText: (item.sourceText || original).trim(),
+          category,
+          canonicalReferent: (item.canonicalReferent || word || '').toLowerCase().trim(),
         };
       })
       .filter((w) => w.word);
