@@ -42,17 +42,19 @@ console.log('expressive-render tests…');
   assert(d.memorySource === 0, 'default source mine');
   assert(d.memoryFrequency === 100, 'default freq 100');
   assert(d.memoryClarity === 100, 'default clarity 100');
-  assert(d.memoryImpact === 0, 'default impact 0');
+  assert(d.memoryImpact === 20, 'default impact 20 (former 0% look)');
 }
 
-// Impact
+// Impact — UI 20% = former 0%; UI 0% is thinner
 {
-  assert(api.computeStrokeWidth(0) === 0.93, 'impact 0 → stroke 0.93');
-  assert(approx(api.computeStrokeWidth(100), 14.0115), 'impact 100 → former impact 45 stroke');
-  assert(approx(api.computeStrokeWidth(50), 7.47075), 'impact 50 → half of rescaled range');
+  assert(api.computeStrokeWidth(0) === 0.25, 'impact 0 → thin floor 0.25');
+  assert(api.computeStrokeWidth(20) === 0.93, 'impact 20 → former 0% stroke 0.93');
+  assert(approx(api.computeStrokeWidth(100), 14.0115), 'impact 100 → former max stroke');
+  assert(approx(api.computeStrokeWidth(60), 7.47075), 'impact 60 → former impact 50 stroke');
+  assert(approx(api.computeStrokeWidth(50), 5.8355625), 'impact 50 mid above base UI');
 }
 
-// Frequency — slider 0–100 maps onto former 8–100% range
+// Frequency — slider 0–100 maps onto former 15–100% range
 {
   const solid = api.computeDash(100, 1);
   assert(solid.solid === true, 'freq 100 solid');
@@ -65,16 +67,16 @@ console.log('expressive-render tests…');
   const low = api.computeDash(0);
   assert(low.solid === false, 'freq 0 dashed');
   assert(low.dash >= 0.01, 'dash floor');
-  // New 0% must match the former 8% look: f=0.08 → dash = 12 * 0.08^1.6
-  const former8Dash = 12 * Math.pow(0.08, 1.6);
-  assert(approx(low.dash, former8Dash), 'freq 0 ≡ former freq 8 dash');
-  const former8Gap = Math.max(0.6 + 6.8 * (1 - 0.08), 1.6 * 0.93);
-  assert(approx(low.gap, former8Gap), 'freq 0 ≡ former freq 8 gap');
+  // New 0% must match the former 15% look: f100 = 21.8 → f=0.218
+  const former15Dash = 12 * Math.pow(0.218, 1.6);
+  assert(approx(low.dash, former15Dash), 'freq 0 ≡ former freq 15 dash');
+  const former15Gap = Math.max(0.6 + 6.8 * (1 - 0.218), 1.6 * 0.93);
+  assert(approx(low.gap, former15Gap), 'freq 0 ≡ former freq 15 gap');
 
   const sameFrequencyThin = api.applyExpressiveRendering(sampleSequence(1), {
     ...api.DEFAULT_PARAMS,
     memoryFrequency: 40,
-    memoryImpact: 0,
+    memoryImpact: 20,
   });
   const sameFrequencyThick = api.applyExpressiveRendering(sampleSequence(1), {
     ...api.DEFAULT_PARAMS,
@@ -113,7 +115,7 @@ console.log('expressive-render tests…');
   assert(state.stripsPerPictogram === 1, 'mine → 1 strip');
   assert(state.maxOffset === 0, 'mine maxOffset 0');
   assert(state.dasharray === 'solid', 'default dash solid');
-  assert(state.strokeWidth === 0.93, 'default stroke 0.93');
+  assert(state.strokeWidth === 0.93, 'default stroke 0.93 (impact 20)');
   assert(approx(state.collapseScale, 1), 'default collapse 1');
   assert(svg.includes('ex-master-0'), 'master in defs');
   assert(svg.includes('stroke="#000000"') || svg.includes("stroke='#000000'"), 'normalized stroke color');
@@ -128,10 +130,10 @@ console.log('expressive-render tests…');
 // Impact must not change viewBox (no canvas jump / pictogram shift)
 {
   const base = sampleSequence(2);
-  const low = api.applyExpressiveRendering(base, { ...api.DEFAULT_PARAMS, memoryImpact: 0 });
+  const low = api.applyExpressiveRendering(base, { ...api.DEFAULT_PARAMS, memoryImpact: 20 });
   const high = api.applyExpressiveRendering(base, { ...api.DEFAULT_PARAMS, memoryImpact: 100 });
   const vb = (svg) => (svg.match(/viewBox="([^"]+)"/) || [])[1];
-  assert(vb(low.svg) === vb(high.svg), 'impact 0 and 100 share viewBox');
+  assert(vb(low.svg) === vb(high.svg), 'impact 20 and 100 share viewBox');
   assert(low.state.pad === high.state.pad, 'pad stable across impact');
   assert(low.state.strokeWidth === 0.93 && approx(high.state.strokeWidth, 14.0115), 'stroke still scales');
 }
@@ -187,7 +189,7 @@ console.log('expressive-render tests…');
   });
   assert(state.dasharray !== 'solid', 'dashed state');
   assert(svg.includes('stroke-dasharray='), 'dasharray in svg');
-  assert(approx(state.strokeWidth, 7.47075), 'rescaled impact mid stroke in state');
+  assert(approx(state.strokeWidth, 5.8355625), 'rescaled impact mid stroke in state');
 }
 
 // apply — clarity collapse factor
@@ -271,11 +273,11 @@ console.log('expressive-render tests…');
     `</svg>`;
   const { svg, state } = api.applyExpressiveRendering(seq, {
     ...api.DEFAULT_PARAMS,
-    memoryImpact: 14,
+    memoryImpact: 36,
   });
-  assert(approx(state.strokeWidth, 2.76141), 'impact 14 → rescaled stroke');
-  assert(/stroke-width="2\.761"/.test(svg), 'presentation stroke-width applied');
-  assert(/stroke-width:2\.761/.test(svg), 'CSS stroke-width rewritten for Impact');
+  assert(approx(state.strokeWidth, 3.5463), 'impact 36 → former ~20 stroke');
+  assert(/stroke-width="3\.546"/.test(svg), 'presentation stroke-width applied');
+  assert(/stroke-width:3\.546/.test(svg), 'CSS stroke-width rewritten for Impact');
   assert(!/stroke-width:0\.5/.test(svg), 'CSS no longer locks 0.5');
 }
 

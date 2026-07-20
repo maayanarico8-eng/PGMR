@@ -10,12 +10,16 @@
   const FRAG_STRIPS = [1, 4, 4];
   const FRAG_DIST = [0, 18, 18];
   const DOT_CLEARANCE = 1.6;
-  /** Match bank grandfather stroke (~0.93); Impact=0 floor for sequence display. */
+  /** Match bank grandfather stroke (~0.93); Impact UI 20% = this floor. */
   const BASE_STROKE = 0.93;
+  /** Stroke at Impact UI 0% — room below former minimum. */
+  const THIN_STROKE = 0.25;
+  /** Former Impact 0% look sits at this UI percent. */
+  const IMPACT_BASE_UI = 20;
   const MAX_STROKE = 30;
   const IMPACT_SCALE = 0.45;
-  /** Slider 0–100 maps onto the former 8–100% frequency range (new 0% = old 8%). */
-  const FREQ_MIN = 8;
+  /** Slider 0–100 maps onto the former 15–100% frequency range (new 0% = old 15%). */
+  const FREQ_MIN = 21.8;
   const STROKE_COLOR = '#000000';
   const GRAPHIC_SEL = 'path,rect,circle,ellipse,line,polyline,polygon';
 
@@ -23,7 +27,8 @@
     memorySource: 0,
     memoryFrequency: 100,
     memoryClarity: 100,
-    memoryImpact: 0,
+    // 20% = former 0% stroke so the default look is unchanged with room to go thinner.
+    memoryImpact: 20,
   };
 
   function clamp(n, lo, hi) {
@@ -45,14 +50,20 @@
   }
 
   function computeStrokeWidth(impact) {
-    const v = clamp(Number(impact), 0, 100);
-    // The full slider now covers the former 0–45% impact range.
-    return BASE_STROKE + (MAX_STROKE - BASE_STROKE) * (v / 100) * IMPACT_SCALE;
+    const ui = clamp(Number(impact), 0, 100);
+    // UI 0..IMPACT_BASE_UI → THIN_STROKE..BASE_STROKE (new thinner range).
+    // UI IMPACT_BASE_UI..100 → former 0..100 impact (BASE_STROKE..max).
+    if (ui <= IMPACT_BASE_UI) {
+      const t = IMPACT_BASE_UI === 0 ? 1 : ui / IMPACT_BASE_UI;
+      return THIN_STROKE + (BASE_STROKE - THIN_STROKE) * t;
+    }
+    const former = ((ui - IMPACT_BASE_UI) / (100 - IMPACT_BASE_UI)) * 100;
+    return BASE_STROKE + (MAX_STROKE - BASE_STROKE) * (former / 100) * IMPACT_SCALE;
   }
 
   function computeDash(freq) {
     const ui = clamp(Number(freq), 0, 100);
-    // Full slider covers the former FREQ_MIN–100% range.
+    // Full slider covers the former FREQ_MIN–100% range (FREQ_MIN = old 15% look).
     const f100 = FREQ_MIN + (ui / 100) * (100 - FREQ_MIN);
     if (f100 >= 100) return { solid: true, dasharray: null, dashoffset: 0 };
     const f = f100 / 100;
@@ -647,6 +658,8 @@
     FRAG_DIST,
     DOT_CLEARANCE,
     BASE_STROKE,
+    THIN_STROKE,
+    IMPACT_BASE_UI,
     MAX_STROKE,
     normalizeParams,
     computeStrokeWidth,
