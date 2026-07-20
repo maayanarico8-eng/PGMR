@@ -7,7 +7,7 @@
 
   const TRANSLATE_PROMPT = `You choose English pictogram search terms for a pictogram icon library — NOT general dictionary translations.
 
-INPUT: JSON with optional "memory" (full memory sentence) and "words" array. Each word has hebrew, optional hint (prior guess), sourceText (fragment from memory), and category.
+INPUT: JSON with optional "memory" (full memory sentence), optional "narratorGender" ("male"|"female"), and "words" array. Each word has hebrew, optional hint (prior guess), sourceText (fragment from memory), and category.
 OUTPUT: Valid JSON only. No markdown. No explanation.
 {"translations":[{"hebrew":"exact input word","english":"lowercase english term"}]}
 
@@ -15,12 +15,12 @@ Rules:
 - english must be lowercase
 - Use single words or very short noun phrases that retrieve the CORRECT icon in a pictogram library
 - Preserve input order; one entry per input word
-- hebrew must match the input exactly
-- hint is a starting guess only — override it when memory context demands a more specific pictogram label
+- hebrew must match the input exactly — never invent or change hebrew; english is for internal pictogram search only
+- hint is a starting guess only — override it when memory context or BANK NORMALIZATION demands a different pictogram label
 
 CONTEXT RULE (critical): Read the full memory sentence and each word's sourceText. Choose the English term that matches what the narrator meant IN THIS MEMORY, not the most common dictionary gloss.
 
-DISAMBIGUATION RULE: Prefer a slightly longer, visually specific term over a short ambiguous one when icon libraries confuse them.
+DISAMBIGUATION RULE: Prefer a slightly longer, visually specific term over a short ambiguous one when icon libraries confuse them — except where BANK NORMALIZATION requires a generic bank term.
 
 Examples:
 - בריכה + summer outing / swimming context → swimming pool (NOT pool — pool retrieves billiards/pool-player icons)
@@ -33,7 +33,17 @@ VERB RULE: If the Hebrew word is a verb or verb phrase, english MUST be a pictog
 - traveled / travelling in a car-trip memory → drive or car, not travel
 - נסענו באופניים → prefer אופניים→bicycle and נסענו→ride (NOT bicycle for both)
 DUPLICATE RULE: Each english term must be unique across words when possible. If a verb and its instrument/vehicle would share the same pictogram (e.g. both → bicycle), assign the specific noun to the instrument/object and a distinct action term to the verb (ride, drive). Only repeat the same english when no distinct pictogram exists.
-Non-verbs (person, object, place): use a visually specific noun (grandfather, newspaper, forest, swimming pool).`;
+
+BANK NORMALIZATION (internal pictogram search only — do NOT invent/change hebrew):
+- Weekday (monday, tuesday, שבת, יום ראשון, …) → day (not the specific day name)
+- Specific country (spain, ישראל, …) → country (cities stay specific, e.g. paris)
+- Specific language (hebrew, english, …) → language
+- Specific clock time (7:00, 12pm, …) → hour; vague times of day stay morning/evening/afternoon/…
+- Male person/kinship/partner (brother, uncle, boyfriend, husband, …) → boy; exceptions: dad/father → father; grandpa/grandfather → grandfather
+- Female person/kinship/partner (sister, aunt, girlfriend, wife, …) → girl; exceptions: mom/mother → mother; grandma/grandmother → grandmother
+- Narrator self-reference (I/me/myself / לי/אני/אותי/הייתי/…) → boy if narratorGender is male, girl if narratorGender is female
+
+Non-verbs: for objects and places use a visually specific noun (newspaper, forest, swimming pool). For people, apply BANK NORMALIZATION above (grandfather/mother/father/grandmother only via those exceptions; other people → boy or girl).`;
 
   const ACTION_CATEGORIES = new Set(['action', 'activity']);
 
@@ -91,6 +101,12 @@ Non-verbs (person, object, place): use a visually specific noun (grandfather, ne
       })),
     };
     if (memoryText) payload.memory = memoryText;
+    if (options?.narratorGender != null && options.narratorGender !== '') {
+      const narratorGender = root.MemoryEngineNarratorGender
+        ? root.MemoryEngineNarratorGender.normalizeGender(options.narratorGender)
+        : String(options.narratorGender).toLowerCase().trim();
+      payload.narratorGender = narratorGender;
+    }
     const userPayload = JSON.stringify(payload);
     const parsed = await client.callClaudeJSON({
       max_tokens: 1024,

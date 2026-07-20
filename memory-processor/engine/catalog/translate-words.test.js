@@ -305,6 +305,51 @@ async function testResolvePictogramWordsPassesExcludeHashesSequentially() {
   console.log('PASS resolvePictogramWords passes excludeHashes sequentially');
 }
 
+async function testBankNormalizationPromptAndNarratorGenderPayload() {
+  const Translate = load();
+  let captured = '';
+  const mockClient = {
+    callClaudeJSON: async (body) => {
+      captured = body.messages[0].content;
+      return { translations: [{ hebrew: 'שבת', english: 'day' }] };
+    },
+  };
+  await Translate.translateWords(
+    [{ hebrew: 'שבת', category: 'object', hint: 'saturday' }],
+    {
+      client: mockClient,
+      memoryText: 'בשבת הלכנו לים',
+      narratorGender: 'female',
+    }
+  );
+  assert(captured.includes('BANK NORMALIZATION'), 'prompt includes BANK NORMALIZATION');
+  assert(captured.includes('→ day'), 'prompt includes weekday → day');
+  assert(captured.includes('→ country'), 'prompt includes country rule');
+  assert(captured.includes('→ language'), 'prompt includes language rule');
+  assert(captured.includes('→ hour'), 'prompt includes hour rule');
+  const payload = JSON.parse(captured.slice(captured.lastIndexOf('\n\n') + 2));
+  assert(payload.narratorGender === 'female', 'payload includes narratorGender');
+  console.log('PASS bank normalization prompt + narratorGender payload');
+}
+
+async function testNarratorGenderOmittedWhenUnset() {
+  const Translate = load();
+  let captured = '';
+  const mockClient = {
+    callClaudeJSON: async (body) => {
+      captured = body.messages[0].content;
+      return { translations: [{ hebrew: 'חתול', english: 'cat' }] };
+    },
+  };
+  await Translate.translateWords([{ hebrew: 'חתול' }], {
+    client: mockClient,
+    memoryText: 'ראיתי חתול',
+  });
+  const payload = JSON.parse(captured.slice(captured.lastIndexOf('\n\n') + 2));
+  assert(payload.narratorGender === undefined, 'narratorGender omitted when unset');
+  console.log('PASS narratorGender omitted when unset');
+}
+
 async function run() {
   await testPassThrough();
   await testBatchAi();
@@ -319,6 +364,8 @@ async function run() {
   await testResolvePictogramWordsDedupesResolve();
   await testResolvePictogramWords();
   await testResolvePictogramWordsPassesExcludeHashesSequentially();
+  await testBankNormalizationPromptAndNarratorGenderPayload();
+  await testNarratorGenderOmittedWhenUnset();
   console.log('\nAll translate-words tests passed.');
 }
 
