@@ -22,7 +22,7 @@
     strokeToFill: false,
     backgroundColor: '#ffffff00',
     colors: '#000000',
-    strokeWidth: 0.375,
+    strokeWidth: 0.5,
   };
 
   let mappingCache = null;
