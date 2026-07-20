@@ -47,9 +47,9 @@ console.log('expressive-render tests…');
 
 // Impact
 {
-  assert(api.computeStrokeWidth(0) === 0.5, 'impact 0 → stroke 0.5');
-  assert(approx(api.computeStrokeWidth(100), 13.775), 'impact 100 → former impact 45 stroke');
-  assert(approx(api.computeStrokeWidth(50), 7.1375), 'impact 50 → half of rescaled range');
+  assert(api.computeStrokeWidth(0) === 0.93, 'impact 0 → stroke 0.93');
+  assert(approx(api.computeStrokeWidth(100), 14.0115), 'impact 100 → former impact 45 stroke');
+  assert(approx(api.computeStrokeWidth(50), 7.47075), 'impact 50 → half of rescaled range');
 }
 
 // Frequency — slider 0–100 maps onto former 8–100% range
@@ -68,7 +68,7 @@ console.log('expressive-render tests…');
   // New 0% must match the former 8% look: f=0.08 → dash = 12 * 0.08^1.6
   const former8Dash = 12 * Math.pow(0.08, 1.6);
   assert(approx(low.dash, former8Dash), 'freq 0 ≡ former freq 8 dash');
-  const former8Gap = Math.max(0.6 + 6.8 * (1 - 0.08), 1.6 * 0.5);
+  const former8Gap = Math.max(0.6 + 6.8 * (1 - 0.08), 1.6 * 0.93);
   assert(approx(low.gap, former8Gap), 'freq 0 ≡ former freq 8 gap');
 
   const sameFrequencyThin = api.applyExpressiveRendering(sampleSequence(1), {
@@ -113,11 +113,12 @@ console.log('expressive-render tests…');
   assert(state.stripsPerPictogram === 1, 'mine → 1 strip');
   assert(state.maxOffset === 0, 'mine maxOffset 0');
   assert(state.dasharray === 'solid', 'default dash solid');
-  assert(state.strokeWidth === 0.5, 'default stroke 0.5');
+  assert(state.strokeWidth === 0.93, 'default stroke 0.93');
   assert(approx(state.collapseScale, 1), 'default collapse 1');
   assert(svg.includes('ex-master-0'), 'master in defs');
   assert(svg.includes('stroke="#000000"') || svg.includes("stroke='#000000'"), 'normalized stroke color');
   assert(svg.includes('stroke-linecap="round"'), 'round linecap');
+  assert(svg.includes('vector-effect="non-scaling-stroke"'), 'non-scaling-stroke applied');
   assert(!svg.includes('fill="#fff"') && !svg.includes('fill="#FFF"'), 'fill overridden on path');
   assert(svg.includes('viewBox="'), 'has viewBox');
   // padding expands viewBox
@@ -132,7 +133,7 @@ console.log('expressive-render tests…');
   const vb = (svg) => (svg.match(/viewBox="([^"]+)"/) || [])[1];
   assert(vb(low.svg) === vb(high.svg), 'impact 0 and 100 share viewBox');
   assert(low.state.pad === high.state.pad, 'pad stable across impact');
-  assert(low.state.strokeWidth === 0.5 && approx(high.state.strokeWidth, 13.775), 'stroke still scales');
+  assert(low.state.strokeWidth === 0.93 && approx(high.state.strokeWidth, 14.0115), 'stroke still scales');
 }
 
 // Memory source must not resize the displayed sequence
@@ -186,7 +187,7 @@ console.log('expressive-render tests…');
   });
   assert(state.dasharray !== 'solid', 'dashed state');
   assert(svg.includes('stroke-dasharray='), 'dasharray in svg');
-  assert(approx(state.strokeWidth, 7.1375), 'rescaled impact mid stroke in state');
+  assert(approx(state.strokeWidth, 7.47075), 'rescaled impact mid stroke in state');
 }
 
 // apply — clarity collapse factor
@@ -253,6 +254,7 @@ console.log('expressive-render tests…');
   assert(html.includes('fill="none"'), 'fill none');
   assert(html.includes('stroke="#000000"'), 'stroke color');
   assert(html.includes('stroke-width="4"'), 'stroke width');
+  assert(html.includes('vector-effect="non-scaling-stroke"'), 'non-scaling-stroke');
   assert(!/\sstyle=/.test(html), 'style attr removed');
 }
 
@@ -271,10 +273,51 @@ console.log('expressive-render tests…');
     ...api.DEFAULT_PARAMS,
     memoryImpact: 14,
   });
-  assert(approx(state.strokeWidth, 2.3585), 'impact 14 → rescaled stroke');
-  assert(/stroke-width="2\.359"/.test(svg), 'presentation stroke-width applied');
-  assert(/stroke-width:2\.359/.test(svg), 'CSS stroke-width rewritten for Impact');
+  assert(approx(state.strokeWidth, 2.76141), 'impact 14 → rescaled stroke');
+  assert(/stroke-width="2\.761"/.test(svg), 'presentation stroke-width applied');
+  assert(/stroke-width:2\.761/.test(svg), 'CSS stroke-width rewritten for Impact');
   assert(!/stroke-width:0\.5/.test(svg), 'CSS no longer locks 0.5');
+}
+
+// Bank scale wrapper + Streamline flat icon → same stroke + non-scaling-stroke
+{
+  const bankMaster =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 48 48">` +
+    `<g transform="translate(-1.76,-0.36) scale(1.073)" stroke-width="0.931707">` +
+    `<defs><style>.cls-1{fill:none;stroke:#000;stroke-linecap:round;stroke-linejoin:round;}</style></defs>` +
+    `<path class="cls-1" d="M8 24h32"/>` +
+    `</g></svg>`;
+  const streamlineMaster =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">` +
+    `<path d="M8 32h48" fill="none" stroke="#000" stroke-width="0.25"/>` +
+    `</svg>`;
+  const dash = { solid: true, dasharray: null };
+  const bankOut = api._normalizeGraphicsInHtml(bankMaster, 0.93, dash);
+  const streamOut = api._normalizeGraphicsInHtml(streamlineMaster, 0.93, dash);
+  assert(/stroke-width="0\.93"/.test(bankOut), 'bank path stroke-width 0.93');
+  assert(/stroke-width="0\.93"/.test(streamOut), 'streamline path stroke-width 0.93');
+  assert(/stroke-width:0\.93/.test(bankOut), 'bank CSS stroke-width 0.93');
+  assert(/vector-effect="non-scaling-stroke"/.test(bankOut), 'bank non-scaling-stroke');
+  assert(/vector-effect="non-scaling-stroke"/.test(streamOut), 'streamline non-scaling-stroke');
+  assert(!/<g\b[^>]*stroke-width=/i.test(bankOut), 'bank wrapper g stroke-width stripped');
+
+  const seq =
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 128">` +
+    `<g transform="translate(20,32)">` +
+    `<svg width="64" height="64" viewBox="0 0 48 48">` +
+    `<g transform="scale(1.073)" stroke-width="0.931707"><path d="M8 24h32"/></g>` +
+    `</svg></g>` +
+    `<g transform="translate(100,32)">` +
+    `<svg width="64" height="64" viewBox="0 0 64 64">` +
+    `<path d="M8 32h48" fill="none" stroke="#000" stroke-width="0.25"/>` +
+    `</svg></g>` +
+    `</svg>`;
+  const { svg, state } = api.applyExpressiveRendering(seq, api.DEFAULT_PARAMS);
+  assert(state.pictogramCount === 2, 'bank+streamline count as two');
+  assert(state.strokeWidth === 0.93, 'unified stroke floor 0.93');
+  assert((svg.match(/stroke-width="0\.93"/g) || []).length >= 2, 'both masters get stroke 0.93');
+  assert((svg.match(/vector-effect="non-scaling-stroke"/g) || []).length >= 2, 'both get non-scaling-stroke');
+  assert(!/<g\b[^>]*stroke-width=/i.test(svg), 'no leftover g stroke-width in output');
 }
 
 // Real bank girl.svg (xml prolog + nested svg + cls-1) must survive sequence expressive path

@@ -10,7 +10,8 @@
   const FRAG_STRIPS = [1, 4, 4];
   const FRAG_DIST = [0, 18, 18];
   const DOT_CLEARANCE = 1.6;
-  const BASE_STROKE = 0.5;
+  /** Match bank grandfather stroke (~0.93); Impact=0 floor for sequence display. */
+  const BASE_STROKE = 0.93;
   const MAX_STROKE = 30;
   const IMPACT_SCALE = 0.45;
   /** Slider 0–100 maps onto the former 8–100% frequency range (new 0% = old 8%). */
@@ -222,6 +223,8 @@
     t = setOrReplaceAttr(t, 'stroke-width', formatNum(strokeWidth));
     t = setOrReplaceAttr(t, 'stroke-linecap', 'round');
     t = setOrReplaceAttr(t, 'stroke-linejoin', 'round');
+    // Bank icons wrap paths in scale(); keep visual weight equal to flat Streamline icons.
+    t = setOrReplaceAttr(t, 'vector-effect', 'non-scaling-stroke');
     if (dash.solid) {
       t = removeAttr(t, 'stroke-dasharray');
       t = removeAttr(t, 'stroke-dashoffset');
@@ -232,6 +235,15 @@
     // Drop style= that could override our attrs
     t = removeAttr(t, 'style');
     return t;
+  }
+
+  /** Bank SVGs put stroke-width on wrapper <g>; strip so it cannot override unified stroke. */
+  function stripGroupStrokeWidth(html) {
+    return String(html || '').replace(/<g\b([^>]*)>/gi, (full, attrs) => {
+      let open = `<g${attrs}>`;
+      open = removeAttr(open, 'stroke-width');
+      return open;
+    });
   }
 
   /**
@@ -292,7 +304,8 @@
   }
 
   function normalizeGraphicsInHtml(html, strokeWidth, dash) {
-    let out = normalizeStyleBlocksInHtml(html, strokeWidth, dash);
+    let out = stripGroupStrokeWidth(html);
+    out = normalizeStyleBlocksInHtml(out, strokeWidth, dash);
     const tags = GRAPHIC_SEL.split(',');
     for (const tag of tags) {
       const re = new RegExp(`<${tag}\\b([^>]*?)(/?)>`, 'gi');
