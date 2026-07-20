@@ -64,4 +64,19 @@ console.log('normalize-pictogram-svg tests…');
   assert(api.normalizePictogramSvg('not-svg') === 'not-svg', 'non-svg unchanged');
 }
 
+// Bank files with <?xml …?> prolog must still normalize (girl/boy bank assets)
+{
+  const input =
+    `<?xml version="1.0" encoding="UTF-8"?>` +
+    `<svg id="Layer_2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">` +
+    `<defs><style>.cls-1{fill:none;stroke:#000;}</style></defs>` +
+    `<path class="cls-1" d="M10 32h44"/>` +
+    `</svg>`;
+  assert(api.stripSvgProlog(input).startsWith('<svg'), 'stripSvgProlog drops xml decl');
+  const out = api.normalizePictogramSvg(input);
+  assert(out.startsWith('<svg'), 'normalized output has no xml decl');
+  assert(/width="64"/.test(out) && /height="64"/.test(out), 'xml-prefixed bank gets size 64');
+  assert(/stroke-width="0\.5"/.test(out), 'xml-prefixed bank gets stroke attrs');
+}
+
 console.log('All normalize-pictogram-svg tests passed.');

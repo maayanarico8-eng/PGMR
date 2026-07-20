@@ -107,8 +107,18 @@
     });
   }
 
+  /** Strip BOM / XML declaration / doctype so bank files starting with <?xml normalize correctly. */
+  function stripSvgProlog(svgText) {
+    return String(svgText || '')
+      .replace(/^\uFEFF/, '')
+      .trim()
+      .replace(/^<\?xml\b[^?]*\?>\s*/i, '')
+      .replace(/^<!DOCTYPE\b[^>]*>\s*/i, '')
+      .trim();
+  }
+
   function normalizeRootSvg(svgText) {
-    const trimmed = String(svgText || '').trim();
+    const trimmed = stripSvgProlog(svgText);
     if (!/^<svg\b/i.test(trimmed)) return trimmed;
 
     return trimmed.replace(/^<svg([^>]*)>/i, (match, attrs) => {
@@ -128,7 +138,7 @@
    * @returns {string}
    */
   function normalizePictogramSvg(svgText) {
-    const trimmed = String(svgText || '').trim();
+    const trimmed = stripSvgProlog(svgText);
     if (!trimmed || !/^<svg\b/i.test(trimmed)) return trimmed;
 
     let out = normalizeRootSvg(trimmed);
@@ -142,6 +152,7 @@
     STROKE_WIDTH,
     STROKE_COLOR,
     FILL,
+    stripSvgProlog,
     normalizePictogramSvg,
   };
 

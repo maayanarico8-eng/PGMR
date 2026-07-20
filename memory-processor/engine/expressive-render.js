@@ -475,20 +475,31 @@
     return rects;
   }
 
+  function stripSvgProlog(svgText) {
+    const fromNorm = root.MemoryEngineNormalizePictogramSvg?.stripSvgProlog;
+    if (typeof fromNorm === 'function') return fromNorm(svgText);
+    return String(svgText || '')
+      .replace(/^\uFEFF/, '')
+      .trim()
+      .replace(/^<\?xml\b[^?]*\?>\s*/i, '')
+      .replace(/^<!DOCTYPE\b[^>]*>\s*/i, '')
+      .trim();
+  }
+
   function localMasterHtml(p) {
-    // Master stored in local coords (0,0)-(w,h) matching nested svg size
+    // Master stored in local coords (0,0)-(w,h) matching nested svg size.
+    // Unwrap nested <svg> into raw children — <use href> of a nested <svg>
+    // (especially after an <?xml …?> prolog) often fails to paint in browsers,
+    // while the same markup shows fine as a standalone thumb in the strip.
     const nested = p.html.match(/^<g\b[^>]*>([\s\S]*)<\/g\s*>$/i);
     if (nested) {
-      const inner = nested[1].trim();
+      const inner = stripSvgProlog(nested[1]);
       const svgM = inner.match(/^<svg\b([^>]*)>([\s\S]*)<\/svg\s*>$/i);
-      if (svgM) {
-        // Keep svg as-is at local origin
-        return inner;
-      }
+      if (svgM) return svgM[2].trim();
       return inner;
     }
     // Non-group: strip translate from outer
-    return p.html.replace(/\stransform\s*=\s*["'][^"']*["']/i, '');
+    return stripSvgProlog(p.html.replace(/\stransform\s*=\s*["'][^"']*["']/i, ''));
   }
 
   function applyExpressiveRendering(svgString, params, options) {

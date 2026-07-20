@@ -1451,8 +1451,10 @@ function lookupHitForUnit(u){
 
 /** Canonicalize + size a pictogram for the sequence row (stroke 0.5, #000000, size 64). */
 function sequenceSlotSvg(svgHtml,size=64){
-  const norm=MemoryEngineNormalizePictogramSvg?.normalizePictogramSvg;
-  let svg=norm?norm(svgHtml):(svgHtml||'').trim();
+  const api=MemoryEngineNormalizePictogramSvg;
+  const strip=api?.stripSvgProlog;
+  const norm=api?.normalizePictogramSvg;
+  let svg=norm?norm(svgHtml):(strip?strip(svgHtml):(svgHtml||'').trim());
   if(!/^<svg/i.test(svg))return svg;
   return svg.replace(/^<svg([^>]*)>/i,(match,attrs)=>{
     let a=attrs.replace(/\s(?:width|height)="[^"]*"/gi,'');

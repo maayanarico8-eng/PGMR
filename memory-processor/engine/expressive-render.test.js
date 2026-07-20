@@ -277,4 +277,32 @@ console.log('expressive-render tests…');
   assert(!/stroke-width:0\.5/.test(svg), 'CSS no longer locks 0.5');
 }
 
+// Real bank girl.svg (xml prolog + nested svg + cls-1) must survive sequence expressive path
+{
+  const fs = require('fs');
+  const path = require('path');
+  const normalizeApi = require('./catalog/normalize-pictogram-svg.js');
+  globalThis.MemoryEngineNormalizePictogramSvg = normalizeApi;
+  const girl = fs.readFileSync(path.join(__dirname, '../pictograms/bank/girl.svg'), 'utf8');
+  assert(girl.trim().startsWith('<?xml'), 'fixture has xml prolog');
+  const normalized = normalizeApi.normalizePictogramSvg(girl);
+  assert(normalized.startsWith('<svg'), 'girl normalizes without xml prolog');
+  const slotSvg = normalized.replace(/^<svg([^>]*)>/i, (m, attrs) => {
+    let a = attrs.replace(/\s(?:width|height)="[^"]*"/gi, '');
+    return `<svg width="64" height="64"${a} overflow="hidden">`;
+  });
+  const seq =
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 128">` +
+    `<g transform="translate(20,32)">${slotSvg}</g>` +
+    `</svg>`;
+  const { svg, state } = api.applyExpressiveRendering(seq, api.DEFAULT_PARAMS);
+  assert(state.pictogramCount === 1, 'girl counts as one pictogram');
+  assert(!/<\?xml/i.test(svg), 'expressive output has no xml prolog in masters');
+  const master = svg.match(/id="ex-master-0">([\s\S]*?)<\/g>\s*<clipPath/)?.[1] || '';
+  assert(master.length > 0, 'girl master exists');
+  assert(!/^<svg\b/i.test(master.trim()), 'master unwraps nested svg root');
+  assert(/39\.61,38\.03/.test(svg), 'girl path retained in sequence output');
+  assert(/<use\b[^>]*href="#ex-master-0"/.test(svg), 'girl referenced via use');
+}
+
 console.log('All expressive-render tests passed.');
