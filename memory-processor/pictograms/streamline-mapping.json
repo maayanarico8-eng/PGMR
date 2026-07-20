@@ -4,26 +4,5 @@
     "searchMode": "family",
     "familySlug": "streamline-regular"
   },
-  "icons": {
-    "dog": {
-      "hash": "ico_new",
-      "iconName": "dog",
-      "familySlug": "streamline-regular",
-      "downloadParams": {
-        "size": 64,
-        "responsive": true,
-        "strokeToFill": false,
-        "backgroundColor": "#ffffff00",
-        "colors": "#000000",
-        "strokeWidth": 0.5
-      },
-      "searchParams": {
-        "mode": "family",
-        "familySlug": "streamline-regular",
-        "limit": 10
-      },
-      "searchQuery": "dog",
-      "updatedAt": "2026-07-09T11:46:13.432Z"
-    }
-  }
+  "icons": {}
 }
