@@ -934,7 +934,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
 
 let currentResult=null,currentVrpResult=null,currentAraResult=null,currentFilter='all';
 let designRepresentativeWords=[];
-let designHeadingPreview=null;
+let designHeadingPreviewWords=null; // selected words (bag); display always follows current RW order
 let designHeadingPreviewKey='';
 let processorMode='anthropic';
 let visualCloneSerial=0;
@@ -945,18 +945,19 @@ let cachedSequenceBuild=null; // { kind:'bank'|'vrp', slots, rtl?, vrpResult? }
 let lastExpressiveState=null;
 let expressiveParams=null;
 
+/** Pick n words at random, returned in original list order. */
 function sampleRandomWords(words,n){
-  const pool=words.slice();
-  const count=Math.min(n,pool.length);
+  const indices=words.map((_,i)=>i);
+  const count=Math.min(n,indices.length);
   for(let i=0;i<count;i++){
-    const j=i+Math.floor(Math.random()*(pool.length-i));
-    const tmp=pool[i];pool[i]=pool[j];pool[j]=tmp;
+    const j=i+Math.floor(Math.random()*(indices.length-i));
+    const tmp=indices[i];indices[i]=indices[j];indices[j]=tmp;
   }
-  return pool.slice(0,count);
+  return indices.slice(0,count).sort((a,b)=>a-b).map(i=>words[i]);
 }
 
 function clearHeadingPreviewCache(){
-  designHeadingPreview=null;
+  designHeadingPreviewWords=null;
   designHeadingPreviewKey='';
 }
 
@@ -964,10 +965,18 @@ function getHeadingPreviewText(){
   const words=designRepresentativeWords.filter(Boolean);
   if(!words.length)return '';
   const key=[...words].sort().join('\0');
-  if(designHeadingPreview&&designHeadingPreviewKey===key)return designHeadingPreview;
-  designHeadingPreview=sampleRandomWords(words,3).join(', ');
-  designHeadingPreviewKey=key;
-  return designHeadingPreview;
+  if(!designHeadingPreviewWords||designHeadingPreviewKey!==key){
+    designHeadingPreviewWords=sampleRandomWords(words,3);
+    designHeadingPreviewKey=key;
+  }
+  // Re-project selection into current RW order (reorder without re-picking).
+  const remaining=designHeadingPreviewWords.slice();
+  return words.filter(w=>{
+    const idx=remaining.indexOf(w);
+    if(idx===-1)return false;
+    remaining.splice(idx,1);
+    return true;
+  }).join(', ');
 }
 
 function resetExpressiveParams(){
