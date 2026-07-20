@@ -12,7 +12,7 @@ const DOWNLOAD_PARAMS = {
   strokeToFill: false,
   backgroundColor: '#ffffff00',
   colors: '#000000',
-  strokeWidth: 0.5,
+  strokeWidth: 0.25,
 };
 const SEARCH_PARAMS = { mode: 'family', familySlug: FAMILY, limit: 10 };
 

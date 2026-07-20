@@ -12,7 +12,7 @@ const DEFAULT_DOWNLOAD_PARAMS = {
   strokeToFill: false,
   backgroundColor: '#ffffff00',
   colors: '#000000',
-  strokeWidth: 0.5,
+  strokeWidth: 0.25,
 };
 
 function buildDownloadQueryParams(overrides) {

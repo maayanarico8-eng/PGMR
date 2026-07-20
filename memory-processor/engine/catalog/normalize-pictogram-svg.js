@@ -4,7 +4,7 @@
  */
 (function (root) {
   const SIZE = 64;
-  const STROKE_WIDTH = '0.5';
+  const STROKE_WIDTH = '0.25';
   const STROKE_COLOR = '#000000';
   const FILL = 'none';
   const GRAPHIC_TAGS = 'path,rect,circle,ellipse,line,polyline,polygon';
