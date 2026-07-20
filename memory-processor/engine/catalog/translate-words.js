@@ -257,6 +257,7 @@ Non-verbs (person, object, place): use a visually specific noun (grandfather, ne
   async function resolvePictogramWords(hebrewWords, options) {
     const opts = options || {};
     const canonicalMap = opts.canonicalMap || {};
+    const resolveDebug = [];
     const { translations, uniqueTranslations } = await translateHebrewWords(hebrewWords, canonicalMap, opts);
     const translationByHebrew = Object.fromEntries(translations.map((t) => [t.hebrew, t]));
     const englishByHebrew = Object.fromEntries(translations.map((t) => [t.hebrew, t.english]));
@@ -269,6 +270,7 @@ Non-verbs (person, object, place): use a visually specific noun (grandfather, ne
       const english = t.english || null;
       if (!english || resolvedByEnglish[normalizeEnglish(english)]) continue;
       const excludeHashes = root.MemoryEngineStreamlineSession?.getUsedHashes?.() || [];
+      const wordTrace = [];
       const resolved = await resolve(t.hebrew, {
         english,
         englishWord: english,
@@ -279,8 +281,21 @@ Non-verbs (person, object, place): use a visually specific noun (grandfather, ne
         narratorGender: opts.narratorGender,
         context: opts.memoryText || opts.context || null,
         excludeHashes,
+        trace: (step) => wordTrace.push(step),
       });
       resolvedByEnglish[normalizeEnglish(english)] = resolved;
+      resolveDebug.push({
+        hebrew: t.hebrew,
+        english,
+        narratorRedirect: !!t.narratorRedirect,
+        originalEnglish: t.originalEnglish || null,
+        excludeHashesBefore: excludeHashes,
+        status: resolved?.status || 'gap',
+        source: resolved?.source || null,
+        hash: resolved?.hash || null,
+        assetRef: resolved?.assetRef || null,
+        steps: wordTrace,
+      });
     }
 
     const slots = await Promise.all(
@@ -315,7 +330,13 @@ Non-verbs (person, object, place): use a visually specific noun (grandfather, ne
       await bank.ensureBankedIcons(iconsToBank);
     }
 
-    return { translations, uniqueTranslations, slots, sequenceSlots: uniqueSlotsForSequence(slots) };
+    return {
+      translations,
+      uniqueTranslations,
+      slots,
+      sequenceSlots: uniqueSlotsForSequence(slots),
+      resolveDebug,
+    };
   }
 
   root.MemoryEngineCatalogTranslate = {

@@ -1435,11 +1435,50 @@ function englishRefMeta(english,slot){
 }
 
 function pictogramSourceMeta(source){
+  if(source==='bank')return '<div class="cat-hit-meta">Bank · local SVG</div>';
   if(source==='cache')return '<div class="cat-hit-meta">Stored · cached</div>';
   if(source==='mapping')return '<div class="cat-hit-meta">Streamline · mapped</div>';
   if(source==='streamline-new')return '<div class="cat-hit-meta">Streamline · new</div>';
   if(source==='streamline')return '<div class="cat-hit-meta">Streamline</div>';
   return '';
+}
+
+function renderResolveDebugPanel(resolveDebug, meta){
+  if(!resolveDebug?.length)return'';
+  const payload={
+    at:new Date().toISOString(),
+    memory:meta?.memory||null,
+    narratorGender:meta?.narratorGender||null,
+    words:meta?.words||null,
+    resolveDebug,
+    usedHashes:MemoryEngineStreamlineSession?.getUsedHashes?.()||[],
+  };
+  const text=JSON.stringify(payload,null,2);
+  return`<div class="resolve-debug-panel" style="margin-top:16px;border:1px solid var(--b2);border-radius:8px;background:var(--bg2);overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--b3)">
+      <div class="sec-label" style="margin:0">Resolve debug <span>copy for support</span></div>
+      <button type="button" class="mode-btn resolve-debug-copy" style="padding:4px 10px;font-size:11px">Copy log</button>
+    </div>
+    <textarea class="resolve-debug-text" readonly dir="ltr" style="width:100%;min-height:160px;max-height:280px;resize:vertical;border:0;padding:10px 12px;font:11px/1.45 ui-monospace,monospace;background:#fff;color:var(--t2);box-sizing:border-box">${esc(text)}</textarea>
+  </div>`;
+}
+
+function bindResolveDebugPanel(root){
+  const panel=root?.querySelector?.('.resolve-debug-panel')||document.querySelector('.resolve-debug-panel');
+  if(!panel||panel.dataset.bound==='1')return;
+  panel.dataset.bound='1';
+  const btn=panel.querySelector('.resolve-debug-copy');
+  const ta=panel.querySelector('.resolve-debug-text');
+  btn?.addEventListener('click',async()=>{
+    try{
+      await navigator.clipboard.writeText(ta?.value||'');
+      btn.textContent='Copied';
+      setTimeout(()=>{btn.textContent='Copy log';},1500);
+    }catch(e){
+      ta?.focus();ta?.select();
+      btn.textContent='Select+Cmd/Ctrl+C';
+    }
+  });
 }
 
 function lookupHitForUnit(u){
@@ -1646,7 +1685,7 @@ async function previewFullApiPictograms(){
   container.innerHTML=translationLoadingHTML();
   try{
     const canonicalMap=MemoryEngineCatalogTranslate.buildCanonicalMapFromRule1(currentResult);
-    const{translations,slots}=await MemoryEngineCatalogTranslate.resolvePictogramWords(words,{canonicalMap,memoryText:currentResult.coreNarrative,narratorGender:getNarratorGender()});
+    const{translations,slots,resolveDebug}=await MemoryEngineCatalogTranslate.resolvePictogramWords(words,{canonicalMap,memoryText:currentResult.coreNarrative,narratorGender:getNarratorGender()});
     const rtl=currentResult.memoryLanguage==='Hebrew';
     const hits=slots.filter(s=>!s.duplicateOf&&s.status==='hit').length;
     const gaps=slots.filter(s=>!s.duplicateOf&&s.status!=='hit').length;
@@ -1671,8 +1710,10 @@ async function previewFullApiPictograms(){
       <div class="bank-word-grid">${rows}</div>
       <div class="sec-label">Sequence</div>
       ${sequenceBlockHtml(seqSvg)}
-      <div style="font-size:11px;color:var(--t3);margin-top:8px">Icons resolve from <code style="font-size:10px">pictogram-cache</code> first, then <code style="font-size:10px">streamline-mapping.json</code>, then Streamline HQ (<code style="font-size:10px">streamline-regular</code>).</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:8px">Icons resolve from <code style="font-size:10px">pictograms/bank</code>, then <code style="font-size:10px">pictogram-cache</code>, then mapping, then Streamline HQ.</div>
+      ${renderResolveDebugPanel(resolveDebug,{memory:currentResult.coreNarrative,narratorGender:getNarratorGender(),words})}
     `;
+    bindResolveDebugPanel(container);
     bindExpressivePanel();
     loadBankList();
   }catch(e){
@@ -1932,7 +1973,7 @@ async function renderCatalogSection(vrpResult){
   container.innerHTML=`<div class="divider"></div>${translationLoadingHTML()}`;
   const hebrewWords=units.map(u=>u.unit||'').filter(Boolean);
   const canonicalMap=MemoryEngineCatalogTranslate.buildCanonicalMapFromRule1(currentResult);
-  const{translations,slots}=await MemoryEngineCatalogTranslate.resolvePictogramWords(hebrewWords,{canonicalMap,memoryText:currentResult.coreNarrative,narratorGender:getNarratorGender()});
+  const{translations,slots,resolveDebug}=await MemoryEngineCatalogTranslate.resolvePictogramWords(hebrewWords,{canonicalMap,memoryText:currentResult.coreNarrative,narratorGender:getNarratorGender()});
   const slotByHebrew=Object.fromEntries(slots.map(s=>[s.hebrew,s]));
   container.innerHTML=`<div class="divider"></div>${renderTranslationSection(translations)}<div class="sec-label">Library Lookup <span>Loading pictograms…</span></div>`;
   let hits=0,gaps=0;
@@ -1975,7 +2016,9 @@ async function renderCatalogSection(vrpResult){
     ${rows.join('')}
     ${skipped.length?`<div style="margin-top:16px"><div class="sec-label" style="margin-bottom:10px">Excluded from lookup <span>${skipped.length} unit${skipped.length!==1?'s':''}</span></div>${skippedRows.join('')}</div>`:''}
     ${hasSeq?`<div style="margin-top:20px"><div class="sec-label">Pictographic Sequence</div>${sequenceBlockHtml(seqSvg)}${gaps>0?`<div style="font-size:11px;color:#D85A30;margin-top:6px">${gaps} word${gaps!==1?'s':''} could not be realized — VISUAL GAP events recorded. The sequence is incomplete.</div>`:''}</div>`:''}
+    ${renderResolveDebugPanel(resolveDebug,{memory:currentResult?.coreNarrative,narratorGender:getNarratorGender(),words:hebrewWords})}
   `;
+  bindResolveDebugPanel(container);
   bindExpressivePanel();
   loadBankList();
 }

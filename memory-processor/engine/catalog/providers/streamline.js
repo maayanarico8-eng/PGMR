@@ -504,21 +504,51 @@
     root.MemoryEngineStreamlineSession?.register?.(svg, meta);
   }
 
+  /** Shared sentinel used when bank icons were bulk-imported — must not block other bank terms. */
+  const SHARED_HASH_SENTINELS = new Set(['manual-upload']);
+
+  function stableAssetHash(term, hash) {
+    const h = hash == null ? '' : String(hash).trim();
+    if (!h || SHARED_HASH_SENTINELS.has(h)) return `bank:${normalizeEnglish(term)}`;
+    return h;
+  }
+
   function returnSvg(term, svg, hash, source) {
     const norm = root.MemoryEngineNormalizePictogramSvg?.normalizePictogramSvg;
     const out = norm ? norm(svg) : svg;
-    registerSession(out, { english: term, hash, source });
-    return { svg: out, source, hash, english: term };
+    const stableHash = stableAssetHash(term, hash);
+    registerSession(out, { english: term, hash: stableHash, source });
+    return { svg: out, source, hash: stableHash, english: term };
   }
 
   function collectExcludeHashes(selectOpts) {
     const fromOpts = selectOpts?.excludeHashes || [];
     const fromSession = root.MemoryEngineStreamlineSession?.getUsedHashes?.() || [];
-    return [...new Set([...fromOpts, ...fromSession].map((h) => String(h || '').trim()).filter(Boolean))];
+    return [
+      ...new Set(
+        [...fromOpts, ...fromSession]
+          .map((h) => String(h || '').trim())
+          .filter((h) => h && !SHARED_HASH_SENTINELS.has(h))
+      ),
+    ];
   }
 
   function isHashExcluded(hash, excludeSet) {
-    return !!(hash && excludeSet?.has(String(hash)));
+    const h = hash == null ? '' : String(hash).trim();
+    if (!h || SHARED_HASH_SENTINELS.has(h)) return false;
+    return !!(excludeSet && excludeSet.has(h));
+  }
+
+  async function tryLocalBank(term) {
+    const local = root.MemoryEngineCatalogLocalProvider;
+    if (!local?.loadByWord) return null;
+    try {
+      const svg = await local.loadByWord(term);
+      if (svg) return returnSvg(term, svg, `bank:${term}`, 'bank');
+    } catch (err) {
+      console.warn('Local bank load failed:', term, err.message);
+    }
+    return null;
   }
 
   async function resolveFromSearch(term, searchParams, selectOpts) {
@@ -582,20 +612,44 @@
     const excludeList = collectExcludeHashes(selectOpts);
     const excludeSet = new Set(excludeList);
     const selectOptsWithExclude = { ...(selectOpts || {}), excludeHashes: excludeList };
+    const trace = selectOpts?.trace;
+    const step = (phase, detail) => {
+      if (typeof trace === 'function') trace({ term, phase, ...detail });
+    };
 
     const sessionCached = root.MemoryEngineStreamlineSession?.getByEnglish?.(term);
     if (sessionCached?.svg && !isHashExcluded(sessionCached.meta?.hash, excludeSet)) {
+      step('session-hit', { hash: sessionCached.meta?.hash, source: sessionCached.meta?.source });
       return {
         svg: sessionCached.svg,
         source: sessionCached.meta?.source || 'cache',
-        hash: sessionCached.meta?.hash || null,
+        hash: stableAssetHash(term, sessionCached.meta?.hash),
         english: term,
       };
     }
 
+    // Prefer committed bank SVG files (pictograms/bank/{term}.svg) over Streamline.
+    const fromBank = await tryLocalBank(term);
+    if (fromBank) {
+      step('bank-hit', { hash: fromBank.hash, source: 'bank' });
+      return fromBank;
+    }
+    step('bank-miss', {});
+
     const cached = await getCachedEntry(term);
-    if (cached?.svg && !isHashExcluded(cached.hash, excludeSet)) {
-      return returnSvg(term, cached.svg, cached.hash, 'cache');
+    if (cached?.svg) {
+      const cacheHash = stableAssetHash(term, cached.hash);
+      if (!isHashExcluded(cacheHash, excludeSet) && !isHashExcluded(cached.hash, excludeSet)) {
+        step('cache-hit', { hash: cacheHash, rawHash: cached.hash, source: 'cache' });
+        return returnSvg(term, cached.svg, cacheHash, 'cache');
+      }
+      step('cache-skipped-excluded', {
+        hash: cacheHash,
+        rawHash: cached.hash,
+        excludeHashes: excludeList,
+      });
+    } else {
+      step('cache-miss', {});
     }
 
     await loadMapping();
@@ -604,6 +658,7 @@
     if (mapped && !isHashExcluded(mapped.hash, excludeSet)) {
       const legacySvg = await migrateLegacyInlineSvg(term, mapped);
       if (legacySvg) {
+        step('mapping-legacy-hit', { hash: mapped.hash });
         return returnSvg(term, legacySvg, mapped.hash, 'cache');
       }
     }
@@ -612,14 +667,24 @@
       try {
         const svg = await downloadSvg(mapped.hash, mapped.downloadParams || DEFAULT_DOWNLOAD_PARAMS);
         await saveCacheEntry(term, { svg, hash: mapped.hash });
+        step('mapping-download-hit', { hash: mapped.hash });
         return returnSvg(term, svg, mapped.hash, 'mapping');
       } catch (err) {
         if (!isPremiumDownloadError(err.message)) throw err;
         if (mappingCache?.icons) delete mappingCache.icons[term];
+        step('mapping-download-failed', { hash: mapped.hash, error: err.message });
       }
+    } else if (mapped?.hash) {
+      step('mapping-skipped-excluded', { hash: mapped.hash, excludeHashes: excludeList });
+    } else {
+      step('mapping-miss', {});
     }
 
-    return resolveFromSearch(term, DEFAULT_SEARCH_PARAMS, selectOptsWithExclude);
+    step('streamline-search', { excludeHashes: excludeList });
+    const searched = await resolveFromSearch(term, DEFAULT_SEARCH_PARAMS, selectOptsWithExclude);
+    if (searched) step('streamline-hit', { hash: searched.hash, source: searched.source });
+    else step('streamline-miss', {});
+    return searched;
   }
 
   async function fetchPictogram({ english, canonicalReferent, englishWord, hebrew, context }) {
@@ -659,6 +724,9 @@
     resolveFromSearch,
     fetchPictogram,
     clearMappingCache,
+    tryLocalBank,
+    stableAssetHash,
+    SHARED_HASH_SENTINELS,
     DEFAULT_SEARCH_PARAMS,
     DEFAULT_DOWNLOAD_PARAMS,
     DEFAULT_FAMILY_SLUG,

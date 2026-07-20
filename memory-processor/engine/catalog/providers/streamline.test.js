@@ -658,6 +658,88 @@ async function testCachedHashExcludedForcesResearch() {
   })();
 }
 
+async function testManualUploadHashDoesNotBlockOtherBankTerms() {
+  await withEmptyBank(async ({ cachePath }) => {
+    const searchResults = [
+      {
+        hash: 'ico_streamline_grandpa',
+        name: 'grandfather',
+        isFree: true,
+        imagePreviewUrl: 'https://assets.streamlinehq.com/image/private/g.png?_a=1',
+      },
+    ];
+    const SL = load({ searchResults, selectWinnerHash: 'ico_streamline_grandpa' });
+    SL.clearMappingCache();
+    globalThis.MemoryEngineStreamlineSession?.cleanup?.();
+    globalThis.MemoryEngineAnthropic = {
+      callClaudeJSON: async () => {
+        throw new Error('unit test must not call Anthropic');
+      },
+    };
+
+    // Simulate bulk bank import: many terms share sentinel hash "manual-upload"
+    fs.writeFileSync(
+      cachePath,
+      JSON.stringify(
+        {
+          version: 1,
+          icons: {
+            girl: { svg: '<svg id="bank-girl"></svg>', hash: 'manual-upload' },
+            grandfather: { svg: '<svg id="bank-grandfather"></svg>', hash: 'manual-upload' },
+          },
+        },
+        null,
+        2
+      )
+    );
+
+    let searched = false;
+    const orig = globalThis.fetch;
+    globalThis.fetch = async (url) => {
+      const u = String(url);
+      if (u.includes('action=search')) searched = true;
+      if (u.includes('/api/pictogram-cache?english=girl')) {
+        return {
+          ok: true,
+          async json() {
+            return { english: 'girl', entry: { svg: '<svg id="bank-girl"></svg>', hash: 'manual-upload' } };
+          },
+        };
+      }
+      if (u.includes('/api/pictogram-cache?english=grandfather')) {
+        return {
+          ok: true,
+          async json() {
+            return {
+              english: 'grandfather',
+              entry: { svg: '<svg id="bank-grandfather"></svg>', hash: 'manual-upload' },
+            };
+          },
+        };
+      }
+      return orig(url);
+    };
+
+    // No local bank provider in this unit test — cache path must still work.
+    delete globalThis.MemoryEngineCatalogLocalProvider;
+
+    const first = await SL.resolveIcon('girl');
+    assert(first?.svg?.includes('bank-girl'), 'girl from cache');
+    assert(first?.hash === 'bank:girl', 'girl gets stable bank hash');
+
+    const second = await SL.resolveIcon('grandfather', {
+      excludeHashes: globalThis.MemoryEngineStreamlineSession.getUsedHashes(),
+    });
+    globalThis.fetch = orig;
+
+    assert(second?.svg?.includes('bank-grandfather'), 'grandfather still from cache');
+    assert(second?.source === 'cache', 'grandfather source cache not streamline-new');
+    assert(second?.hash === 'bank:grandfather', 'grandfather unique bank hash');
+    assert(!searched, 'must not fall through to Streamline search');
+    console.log('PASS manual-upload sentinel does not block other bank terms');
+  })();
+}
+
 async function run() {
   await testCachedSvgSkipsDownload();
   await testHashOnlyMappingDownloadsOnce();
@@ -666,6 +748,7 @@ async function run() {
   await testAiSelectsNonFirstHash();
   await testExcludeHashesSkipsAlreadyUsedIcon();
   await testCachedHashExcludedForcesResearch();
+  await testManualUploadHashDoesNotBlockOtherBankTerms();
   await testRankDoesNotPreferFree();
   await testSelectErrorFallsBack();
   await testResolvePreviewUrl();

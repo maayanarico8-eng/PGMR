@@ -1,5 +1,5 @@
 /**
- * Pictogram resolver — mapping-first Streamline HQ (no local bank).
+ * Pictogram resolver — local bank first, then pictogram-cache / Streamline mapping / search.
  * All results include hebrew + english word pair for client UX.
  */
 (function (root) {
@@ -39,15 +39,21 @@
         hebrew,
         context: options?.context || options?.memory || null,
         excludeHashes: options?.excludeHashes,
+        trace: options?.trace,
       });
       if (result?.svg) {
+        const hash = result.hash || english;
+        const assetRef =
+          result.source === 'bank'
+            ? `bank://${english}.svg`
+            : `streamline://${hash}`;
         return withPair(
           {
             status: 'hit',
             source: result.source,
             svg: result.svg,
-            assetRef: `streamline://${result.hash || english}`,
-            hash: result.hash,
+            assetRef,
+            hash,
             provisional: result.source === 'streamline-new',
             narratorRedirect,
             originalEnglish: narratorRedirect ? rawEnglish : undefined,
