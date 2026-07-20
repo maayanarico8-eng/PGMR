@@ -486,16 +486,28 @@
       .trim();
   }
 
+  function forceMasterSvgSize(attrs, size) {
+    let a = String(attrs || '');
+    a = a.replace(/\s(?:width|height)\s*=\s*["'][^"']*["']/gi, '');
+    a = a.replace(/\s(?:width|height)\s*=\s*[^\s>]+/gi, '');
+    // Drop duplicate Layer ids so multiple masters in one sequence don't collide.
+    a = a.replace(/\sid\s*=\s*["'][^"']*["']/gi, '');
+    if (!/\bviewBox\s*=/i.test(a)) a += ` viewBox="0 0 ${size} ${size}"`;
+    if (!/\boverflow\s*=/i.test(a)) a += ' overflow="hidden"';
+    return ` width="${size}" height="${size}"${a}`;
+  }
+
   function localMasterHtml(p) {
-    // Master stored in local coords (0,0)-(w,h) matching nested svg size.
-    // Unwrap nested <svg> into raw children — <use href> of a nested <svg>
-    // (especially after an <?xml …?> prolog) often fails to paint in browsers,
-    // while the same markup shows fine as a standalone thumb in the strip.
+    // Keep a nested <svg width/height=64> so every pictogram shares one slot size.
+    // Only strip <?xml …?> — unwrapping children made bank icons (girl) huge vs Streamline icons.
     const nested = p.html.match(/^<g\b[^>]*>([\s\S]*)<\/g\s*>$/i);
     if (nested) {
       const inner = stripSvgProlog(nested[1]);
       const svgM = inner.match(/^<svg\b([^>]*)>([\s\S]*)<\/svg\s*>$/i);
-      if (svgM) return svgM[2].trim();
+      if (svgM) {
+        const size = Math.max(1, Math.round(p.width) || 64);
+        return `<svg${forceMasterSvgSize(svgM[1], size)}>${svgM[2]}</svg>`;
+      }
       return inner;
     }
     // Non-group: strip translate from outer

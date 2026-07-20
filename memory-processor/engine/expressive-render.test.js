@@ -291,16 +291,22 @@ console.log('expressive-render tests…');
     let a = attrs.replace(/\s(?:width|height)="[^"]*"/gi, '');
     return `<svg width="64" height="64"${a} overflow="hidden">`;
   });
+  const walk =
+    `<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">` +
+    `<path d="M8 32h48" fill="none" stroke="#000" stroke-width="0.5"/>` +
+    `</svg>`;
   const seq =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 128">` +
     `<g transform="translate(20,32)">${slotSvg}</g>` +
+    `<g transform="translate(100,32)">${walk}</g>` +
     `</svg>`;
   const { svg, state } = api.applyExpressiveRendering(seq, api.DEFAULT_PARAMS);
-  assert(state.pictogramCount === 1, 'girl counts as one pictogram');
+  assert(state.pictogramCount === 2, 'girl+walk count as two pictograms');
   assert(!/<\?xml/i.test(svg), 'expressive output has no xml prolog in masters');
   const master = svg.match(/id="ex-master-0">([\s\S]*?)<\/g>\s*<clipPath/)?.[1] || '';
   assert(master.length > 0, 'girl master exists');
-  assert(!/^<svg\b/i.test(master.trim()), 'master unwraps nested svg root');
+  assert(/^<svg\b/i.test(master.trim()), 'master keeps nested svg for uniform size');
+  assert(/width="64"/.test(master) && /height="64"/.test(master), 'master svg forced to 64');
   assert(/39\.61,38\.03/.test(svg), 'girl path retained in sequence output');
   assert(/<use\b[^>]*href="#ex-master-0"/.test(svg), 'girl referenced via use');
 }
