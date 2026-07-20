@@ -12,7 +12,7 @@ console.log('normalize-pictogram-svg tests…');
 
 {
   assert(api.SIZE === 64, 'size constant 64');
-  assert(api.STROKE_WIDTH === '0.5', 'stroke width 0.5');
+  assert(api.STROKE_WIDTH === '0.375', 'stroke width 0.375');
   assert(api.STROKE_COLOR === '#000000', 'stroke color #000000');
 }
 
@@ -27,10 +27,10 @@ console.log('normalize-pictogram-svg tests…');
   assert(/width="64"/.test(out) && /height="64"/.test(out), 'root size forced to 64');
   assert(/viewBox="0 0 24 24"/.test(out), 'preserves existing viewBox');
   assert(/stroke="#000000"/.test(out), 'path stroke #000000');
-  assert(/stroke-width="0\.5"/.test(out), 'path stroke-width 0.5');
+  assert(/stroke-width="0\.375"/.test(out), 'path stroke-width 0.375');
   assert(/fill="none"/.test(out), 'fill none on graphics');
   assert(/style="[^"]*stroke:#000000/.test(out), 'inline style stroke rewritten');
-  assert(/style="[^"]*stroke-width:0\.5/.test(out), 'inline style stroke-width rewritten');
+  assert(/style="[^"]*stroke-width:0\.375/.test(out), 'inline style stroke-width rewritten');
 }
 
 // Bank-like CSS class SVG (no stroke-width in stylesheet)
@@ -45,8 +45,8 @@ console.log('normalize-pictogram-svg tests…');
   assert(/width="64"/.test(out) && /height="64"/.test(out), 'bank root size 64');
   assert(/viewBox="0 0 48 48"/.test(out), 'bank viewBox preserved');
   assert(/stroke:#000000/.test(out) || /stroke="#000000"/.test(out), 'bank stroke color');
-  assert(/stroke-width:0\.5/.test(out), 'CSS stroke-width added');
-  assert(/stroke-width="0\.5"/.test(out), 'element stroke-width set');
+  assert(/stroke-width:0\.375/.test(out), 'CSS stroke-width added');
+  assert(/stroke-width="0\.375"/.test(out), 'element stroke-width set');
   assert(/fill:none/.test(out) && /fill="none"/.test(out), 'fill none in CSS and attrs');
 }
 
@@ -76,7 +76,7 @@ console.log('normalize-pictogram-svg tests…');
   const out = api.normalizePictogramSvg(input);
   assert(out.startsWith('<svg'), 'normalized output has no xml decl');
   assert(/width="64"/.test(out) && /height="64"/.test(out), 'xml-prefixed bank gets size 64');
-  assert(/stroke-width="0\.5"/.test(out), 'xml-prefixed bank gets stroke attrs');
+  assert(/stroke-width="0\.375"/.test(out), 'xml-prefixed bank gets stroke attrs');
 }
 
 console.log('All normalize-pictogram-svg tests passed.');

@@ -22,7 +22,7 @@
     strokeToFill: false,
     backgroundColor: '#ffffff00',
     colors: '#000000',
-    strokeWidth: 0.5,
+    strokeWidth: 0.375,
   };
 
   let mappingCache = null;
@@ -504,8 +504,11 @@
     root.MemoryEngineStreamlineSession?.register?.(svg, meta);
   }
 
-  /** Shared sentinel used when bank icons were bulk-imported — must not block other bank terms. */
-  const SHARED_HASH_SENTINELS = new Set(['manual-upload']);
+  const EMPTY_STATE_WORD = 'empty state';
+  const EMPTY_STATE_HASH = 'bank:empty state';
+
+  /** Shared sentinels — must not block other terms when the same placeholder hash is reused. */
+  const SHARED_HASH_SENTINELS = new Set(['manual-upload', EMPTY_STATE_HASH]);
 
   function stableAssetHash(term, hash) {
     const h = hash == null ? '' : String(hash).trim();
@@ -547,6 +550,20 @@
       if (svg) return returnSvg(term, svg, `bank:${term}`, 'bank');
     } catch (err) {
       console.warn('Local bank load failed:', term, err.message);
+    }
+    return null;
+  }
+
+  /** After Streamline search miss, use the bank "empty state" pictogram as a visual placeholder. */
+  async function tryEmptyStateFallback(term) {
+    if (!term || term === EMPTY_STATE_WORD) return null;
+    const local = root.MemoryEngineCatalogLocalProvider;
+    if (!local?.loadByWord) return null;
+    try {
+      const svg = await local.loadByWord(EMPTY_STATE_WORD);
+      if (svg) return returnSvg(term, svg, EMPTY_STATE_HASH, 'bank-fallback');
+    } catch (err) {
+      console.warn('Empty state fallback load failed:', err.message);
     }
     return null;
   }
@@ -682,9 +699,18 @@
 
     step('streamline-search', { excludeHashes: excludeList });
     const searched = await resolveFromSearch(term, DEFAULT_SEARCH_PARAMS, selectOptsWithExclude);
-    if (searched) step('streamline-hit', { hash: searched.hash, source: searched.source });
-    else step('streamline-miss', {});
-    return searched;
+    if (searched) {
+      step('streamline-hit', { hash: searched.hash, source: searched.source });
+      return searched;
+    }
+    step('streamline-miss', {});
+
+    const fallback = await tryEmptyStateFallback(term);
+    if (fallback) {
+      step('empty-state-fallback', { hash: fallback.hash, source: fallback.source });
+      return fallback;
+    }
+    return null;
   }
 
   async function fetchPictogram({ english, canonicalReferent, englishWord, hebrew, context }) {
@@ -725,8 +751,11 @@
     fetchPictogram,
     clearMappingCache,
     tryLocalBank,
+    tryEmptyStateFallback,
     stableAssetHash,
     SHARED_HASH_SENTINELS,
+    EMPTY_STATE_WORD,
+    EMPTY_STATE_HASH,
     DEFAULT_SEARCH_PARAMS,
     DEFAULT_DOWNLOAD_PARAMS,
     DEFAULT_FAMILY_SLUG,

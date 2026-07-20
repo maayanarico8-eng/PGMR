@@ -1,10 +1,10 @@
 /**
- * Canonical pictogram SVG normalizer — size 64, stroke 0.5, color #000000.
+ * Canonical pictogram SVG normalizer — size 64, stroke 0.375, color #000000.
  * Works in browser and Node (string rewrite; no DOM dependency).
  */
 (function (root) {
   const SIZE = 64;
-  const STROKE_WIDTH = '0.5';
+  const STROKE_WIDTH = '0.375';
   const STROKE_COLOR = '#000000';
   const FILL = 'none';
   const GRAPHIC_TAGS = 'path,rect,circle,ellipse,line,polyline,polygon';
@@ -133,7 +133,7 @@
   }
 
   /**
-   * Normalize a pictogram SVG string to size 64, stroke 0.5, color #000000.
+   * Normalize a pictogram SVG string to size 64, stroke 0.375, color #000000.
    * @param {string} svgText
    * @returns {string}
    */

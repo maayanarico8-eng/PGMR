@@ -12,7 +12,7 @@ const DOWNLOAD_PARAMS = {
   strokeToFill: false,
   backgroundColor: '#ffffff00',
   colors: '#000000',
-  strokeWidth: 0.5,
+  strokeWidth: 0.375,
 };
 const SEARCH_PARAMS = { mode: 'family', familySlug: FAMILY, limit: 10 };
 
@@ -23,6 +23,7 @@ function assert(cond, msg) {
 function load(opts) {
   const g = globalThis;
   delete g.MemoryEngineCatalogStreamlineProvider;
+  delete g.MemoryEngineCatalogLocalProvider;
   delete g.MemoryEngineSelectPictogram;
   delete g.MemoryEngineSelectPictogramPrompt;
   delete g.MemoryEngineAnthropic;
@@ -658,6 +659,92 @@ async function testCachedHashExcludedForcesResearch() {
   })();
 }
 
+async function testEmptyStateFallbackOnStreamlineMiss() {
+  await withEmptyBank(async ({ mappingPath, cachePath }) => {
+    const EMPTY_SVG = '<svg id="empty-state-bank"></svg>';
+    const SL = load({ disableSelect: true, searchResults: [] });
+    SL.clearMappingCache();
+    globalThis.MemoryEngineStreamlineSession?.cleanup?.();
+
+    globalThis.MemoryEngineCatalogLocalProvider = {
+      loadByWord: async (word) => (word === 'empty state' ? EMPTY_SVG : null),
+    };
+
+    const persistCalls = [];
+    const orig = globalThis.fetch;
+    globalThis.fetch = async (url, init) => {
+      const u = String(url);
+      if (init?.method && init.method !== 'GET') {
+        persistCalls.push({ url: u, method: init.method, body: init.body });
+      }
+      return orig(u, init);
+    };
+
+    const phases = [];
+    const result = await SL.resolveIcon('unicorn', {
+      trace: (step) => phases.push(step.phase),
+    });
+    globalThis.fetch = orig;
+
+    assert(result?.source === 'bank-fallback', 'expected bank-fallback source');
+    assert(result?.english === 'unicorn', 'slot keeps original english');
+    assert(result?.svg?.includes('empty-state-bank'), 'expected empty state svg');
+    assert(result?.hash === 'bank:unicorn', 'stable hash rewrites shared empty-state sentinel per term');
+    assert(phases.includes('streamline-miss'), 'should miss streamline search');
+    assert(phases.includes('empty-state-fallback'), 'should record empty-state-fallback');
+
+    const mapping = JSON.parse(fs.readFileSync(mappingPath, 'utf8'));
+    const cache = JSON.parse(fs.readFileSync(cachePath, 'utf8'));
+    assert(!mapping.icons?.unicorn, 'must not write streamline mapping for original term');
+    assert(!cache.icons?.unicorn, 'must not write pictogram cache for original term');
+    assert(
+      !persistCalls.some((c) => c.url.includes('/api/streamline-mapping') || c.url.includes('/api/pictogram-cache')),
+      'must not persist mapping/cache for fallback'
+    );
+    console.log('PASS empty-state fallback on streamline miss');
+  })();
+}
+
+async function testEmptyStateFallbackMissingReturnsNull() {
+  await withEmptyBank(async () => {
+    const SL = load({ disableSelect: true, searchResults: [] });
+    SL.clearMappingCache();
+    globalThis.MemoryEngineStreamlineSession?.cleanup?.();
+
+    globalThis.MemoryEngineCatalogLocalProvider = {
+      loadByWord: async () => null,
+    };
+
+    const result = await SL.resolveIcon('unicorn');
+    assert(result == null, 'missing empty-state bank asset should still gap');
+    console.log('PASS empty-state fallback missing returns null');
+  })();
+}
+
+async function testEmptyStateFallbackReusableAcrossTerms() {
+  await withEmptyBank(async () => {
+    const EMPTY_SVG = '<svg id="empty-state-bank"></svg>';
+    const SL = load({ disableSelect: true, searchResults: [] });
+    SL.clearMappingCache();
+    globalThis.MemoryEngineStreamlineSession?.cleanup?.();
+
+    globalThis.MemoryEngineCatalogLocalProvider = {
+      loadByWord: async (word) => (word === 'empty state' ? EMPTY_SVG : null),
+    };
+
+    const first = await SL.resolveIcon('alpha');
+    const second = await SL.resolveIcon('beta', {
+      excludeHashes: globalThis.MemoryEngineStreamlineSession.getUsedHashes(),
+    });
+
+    assert(first?.source === 'bank-fallback', 'first fallback hit');
+    assert(second?.source === 'bank-fallback', 'second fallback hit despite shared sentinel');
+    assert(first?.hash === 'bank:alpha' && second?.hash === 'bank:beta', 'unique per-term hashes');
+    assert(SL.SHARED_HASH_SENTINELS.has('bank:empty state'), 'empty state hash is shared sentinel');
+    console.log('PASS empty-state fallback reusable across terms');
+  })();
+}
+
 async function testManualUploadHashDoesNotBlockOtherBankTerms() {
   await withEmptyBank(async ({ cachePath }) => {
     const searchResults = [
@@ -749,6 +836,9 @@ async function run() {
   await testExcludeHashesSkipsAlreadyUsedIcon();
   await testCachedHashExcludedForcesResearch();
   await testManualUploadHashDoesNotBlockOtherBankTerms();
+  await testEmptyStateFallbackOnStreamlineMiss();
+  await testEmptyStateFallbackMissingReturnsNull();
+  await testEmptyStateFallbackReusableAcrossTerms();
   await testRankDoesNotPreferFree();
   await testSelectErrorFallsBack();
   await testResolvePreviewUrl();
