@@ -20,20 +20,26 @@ function testDetection() {
   assert(NG.isNarratorSelfWord('לי', 'narrator'), 'לי');
   assert(NG.isNarratorSelfWord('אני', null), 'אני');
   assert(NG.isNarratorSelfWord('אותי', 'me'), 'אותי');
+  assert(NG.isNarratorSelfWord('הייתי', 'i'), 'הייתי');
+  assert(NG.isNarratorSelfWord('היינו', null), 'היינו');
+  assert(NG.isNarratorSelfWord('היית', 'i'), 'היית');
   assert(NG.isNarratorSelfWord('me', 'me'), 'me');
   assert(NG.isNarratorSelfWord('I', 'i'), 'I');
   assert(!NG.isNarratorSelfWord('מכין לי', 'cooking for me'), 'phrase not self');
   assert(!NG.isNarratorSelfWord('סבא', 'grandfather'), 'not narrator');
+  assert(!NG.isNarratorSelfWord('הולך', 'walk'), 'verb not self');
   console.log('PASS narrator self-word detection');
 }
 
 function testGenderTerms() {
   const NG = load();
-  assert(NG.pictogramTermForGender('male') === 'man', 'male → man');
-  assert(NG.pictogramTermForGender('female') === 'woman', 'female → woman');
-  assert(NG.pictogramTermForGender('נקבה') === 'woman', 'נקבה → woman');
-  assert(NG.resolveEnglishForPictogram('לי', 'narrator', 'male') === 'man', 'לי male');
-  assert(NG.resolveEnglishForPictogram('לי', 'narrator', 'female') === 'woman', 'לי female');
+  assert(NG.pictogramTermForGender('male') === 'boy', 'male → boy');
+  assert(NG.pictogramTermForGender('female') === 'girl', 'female → girl');
+  assert(NG.pictogramTermForGender('נקבה') === 'girl', 'נקבה → girl');
+  assert(NG.resolveEnglishForPictogram('לי', 'narrator', 'male') === 'boy', 'לי male');
+  assert(NG.resolveEnglishForPictogram('לי', 'narrator', 'female') === 'girl', 'לי female');
+  assert(NG.resolveEnglishForPictogram('הייתי', 'i', 'male') === 'boy', 'הייתי male');
+  assert(NG.resolveEnglishForPictogram('הייתי', 'i', 'female') === 'girl', 'הייתי female');
   assert(NG.resolveEnglishForPictogram('סבא', 'grandfather', 'male') === 'grandfather', 'non-narrator unchanged');
   console.log('PASS gender pictogram terms');
 }
@@ -52,8 +58,18 @@ async function testTranslateIntegration() {
       client: { callClaudeJSON: async () => { throw new Error('should not call AI'); } },
     }
   );
-  assert(result.translations[0].english === 'woman', 'לי → woman');
+  assert(result.translations[0].english === 'girl', 'לי → girl');
   assert(result.translations[0].narratorRedirect === true, 'redirect flagged');
+
+  const result2 = await Translate.translateWords(
+    [{ hebrew: 'הייתי', english: 'i', category: 'participant' }],
+    {
+      narratorGender: 'male',
+      client: { callClaudeJSON: async () => { throw new Error('should not call AI'); } },
+    }
+  );
+  assert(result2.translations[0].english === 'boy', 'הייתי → boy');
+  assert(result2.translations[0].narratorRedirect === true, 'הייתי redirect flagged');
   console.log('PASS translate integration for narrator gender');
 }
 

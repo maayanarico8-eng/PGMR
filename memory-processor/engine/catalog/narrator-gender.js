@@ -1,12 +1,12 @@
 /**
- * Narrator self-reference → gendered pictogram term (man / woman).
- * Hebrew label stays לי/אני/אותי; English search uses man or woman — never me/i/narrator.
+ * Narrator self-reference → gendered pictogram term (boy / girl).
+ * Hebrew label stays לי/אני/אותי/הייתי…; English search uses boy or girl — never me/i/narrator.
  */
 (function (root) {
   const GENDER_MALE = 'male';
   const GENDER_FEMALE = 'female';
 
-  const NARRATOR_HEBREW = new Set(['לי', 'אני', 'אותי', 'אלי']);
+  const NARRATOR_HEBREW = new Set(['לי', 'אני', 'אותי', 'אלי', 'הייתי', 'היינו', 'היית']);
   const NARRATOR_ENGLISH = new Set(['me', 'i', 'myself', 'narrator']);
 
   function normalizeGender(gender) {
@@ -16,7 +16,7 @@
   }
 
   function pictogramTermForGender(gender) {
-    return normalizeGender(gender) === GENDER_FEMALE ? 'woman' : 'man';
+    return normalizeGender(gender) === GENDER_FEMALE ? 'girl' : 'boy';
   }
 
   function isNarratorSelfWord(hebrew, english) {
