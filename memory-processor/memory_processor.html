@@ -1667,7 +1667,7 @@ async function renderBankTest(sentence){
     <div class="bank-word-grid">${rows}</div>
     <div class="sec-label">Sequence</div>
     ${sequenceBlockHtml(seqSvg)}
-    <div style="font-size:11px;color:var(--t3);margin-top:8px">Icons resolve from <code style="font-size:10px">pictogram-cache</code> first, then <code style="font-size:10px">streamline-mapping.json</code>, then Streamline HQ (<code style="font-size:10px">streamline-regular</code>).</div>
+    <div style="font-size:11px;color:var(--t3);margin-top:8px">Bank list is the committed local pack only. Resolve order: <code style="font-size:10px">pictograms/bank</code>, then cache, then mapping, then Streamline HQ.</div>
   `;
   bindExpressivePanel();
   loadBankList();
@@ -1710,7 +1710,7 @@ async function previewFullApiPictograms(){
       <div class="bank-word-grid">${rows}</div>
       <div class="sec-label">Sequence</div>
       ${sequenceBlockHtml(seqSvg)}
-      <div style="font-size:11px;color:var(--t3);margin-top:8px">Icons resolve from <code style="font-size:10px">pictograms/bank</code>, then <code style="font-size:10px">pictogram-cache</code>, then mapping, then Streamline HQ.</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:8px">Bank list shows the committed pack only (not Streamline fills). Resolve: bank → cache → mapping → Streamline HQ.</div>
       ${renderResolveDebugPanel(resolveDebug,{memory:currentResult.coreNarrative,narratorGender:getNarratorGender(),words})}
     `;
     bindResolveDebugPanel(container);

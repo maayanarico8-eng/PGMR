@@ -60,18 +60,19 @@ async function writeCacheToBlob(cache) {
 
 async function readCache() {
   const fromDisk = readCacheFromDisk();
-  let fromBlob = null;
+  const diskIcons = fromDisk.icons || {};
+  // Committed bank on disk is the source of truth for the pictogram bank UI.
+  // Do not merge Blob-only Streamline fills (those used to reappear as "Streamline / cached").
+  if (Object.keys(diskIcons).length > 0) {
+    return { version: fromDisk.version || 1, icons: diskIcons };
+  }
   try {
-    fromBlob = await readCacheFromBlob();
+    const fromBlob = await readCacheFromBlob();
+    if (fromBlob) return fromBlob;
   } catch (err) {
     console.warn('pictogram-cache blob read failed:', err.message);
   }
-  if (!fromBlob) return fromDisk;
-  // Committed disk bank wins over stale Blob for the same keys.
-  return {
-    version: fromDisk.version || fromBlob.version || 1,
-    icons: { ...(fromBlob.icons || {}), ...(fromDisk.icons || {}) },
-  };
+  return fromDisk;
 }
 
 async function writeCache(cache) {
@@ -154,6 +155,19 @@ module.exports = async (req, res) => {
       const cache = emptyCache();
       const storage = await writeCache(cache);
       res.status(200).json({ ok: true, reset: true, cache, storage });
+      return;
+    }
+
+    // Overwrite Blob with the committed disk bank (drops Streamline-only fills).
+    if (req.body?.replace === true || req.body?.syncDisk === true) {
+      const cache = readCacheFromDisk();
+      const storage = await writeCache(cache);
+      res.status(200).json({
+        ok: true,
+        replaced: true,
+        count: Object.keys(cache.icons || {}).length,
+        storage,
+      });
       return;
     }
 
