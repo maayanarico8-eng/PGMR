@@ -354,7 +354,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 }
 .site-nav-link.is-active{font-family:var(--font-mono-bold);font-weight:700}
 .workspace{
-  display:grid;grid-template-columns:minmax(0,calc(1342 * var(--figma-unit))) calc(392 * var(--figma-unit));
+  display:grid;grid-template-columns:minmax(0,calc(1342 * var(--figma-unit))) calc(391 * var(--figma-unit));
   gap:calc(20 * var(--figma-unit));height:calc(898 * var(--figma-unit));min-height:0
 }
 .app:not(.has-results) .workspace{height:calc(898 * var(--figma-unit));min-height:0}
@@ -560,13 +560,13 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .app.is-editing-memory .design-sidebar .mediated-relation{
   color:var(--design-muted)
 }
-.app.is-editing-memory .design-sidebar .add-word-btn img,
-.app.is-editing-memory .design-sidebar .add-word-confirm img{
-  opacity:.55
-}
 .app.is-editing-memory .design-sidebar .add-word-btn,
 .app.is-editing-memory .design-sidebar .add-word-confirm{
   background:var(--design-blue-soft);border-color:var(--design-line);color:var(--design-muted);opacity:1
+}
+.app.is-editing-memory .design-sidebar .add-word-btn img,
+.app.is-editing-memory .design-sidebar .add-word-confirm img{
+  opacity:1;filter:none
 }
 .app.is-editing-memory .design-sidebar .narrator-gender-picker label,
 .app.is-editing-memory .design-sidebar .narrator-gender-picker label:has(input:checked),
@@ -613,28 +613,37 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .error-card{direction:rtl;margin:8px 0;color:#d42b2b;border-color:#f4a9a9;background:#fff7f7;font-size:11px}
 
 .design-sidebar{
-  display:none;width:calc(392 * var(--figma-unit));height:calc(898 * var(--figma-unit));
+  display:none;box-sizing:border-box;
+  width:calc(391 * var(--figma-unit));height:calc(898 * var(--figma-unit));
   border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));background:#fff;direction:rtl;
   min-height:0;max-height:none;overflow:hidden;position:relative
 }
 .app.has-results .design-sidebar{display:flex;flex-direction:column}
+/* Figma 1087:103133 — p24, content ≤320 + gap 16 + scrollbar 7 (border-box safe). */
+.sidebar-body{
+  flex:1;min-height:0;box-sizing:border-box;overflow:hidden;direction:ltr;
+  display:flex;flex-direction:row;justify-content:flex-end;align-items:stretch;
+  gap:0;
+  padding:calc(24 * var(--figma-unit));
+  padding-bottom:calc(111 * var(--figma-unit))
+}
+.sidebar-body.has-scrollbar{gap:calc(16 * var(--figma-unit))}
 .sidebar-content{
-  flex:1;overflow-y:scroll;scrollbar-width:none;
-  padding:
-    calc(24 * var(--figma-unit))
-    calc(47 * var(--figma-unit))
-    calc(111 * var(--figma-unit))
-    calc(24 * var(--figma-unit));
-  direction:ltr
+  flex:1 1 auto;width:auto;max-width:calc(320 * var(--figma-unit));min-width:0;height:100%;
+  overflow-x:hidden;overflow-y:auto;scrollbar-width:none;box-sizing:border-box;
+  padding:0;direction:ltr
 }
 .sidebar-content::-webkit-scrollbar{width:0;height:0}
 .sidebar-scroll-indicator{
-  position:absolute;z-index:3;top:calc(28 * var(--figma-unit));right:calc(24 * var(--figma-unit));
-  bottom:calc(111 * var(--figma-unit));width:calc(7 * var(--figma-unit));pointer-events:none
+  position:relative;z-index:3;flex:0 0 calc(7 * var(--figma-unit));
+  width:calc(7 * var(--figma-unit));align-self:stretch;
+  display:flex;justify-content:center;pointer-events:none
 }
+.sidebar-scroll-indicator[hidden]{display:none!important}
 .sidebar-scroll-indicator span{
-  position:absolute;top:0;left:0;width:100%;height:min(calc(371.707 * var(--figma-unit)),100%);
-  border-radius:calc(5 * var(--figma-unit));background:#eee
+  position:absolute;top:0;left:50%;width:100%;height:40%;
+  border-radius:calc(5 * var(--figma-unit));background:#eee;
+  transform:translateX(-50%);will-change:transform
 }
 .side-section{
   padding:0 0 calc(32 * var(--figma-unit));margin-bottom:calc(32 * var(--figma-unit));
@@ -689,15 +698,16 @@ textarea#memory-input[aria-invalid="true"]:hover{
   line-height:calc(21 * var(--figma-unit));color:#000;text-align:right
 }
 .app.has-visual-result .visual-settings:not(.pictogram-section){
-  box-sizing:border-box;width:calc(320 * var(--figma-unit));height:calc(128 * var(--figma-unit));
+  box-sizing:border-box;width:100%;max-width:100%;height:calc(138 * var(--figma-unit));
   border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));background:#fff;
-  padding:calc(16 * var(--figma-unit));
+  padding:calc(16 * var(--figma-unit)) calc(16 * var(--figma-unit)) calc(24 * var(--figma-unit));
   margin-bottom:calc(32 * var(--figma-unit));
-  display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:calc(24 * var(--figma-unit));
+  display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:calc(24 * var(--figma-unit));
   overflow:visible
 }
-.app.has-visual-result .visual-settings:not(.pictogram-section):has(.mediated-relation.is-visible){
-  height:auto;min-height:calc(128 * var(--figma-unit))
+/* Keep source card at mediated height so toggle doesn't jump title/buttons (Figma 1087:103160). */
+.app.has-visual-result .visual-settings:not(.pictogram-section):has(.source-toggle){
+  height:calc(172 * var(--figma-unit))
 }
 .app.has-visual-result .visual-settings:not(.pictogram-section):last-child{margin-bottom:0}
 .app.has-visual-result .visual-settings:not(.pictogram-section) .range-row{
@@ -715,9 +725,6 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .app.has-visual-result .visual-settings:not(.pictogram-section) .mediated-relation{
   width:100%;margin-top:0;justify-content:flex-start
-}
-.app.has-visual-result .visual-settings:not(.pictogram-section) .mediated-relation.is-visible{
-  display:flex
 }
 .app.has-visual-result .side-section:first-child{
   padding-bottom:calc(24 * var(--figma-unit));margin-bottom:calc(24 * var(--figma-unit))
@@ -867,25 +874,29 @@ textarea#memory-input[aria-invalid="true"]:hover{
   display:block;color:#111;overflow:visible;object-fit:contain
 }
 .source-toggle{
-  width:max-content;display:flex;align-items:center;justify-content:flex-start;gap:calc(16 * var(--figma-unit));
-  padding:0;border:0;border-radius:0;background:transparent;direction:rtl
+  width:max-content;max-width:100%;display:flex;align-items:center;justify-content:flex-start;
+  gap:calc(16 * var(--figma-unit));padding:0;border:0;border-radius:0;background:transparent;direction:rtl
 }
+/* Figma 1087:103162 — white chips, 8px pad, grey idle / blue active */
 .source-toggle button{
+  box-sizing:border-box;flex:0 0 auto;min-height:calc(36 * var(--figma-unit));
   border:1px solid var(--design-line);background:#fff;padding:calc(8 * var(--figma-unit));
   border-radius:calc(8 * var(--figma-unit));font-family:var(--font-mono);color:#000;
-  font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit));cursor:pointer
+  font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit));
+  white-space:nowrap;cursor:pointer
 }
-.source-toggle button:hover{border-color:var(--design-muted)}
+.source-toggle button:hover{border-color:var(--design-muted);background:#fff;color:#000}
 .source-toggle button.active{
   border-color:var(--design-blue);color:var(--design-blue);background:#fff
 }
-.source-toggle button.active:hover{border-color:var(--design-blue)}
+.source-toggle button.active:hover{border-color:var(--design-blue);color:var(--design-blue);background:#fff}
 .mediated-relation{
-  display:none;align-items:center;justify-content:flex-start;gap:calc(16 * var(--figma-unit));
-  margin-top:calc(10 * var(--figma-unit));font-family:var(--font-mono);
-  font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit));direction:rtl
+  /* Always keep layout space so toggling personal/mediated doesn't jump the card. */
+  display:flex;visibility:hidden;pointer-events:none;align-items:center;justify-content:flex-start;
+  gap:calc(16 * var(--figma-unit));margin-top:calc(10 * var(--figma-unit));min-height:calc(20 * var(--figma-unit));
+  font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit));direction:rtl
 }
-.mediated-relation.is-visible{display:flex}
+.mediated-relation.is-visible{visibility:visible;pointer-events:auto}
 .mediated-relation label{
   display:flex;align-items:center;justify-content:flex-start;gap:calc(4 * var(--figma-unit));
   cursor:pointer;color:#000;direction:rtl
@@ -905,7 +916,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .range-control{position:relative;width:100%}
 .range-value-bubble{
-  position:absolute;z-index:1;top:0;left:var(--slider-position,100%);
+  position:absolute;z-index:1;top:0;left:var(--slider-thumb-center,100%);
   transform:translate(-50%,calc(-100% - 2px));
   margin:0;padding:0;border:0;background:transparent;pointer-events:none;
   font-family:var(--font-mono);font-size:calc(13 * var(--figma-unit));font-weight:400;
@@ -1129,9 +1140,12 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .app.has-results .edit-memory-btn{position:absolute;left:0;bottom:0;height:39px;margin-top:0;font-size:18px;line-height:20px;padding:6px 8px;gap:6px}
   .app.has-results .edit-memory-btn svg{width:20px;height:20px}
   .app.has-results .input-footer-wrap{min-height:39px}
-  .sidebar-content{padding:24px 47px 111px 24px}
-  .sidebar-scroll-indicator{top:28px;right:24px;bottom:111px;width:7px}
-  .sidebar-scroll-indicator span{height:min(371.707px,100%);border-radius:5px}
+  .sidebar-body{padding:24px;padding-bottom:111px;gap:0}
+  .sidebar-body.has-scrollbar{gap:16px}
+  .sidebar-content{width:auto;max-width:320px;padding:0}
+  .sidebar-scroll-indicator{width:7px;flex:0 0 7px;position:relative;top:auto;right:auto;bottom:auto;display:flex;justify-content:center}
+  .sidebar-scroll-indicator span{height:40%;border-radius:5px;left:50%;transform:translateX(-50%)}
+  .app.has-visual-result .visual-settings:not(.pictogram-section){width:100%;max-width:100%}
   .side-section{padding-bottom:32px;margin-bottom:32px}
   .app.has-visual-result .pictogram-section{padding:0;margin-bottom:32px;border:0}
   .side-heading-row{gap:16px;margin-bottom:16px}
@@ -1278,6 +1292,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
     </section>
 
     <aside class="design-sidebar" id="design-sidebar" aria-label="הגדרות ייצוג חזותי">
+      <div class="sidebar-body">
       <div class="sidebar-content">
         <section class="side-section">
           <div class="side-heading-row">
@@ -1341,7 +1356,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
               <span class="range-value-bubble" aria-hidden="true">0%</span>
               <input type="range" id="design-clarity" min="0" max="100" value="0" data-range-key="memoryClarity">
             </div>
-            <div class="range-ends"><span>חד</span><span>עמום</span></div>
+            <div class="range-ends"><span>עמום</span><span>חד</span></div>
           </div>
         </section>
 
@@ -1357,7 +1372,8 @@ textarea#memory-input[aria-invalid="true"]:hover{
         </section>
 
       </div>
-      <div class="sidebar-scroll-indicator" id="sidebar-scroll-indicator" aria-hidden="true"><span></span></div>
+      <div class="sidebar-scroll-indicator" id="sidebar-scroll-indicator" hidden aria-hidden="true"><span></span></div>
+      </div>
       <div class="sidebar-action">
         <button type="button" class="create-visual-btn" id="create-visual-btn">רישום זיכרון</button>
       </div>
@@ -2589,6 +2605,16 @@ function syncEntryHeading(){
     :'איזה זיכרון היית רוצה לשמר?';
 }
 
+function syncAddWordIcon(){
+  const addBtn=document.getElementById('add-word-btn');
+  const icon=addBtn?.querySelector('img');
+  if(!icon)return;
+  const on=icon.dataset.iconDefault||'/memory-processor/assets/icons/add-word.svg';
+  const off=icon.dataset.iconDisabled||'/memory-processor/assets/icons/add-word-disabled-figma.svg';
+  // Grey panel (edit memory) matches Figma Dissable add-word: #ABABAB +.
+  icon.src=(designRepresentativeWords.length>=10||isEditingMemory())?off:on;
+}
+
 function enterEditMemory(){
   const app=document.getElementById('app');
   if(!app?.classList.contains('has-results'))return;
@@ -2602,6 +2628,7 @@ function enterEditMemory(){
   if(btn&&!btn.querySelector('.spinner'))btn.textContent='עיבוד זיכרון';
   syncMemoryInputEditable();
   syncEntryHeading();
+  syncAddWordIcon();
   if(input){
     syncMemoryInputPlaceholder(input);
     input.focus();
@@ -2619,6 +2646,7 @@ function exitEditMemory(){
   setSidebarInert(false);
   syncMemoryInputEditable();
   syncEntryHeading();
+  syncAddWordIcon();
   const btn=document.getElementById('analyze-btn');
   if(btn&&!btn.querySelector('.spinner'))btn.textContent=analyzeBtnLabel();
 }
@@ -3213,38 +3241,67 @@ function syncRangeVisual(input){
   const min=Number(input.min)||0;
   const max=Number(input.max)||100;
   const value=Number(input.value)||0;
-  const progress=((value-min)/(max-min))*100;
-  const position=100-Math.max(0,Math.min(100,progress));
+  const progress=max===min?0:Math.max(0,Math.min(1,(value-min)/(max-min)));
+  // RTL range: value 0 sits on the right (empty); value 100 fills toward the left.
+  const emptyProgress=1-progress;
   const control=input.closest('.range-control');
-  const key=input.dataset.rangeKey||'';
-  const percent=Math.round(expressiveRangeValue(key,value));
-  if(control)control.style.setProperty('--slider-position',`${position}%`);
-  input.style.setProperty('--slider-position',`${position}%`);
+  // Percent follows fill amount from the empty default (0% right → 100% left).
+  const percent=Math.round(progress*100);
+  const trackWidth=input.clientWidth||control?.clientWidth||0;
+  // Thumb is ~19.184×20 in Figma; derive from the input’s laid-out height.
+  const thumbSize=(input.clientHeight||20)*(19.184/20);
+  const travel=Math.max(0,trackWidth-thumbSize);
+  const thumbCenter=thumbSize/2+emptyProgress*travel;
+  const fillEdge=trackWidth>0?(thumbCenter/trackWidth)*100:emptyProgress*100;
+  if(control){
+    control.style.setProperty('--slider-position',`${fillEdge}%`);
+    control.style.setProperty('--slider-thumb-center',trackWidth?`${thumbCenter}px`:`${emptyProgress*100}%`);
+  }
+  input.style.setProperty('--slider-position',`${fillEdge}%`);
   const bubble=control?.querySelector('.range-value-bubble');
   if(bubble)bubble.textContent=`${percent}%`;
 }
 
 function designRangeValue(key,expressiveValue){
-  return key==='memoryFrequency'?100-Number(expressiveValue):Number(expressiveValue);
+  // Frequency + clarity: engine 100 maps to empty thumb on the right (design 0).
+  return (key==='memoryFrequency'||key==='memoryClarity')?100-Number(expressiveValue):Number(expressiveValue);
 }
 
 function expressiveRangeValue(key,designValue){
-  return key==='memoryFrequency'?100-Number(designValue):Number(designValue);
+  return (key==='memoryFrequency'||key==='memoryClarity')?100-Number(designValue):Number(designValue);
 }
 
 function syncSidebarScrollIndicator(){
   const content=document.querySelector('.sidebar-content');
+  const body=content?.closest('.sidebar-body');
   const indicator=document.getElementById('sidebar-scroll-indicator');
   const thumb=indicator?.querySelector('span');
   if(!content||!indicator||!thumb)return;
-  const trackHeight=indicator.clientHeight;
   const viewportHeight=content.clientHeight;
   const totalHeight=content.scrollHeight;
   const scrollable=Math.max(0,totalHeight-viewportHeight);
-  const thumbHeight=Math.min(trackHeight,thumb.offsetHeight||trackHeight);
-  const travel=Math.max(0,trackHeight-thumbHeight);
-  const top=scrollable?(content.scrollTop/scrollable)*travel:0;
-  thumb.style.transform=`translateY(${top}px)`;
+  const needsScroll=scrollable>1;
+  body?.classList.toggle('has-scrollbar',needsScroll);
+  indicator.hidden=!needsScroll;
+  indicator.setAttribute('aria-hidden',needsScroll?'false':'true');
+  if(!needsScroll){
+    thumb.style.height='';
+    thumb.style.transform='translateX(-50%)';
+    return;
+  }
+  const updateThumb=()=>{
+    const trackHeight=indicator.clientHeight;
+    if(trackHeight<=0)return;
+    const ratio=totalHeight>0?viewportHeight/totalHeight:1;
+    const thumbHeight=Math.max(24,Math.min(trackHeight,Math.round(trackHeight*ratio)));
+    thumb.style.height=`${thumbHeight}px`;
+    const travel=Math.max(0,trackHeight-thumbHeight);
+    const top=scrollable?(content.scrollTop/scrollable)*travel:0;
+    // Keep horizontal centering (translateX(-50%)) while moving vertically.
+    thumb.style.transform=`translate(-50%,${top}px)`;
+  };
+  if(indicator.clientHeight>0)updateThumb();
+  else requestAnimationFrame(updateThumb);
 }
 
 function syncDesignUI(){
@@ -3279,12 +3336,7 @@ function syncDesignUI(){
   const addHint=document.getElementById('add-word-limit-hint');
   if(addBtn){
     addBtn.disabled=atWordLimit;
-    const icon=addBtn.querySelector('img');
-    if(icon){
-      const on=icon.dataset.iconDefault||'/memory-processor/assets/icons/add-word.svg';
-      const off=icon.dataset.iconDisabled||'/memory-processor/assets/icons/add-word-disabled-figma.svg';
-      icon.src=atWordLimit?off:on;
-    }
+    syncAddWordIcon();
   }
   // Figma 10/10 (1027:109376): disabled add button only — no extra limit copy.
   if(addHint)addHint.hidden=true;
@@ -3307,7 +3359,9 @@ function syncDesignUI(){
     button.classList.toggle('active',source===0?params.memorySource===0:params.memorySource>0);
   });
   const relation=document.getElementById('mediated-relation');
-  relation?.classList.toggle('is-visible',params.memorySource>0);
+  const relationOpen=params.memorySource>0;
+  relation?.classList.toggle('is-visible',relationOpen);
+  if(relation)relation.setAttribute('aria-hidden',relationOpen?'false':'true');
   const relationInput=document.querySelector(`input[name="mediated-relation"][value="${params.memorySource===2?2:1}"]`);
   if(relationInput)relationInput.checked=true;
   [['design-frequency','memoryFrequency'],['design-clarity','memoryClarity'],['design-impact','memoryImpact']].forEach(([id,key])=>{
@@ -3319,7 +3373,10 @@ function syncDesignUI(){
   });
   syncPictogramStrip();
   syncVisualOutput();
-  requestAnimationFrame(syncSidebarScrollIndicator);
+  requestAnimationFrame(()=>{
+    ['design-frequency','design-clarity','design-impact'].forEach(id=>syncRangeVisual(document.getElementById(id)));
+    syncSidebarScrollIndicator();
+  });
 }
 
 async function createDesignedVisual(){
@@ -3606,13 +3663,19 @@ function bindDesignedInterface(){
   function setRepChipDragImage(event,chip){
     const rect=chip.getBoundingClientRect();
     const radius=getComputedStyle(chip).borderRadius||'8px';
+    const muted=getComputedStyle(document.documentElement).getPropertyValue('--design-muted').trim()||'#ababab';
     const clone=chip.cloneNode(true);
-    clone.classList.remove('is-dragging');
+    // Figma 999:85126 Drag — text, border, and X are #ABABAB on white.
+    clone.classList.add('is-dragging');
     clone.removeAttribute('data-word-index');
     clone.querySelectorAll('button').forEach(btn=>{
       btn.removeAttribute('data-remove-word');
       btn.tabIndex=-1;
       btn.setAttribute('aria-hidden','true');
+      btn.style.color=muted;
+      btn.style.background='transparent';
+      btn.style.webkitMask='none';
+      btn.style.mask='none';
     });
     clone.style.cssText=[
       'position:absolute',
@@ -3624,15 +3687,16 @@ function bindDesignedInterface(){
       'direction:ltr',
       'display:inline-flex',
       'align-items:center',
-      'color:#000',
+      `color:${muted}`,
       'background:#fff',
-      'border:1px solid var(--design-line)',
+      `border:1px solid ${muted}`,
       `border-radius:${radius}`,
       'opacity:1',
       'box-shadow:none',
       'cursor:grabbing',
     ].join(';');
     clone.querySelectorAll('img').forEach(img=>{
+      img.src='/memory-processor/assets/icons/remove-word-muted-figma.svg';
       img.style.opacity='1';
       img.style.filter='none';
       img.setAttribute('draggable','false');
