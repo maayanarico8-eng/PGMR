@@ -504,8 +504,30 @@ textarea#memory-input[aria-invalid="true"]:hover{
   height:calc(39 * var(--figma-unit));box-sizing:border-box
 }
 .app.has-results .memory-stage{display:none}
-.app.has-results.has-visual-result .memory-stage{display:flex;margin-top:calc(16 * var(--figma-unit))}
-.app.has-results.has-visual-result .memory-main{justify-content:flex-start;height:calc(898 * var(--figma-unit))}
+.app.has-results.has-visual-result .memory-stage{display:flex;margin-top:0}
+.app.has-results.has-visual-result .memory-main{
+  justify-content:flex-start;align-items:flex-end;height:calc(898 * var(--figma-unit));
+  gap:calc(16 * var(--figma-unit))
+}
+.app.has-results.has-visual-result .memory-entry{
+  flex:0 0 auto;width:calc(926 * var(--figma-unit));gap:calc(24 * var(--figma-unit));
+  align-items:stretch;margin:0
+}
+.app.has-results.has-visual-result .entry-heading-row{
+  justify-content:flex-end
+}
+.app.has-results.has-visual-result .entry-heading,
+.app.has-results.has-visual-result .entry-heading-row .entry-heading{
+  text-align:right
+}
+.app.has-results.has-visual-result .edit-memory-btn{display:none}
+.app.has-results.has-visual-result .input-footer-wrap{display:none}
+.postcard-heading{
+  display:none;width:calc(1111 * var(--figma-unit));max-width:100%;margin:0;
+  font-family:var(--font-body);font-size:calc(27 * var(--figma-unit));font-weight:500;
+  line-height:calc(28 * var(--figma-unit));color:#000;text-align:right;direction:rtl
+}
+.app.has-results.has-visual-result .postcard-heading{display:block}
 .app.has-results:not(.is-editing-memory) textarea#memory-input{
   cursor:default;border-color:var(--design-line)
 }
@@ -532,15 +554,14 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .app.is-editing-memory .design-sidebar .rep-count,
 .app.is-editing-memory .design-sidebar .side-copy,
 .app.is-editing-memory .design-sidebar .rep-chip,
+.app.is-editing-memory .design-sidebar .rep-chip button,
 .app.is-editing-memory .design-sidebar .range-row label,
 .app.is-editing-memory .design-sidebar .range-ends,
 .app.is-editing-memory .design-sidebar .mediated-relation{
   color:var(--design-muted)
 }
-.app.is-editing-memory .design-sidebar .rep-chip,
 .app.is-editing-memory .design-sidebar .add-word-btn img,
-.app.is-editing-memory .design-sidebar .add-word-confirm img,
-.app.is-editing-memory .design-sidebar .rep-chip button img{
+.app.is-editing-memory .design-sidebar .add-word-confirm img{
   opacity:.55
 }
 .app.is-editing-memory .design-sidebar .add-word-btn,
@@ -554,7 +575,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   color:var(--design-muted);border-color:var(--design-line);background:transparent
 }
 .app.is-editing-memory .design-sidebar .narrator-gender-picker label:has(input:checked){
-  background:var(--design-blue-soft)
+  background:#fff
 }
 .app.is-editing-memory .design-sidebar .create-visual-btn,
 .app.is-editing-memory .design-sidebar .create-visual-btn:disabled{
@@ -566,20 +587,29 @@ textarea#memory-input[aria-invalid="true"]:hover{
   border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));
   display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff;padding:0
 }
+.app.has-results.has-visual-result .memory-stage{
+  width:calc(1111 * var(--figma-unit));max-width:100%;height:calc(633 * var(--figma-unit));
+  margin-top:0;padding:calc(24 * var(--figma-unit)) calc(50 * var(--figma-unit));
+  box-sizing:border-box
+}
 .visual-output{width:100%;height:100%;min-height:100%;display:flex;align-items:center;justify-content:center}
 .visual-output:empty::after{content:"";display:block}
 .visual-output svg{display:block;width:min(100%,856px);height:auto;max-height:360px}
-.app.has-visual-result .visual-output{position:relative;display:block}
+.app.has-visual-result .visual-output{
+  position:static;display:flex;align-items:center;justify-content:center;gap:0;overflow:auto
+}
 .app.has-visual-result .visual-output>svg{
-  position:absolute;left:calc(212 * var(--figma-unit));top:calc(163 * var(--figma-unit));
-  width:calc(966 * var(--figma-unit));height:auto;max-height:none
+  position:static;left:auto;top:auto;width:auto;max-width:100%;height:auto;max-height:calc(100 * var(--figma-unit))
 }
-.visual-memory-text{
-  position:absolute;top:calc(536.55 * var(--figma-unit));right:calc(164.8 * var(--figma-unit));
-  width:calc(405 * var(--figma-unit));margin:0;direction:rtl;text-align:right;color:#000;
-  font-family:var(--font-display);font-size:calc(22 * var(--figma-unit));font-weight:700;
-  line-height:calc(25 * var(--figma-unit))
+.app.has-visual-result .visual-output .visual-seq-row{
+  display:flex;align-items:center;justify-content:center;gap:0;direction:ltr;flex-wrap:nowrap
 }
+.app.has-visual-result .visual-output .visual-seq-row img,
+.app.has-visual-result .visual-output .visual-seq-row svg{
+  width:calc(100 * var(--figma-unit));height:calc(100 * var(--figma-unit));
+  max-width:none;max-height:none;display:block;object-fit:contain;flex-shrink:0
+}
+.visual-memory-text{display:none}
 .error-card{direction:rtl;margin:8px 0;color:#d42b2b;border-color:#f4a9a9;background:#fff7f7;font-size:11px}
 
 .design-sidebar{
@@ -620,10 +650,80 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .app.has-results:not(.has-visual-result) .narrator-section{
   padding-bottom:0;margin-bottom:0;border-bottom:0
 }
-.app.has-visual-result .narrator-section{margin-bottom:0;border-bottom:0}
+/* Approved postcard sidebar — Figma 1006:14426 / 1047:26004 */
 .app.has-visual-result .pictogram-section{
-  padding-top:calc(32 * var(--figma-unit));border-top:1px solid var(--design-line)
+  padding:0;border:0;margin:0 0 calc(32 * var(--figma-unit))
 }
+.app.has-visual-result .rep-count,
+.app.has-visual-result .add-word-row,
+.app.has-visual-result .side-copy,
+.app.has-visual-result .narrator-gender-picker,
+.app.has-visual-result .pictogram-strip{display:none!important}
+.app.has-visual-result .rep-chips{
+  gap:calc(12 * var(--figma-unit)) calc(10 * var(--figma-unit))
+}
+.app.has-visual-result .rep-chip{
+  border:0;background:transparent;padding:0;border-radius:0;cursor:default;gap:0;
+  font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit))
+}
+.app.has-visual-result .rep-chip:hover{border-color:transparent}
+.app.has-visual-result .rep-chip button{display:none}
+.app.has-visual-result .rep-chip::before{content:'['}
+.app.has-visual-result .rep-chip::after{content:']'}
+.app.has-visual-result .narrator-section{
+  flex-direction:row;align-items:center;justify-content:flex-end;gap:calc(16 * var(--figma-unit));
+  padding-bottom:calc(24 * var(--figma-unit));margin-bottom:calc(24 * var(--figma-unit));
+  border-bottom:1px solid var(--design-line)
+}
+.app.has-visual-result .narrator-section > .side-heading{
+  flex:1 1 auto;width:auto;margin:0;line-height:calc(28 * var(--figma-unit));text-align:right
+}
+.app.has-visual-result .narrator-gender-value{
+  display:block;margin:0;font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));
+  line-height:calc(20 * var(--figma-unit));color:#000;white-space:nowrap
+}
+.app.has-visual-result .pictogram-section .side-heading{margin-bottom:calc(16 * var(--figma-unit))}
+.app.has-visual-result .visual-params-copy{
+  display:block;width:100%;margin:0 0 calc(16 * var(--figma-unit));
+  font-family:var(--font-mono);font-size:calc(13 * var(--figma-unit));font-weight:400;
+  line-height:calc(21 * var(--figma-unit));color:#000;text-align:right
+}
+.app.has-visual-result .visual-settings:not(.pictogram-section){
+  box-sizing:border-box;width:calc(320 * var(--figma-unit));height:calc(128 * var(--figma-unit));
+  border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));background:#fff;
+  padding:calc(16 * var(--figma-unit));
+  margin-bottom:calc(32 * var(--figma-unit));
+  display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:calc(24 * var(--figma-unit));
+  overflow:visible
+}
+.app.has-visual-result .visual-settings:not(.pictogram-section):has(.mediated-relation.is-visible){
+  height:auto;min-height:calc(128 * var(--figma-unit))
+}
+.app.has-visual-result .visual-settings:not(.pictogram-section):last-child{margin-bottom:0}
+.app.has-visual-result .visual-settings:not(.pictogram-section) .range-row{
+  width:100%;display:flex;flex-direction:column;justify-content:center
+}
+.app.has-visual-result .visual-settings:not(.pictogram-section) .range-row label{margin:0 0 calc(24 * var(--figma-unit))}
+.app.has-visual-result .visual-settings:not(.pictogram-section) .range-control,
+.app.has-visual-result .visual-settings:not(.pictogram-section) .range-ends{width:100%}
+.app.has-visual-result .visual-settings:not(.pictogram-section) .range-ends{margin-top:calc(8 * var(--figma-unit))}
+.app.has-visual-result .visual-settings:not(.pictogram-section) .source-toggle{
+  width:100%;justify-content:flex-start;align-self:stretch
+}
+.app.has-visual-result .visual-settings:not(.pictogram-section) .side-heading{
+  margin:0
+}
+.app.has-visual-result .visual-settings:not(.pictogram-section) .mediated-relation{
+  width:100%;margin-top:0;justify-content:flex-start
+}
+.app.has-visual-result .visual-settings:not(.pictogram-section) .mediated-relation.is-visible{
+  display:flex
+}
+.app.has-visual-result .side-section:first-child{
+  padding-bottom:calc(24 * var(--figma-unit));margin-bottom:calc(24 * var(--figma-unit))
+}
+.narrator-gender-value{display:none}
+.visual-params-copy{display:none}
 .side-heading-row{
   width:100%;display:flex;align-items:center;justify-content:space-between;gap:calc(16 * var(--figma-unit));
   margin-bottom:calc(16 * var(--figma-unit));direction:rtl
@@ -652,12 +752,19 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .rep-chip:has([data-remove-word]:hover){
   border-style:dashed;border-color:var(--design-muted);color:var(--design-muted)
 }
-.rep-chip:has([data-remove-word]:hover) button img{opacity:.55;filter:grayscale(1)}
+.rep-chip:has([data-remove-word]:hover) button{
+  color:var(--design-muted)
+}
 .rep-chip.is-dragging{color:var(--design-muted);border-color:var(--design-muted)}
-.rep-chip.is-dragging button img{opacity:.55;filter:grayscale(1)}
-.rep-chip button{width:calc(11.018 * var(--figma-unit));height:calc(11.018 * var(--figma-unit));border:0;background:none;cursor:pointer;padding:0}
+.rep-chip.is-dragging button{color:var(--design-muted)}
+.rep-chip button{
+  width:calc(9.75 * var(--figma-unit));height:calc(9.75 * var(--figma-unit));
+  border:0;background:currentColor;cursor:pointer;padding:0;color:#000;
+  -webkit-mask:url("/memory-processor/assets/icons/remove-word-figma.svg") center/contain no-repeat;
+  mask:url("/memory-processor/assets/icons/remove-word-figma.svg") center/contain no-repeat
+}
 .rep-chip button,.rep-chip button img{-webkit-user-drag:none;user-drag:none;pointer-events:auto}
-.rep-chip button img{display:block;width:100%;height:100%}
+.rep-chip button img{display:block;width:100%;height:100%;opacity:0}
 .add-word-row{
   display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;
   gap:calc(12 * var(--figma-unit));margin-top:0;direction:rtl;width:100%
@@ -676,8 +783,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   background:var(--design-blue-soft);border-color:var(--design-line);color:var(--design-muted);cursor:not-allowed
 }
 .add-word-btn img{
-  width:calc(9.916 * var(--figma-unit));height:calc(9.916 * var(--figma-unit));display:block;
-  transform:rotate(45deg)
+  width:calc(13 * var(--figma-unit));height:calc(13 * var(--figma-unit));display:block
 }
 .add-word-btn:disabled img{opacity:1;filter:none}
 .add-word-input{
@@ -692,13 +798,13 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .add-word-confirm{
   display:none;align-items:center;justify-content:center;
-  width:calc(38 * var(--figma-unit));height:calc(36 * var(--figma-unit));padding:0;
+  box-sizing:border-box;min-width:calc(36 * var(--figma-unit));height:calc(36 * var(--figma-unit));
+  padding:calc(8 * var(--figma-unit)) calc(12 * var(--figma-unit));
   border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));
   background:var(--design-blue-soft);cursor:not-allowed;outline:none;box-shadow:none
 }
 .add-word-confirm img{
-  width:calc(9.916 * var(--figma-unit));height:calc(9.916 * var(--figma-unit));display:block;
-  transform:rotate(45deg);opacity:.55;filter:grayscale(1)
+  width:calc(13 * var(--figma-unit));height:calc(13 * var(--figma-unit));display:block
 }
 .add-word-confirm:focus,.add-word-confirm:focus-visible{outline:none!important;box-shadow:none}
 .add-word-confirm:not(:disabled){
@@ -728,7 +834,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   flex:none;width:100%;line-height:calc(21 * var(--figma-unit))
 }
 .narrator-gender-picker{
-  width:max-content;margin:0;align-self:flex-start;display:flex;align-items:center;gap:calc(16 * var(--figma-unit));direction:ltr;
+  width:max-content;margin:0;align-self:flex-start;display:flex;align-items:center;gap:calc(16 * var(--figma-unit));direction:rtl;
   padding:0;border:0;background:transparent
 }
 .narrator-gender-picker .gender-lbl{font-size:11px;font-weight:400;margin-left:8px}
@@ -741,7 +847,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .narrator-gender-picker label:hover{border-color:var(--design-muted)}
 .narrator-gender-picker label:has(input:checked){
-  color:var(--design-blue);border-color:var(--design-blue);background:var(--design-blue-tint)
+  color:var(--design-blue);border-color:var(--design-blue);background:#fff
 }
 .narrator-gender-picker label:has(input:checked):hover{border-color:var(--design-blue)}
 .narrator-gender-picker input{position:absolute;opacity:0;pointer-events:none}
@@ -761,7 +867,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   display:block;color:#111;overflow:visible;object-fit:contain
 }
 .source-toggle{
-  width:max-content;display:flex;align-items:center;justify-content:flex-end;gap:calc(16 * var(--figma-unit));
+  width:max-content;display:flex;align-items:center;justify-content:flex-start;gap:calc(16 * var(--figma-unit));
   padding:0;border:0;border-radius:0;background:transparent;direction:rtl
 }
 .source-toggle button{
@@ -775,12 +881,15 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .source-toggle button.active:hover{border-color:var(--design-blue)}
 .mediated-relation{
-  display:none;align-items:center;justify-content:flex-end;gap:calc(16 * var(--figma-unit));
+  display:none;align-items:center;justify-content:flex-start;gap:calc(16 * var(--figma-unit));
   margin-top:calc(10 * var(--figma-unit));font-family:var(--font-mono);
   font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit));direction:rtl
 }
 .mediated-relation.is-visible{display:flex}
-.mediated-relation label{display:flex;align-items:center;gap:calc(4 * var(--figma-unit));cursor:pointer;color:#000}
+.mediated-relation label{
+  display:flex;align-items:center;justify-content:flex-start;gap:calc(4 * var(--figma-unit));
+  cursor:pointer;color:#000;direction:rtl
+}
 .mediated-relation input{position:absolute;opacity:0;pointer-events:none}
 .relation-box{
   width:calc(16 * var(--figma-unit));height:calc(16 * var(--figma-unit));display:block;
@@ -794,10 +903,21 @@ textarea#memory-input[aria-invalid="true"]:hover{
   display:block;margin-bottom:calc(16 * var(--figma-unit));font-family:var(--font-body);
   font-size:calc(22 * var(--figma-unit));font-weight:500;line-height:calc(28 * var(--figma-unit));text-align:right
 }
+.range-control{position:relative;width:100%}
+.range-value-bubble{
+  position:absolute;z-index:1;top:0;left:var(--slider-position,100%);
+  transform:translate(-50%,calc(-100% - 2px));
+  margin:0;padding:0;border:0;background:transparent;pointer-events:none;
+  font-family:var(--font-mono);font-size:calc(13 * var(--figma-unit));font-weight:400;
+  line-height:calc(18 * var(--figma-unit));color:#000;white-space:nowrap;direction:ltr;
+  opacity:0;visibility:hidden
+}
+.range-control.is-scrubbing .range-value-bubble{opacity:1;visibility:visible}
 .range-control input[type=range]{
   appearance:none;-webkit-appearance:none;width:100%;height:calc(20 * var(--figma-unit));display:block;
   margin:0;border:0;background:transparent;direction:rtl
 }
+.range-control input[type=range]:focus{outline:none}
 .range-control input[type=range]:focus-visible{outline:none}
 .range-control input[type=range]::-webkit-slider-runnable-track{
   width:100%;height:calc(11.511 * var(--figma-unit));border:1px solid var(--design-line);
@@ -808,9 +928,6 @@ textarea#memory-input[aria-invalid="true"]:hover{
   appearance:none;-webkit-appearance:none;width:calc(19.184 * var(--figma-unit));height:calc(20 * var(--figma-unit));
   margin-top:calc(-4.245 * var(--figma-unit));border:0;border-radius:50%;background:var(--design-blue);cursor:pointer
 }
-.range-control input[type=range]:hover::-webkit-slider-runnable-track{border-color:var(--design-muted)}
-.range-control input[type=range]:active::-webkit-slider-runnable-track,
-.range-control input[type=range]:focus::-webkit-slider-runnable-track{border-color:var(--design-blue)}
 .range-control input[type=range]::-moz-range-track{
   width:100%;height:calc(11.511 * var(--figma-unit));border:1px solid var(--design-line);
   border-radius:calc(8 * var(--figma-unit));
@@ -820,9 +937,6 @@ textarea#memory-input[aria-invalid="true"]:hover{
   width:calc(19.184 * var(--figma-unit));height:calc(20 * var(--figma-unit));
   border:0;border-radius:50%;background:var(--design-blue);cursor:pointer
 }
-.range-control input[type=range]:hover::-moz-range-track{border-color:var(--design-muted)}
-.range-control input[type=range]:active::-moz-range-track,
-.range-control input[type=range]:focus::-moz-range-track{border-color:var(--design-blue)}
 .range-ends{
   display:flex;justify-content:space-between;margin-top:calc(8 * var(--figma-unit));direction:ltr;
   font-family:var(--font-mono);font-size:calc(13 * var(--figma-unit));line-height:calc(18 * var(--figma-unit));color:#000
@@ -1005,9 +1119,11 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .analyze-btn,.generate-vrp-btn{width:237px;height:39px;font-size:18px;line-height:20px;border-radius:8px;padding:9px 20px}
   .memory-stage,.app.has-results.has-visual-result .memory-stage{width:100%;height:360px;min-height:360px;margin-top:16px;border-radius:8px;padding:16px;display:flex}
   .app.has-results:not(.has-visual-result) .memory-stage{display:none}
-  .app.has-visual-result .memory-stage{padding:0}
-  .app.has-visual-result .visual-output>svg{left:11%;top:20%;width:72%}
-  .visual-memory-text{top:auto;right:12%;bottom:10%;width:42%;font-size:18px;line-height:22px}
+  .app.has-visual-result .memory-stage{padding:16px;display:flex;align-items:center;justify-content:center}
+  .app.has-visual-result .visual-output>svg{position:static;left:auto;top:auto;width:auto;max-width:100%;height:auto;max-height:100px}
+  .app.has-visual-result .visual-output .visual-seq-row img,
+  .app.has-visual-result .visual-output .visual-seq-row svg{width:72px;height:72px}
+  .visual-memory-text{display:none}
   .design-sidebar,.app.has-results .design-sidebar{width:100%;height:auto;min-height:620px;max-height:none;border-radius:8px}
   .app.has-results .design-sidebar{display:flex}
   .app.has-results .edit-memory-btn{position:absolute;left:0;bottom:0;height:39px;margin-top:0;font-size:18px;line-height:20px;padding:6px 8px;gap:6px}
@@ -1017,15 +1133,15 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .sidebar-scroll-indicator{top:28px;right:24px;bottom:111px;width:7px}
   .sidebar-scroll-indicator span{height:min(371.707px,100%);border-radius:5px}
   .side-section{padding-bottom:32px;margin-bottom:32px}
-  .app.has-visual-result .pictogram-section{padding-top:32px}
+  .app.has-visual-result .pictogram-section{padding:0;margin-bottom:32px;border:0}
   .side-heading-row{gap:16px;margin-bottom:16px}
   .side-heading{font-size:22px;line-height:28px}
   .rep-count{font-size:13px;line-height:18px}
   .rep-chips{gap:12px 10px}
   .rep-chip,.add-word-btn{padding:4px 8px;gap:6px;border-radius:8px;font-size:15px;line-height:20px}
   .add-word-btn{padding:8px 16px;gap:8px}
-  .rep-chip button{width:11px;height:11px}
-  .add-word-btn img{width:10px;height:10px}
+  .rep-chip button{width:9.75px;height:9.75px}
+  .add-word-btn img,.add-word-confirm img{width:13px;height:13px}
   .add-word-row{gap:12px;margin-top:0}
   .side-words-block{gap:12px}
   .add-word-input{width:170px;padding:8px 16px;border-radius:8px;font-size:15px;line-height:20px}
@@ -1143,9 +1259,9 @@ textarea#memory-input[aria-invalid="true"]:hover{
         <div class="input-footer-wrap">
           <div class="input-footer">
             <span class="word-count" id="word-count"></span>
-            <button class="analyze-btn" id="analyze-btn" disabled>זיהוי מילים מייצגות</button>
+            <button class="analyze-btn" id="analyze-btn" disabled>עיבוד זיכרון</button>
           </div>
-          <p class="memory-error-msg" id="memory-error-msg" hidden>על מנת להמשיך ליצירת גלויה יש לוודא כי הזיכרון אינו חורג מ-20 מילים</p>
+          <p class="memory-error-msg" id="memory-error-msg" hidden>על מנת להמשיך לרישום זיכרון יש לוודא כי הזיכרון אינו חורג מ-20 מילים</p>
         </div>
         <button type="button" class="edit-memory-btn" id="edit-memory-btn">
           <span>עריכת הזיכרון</span>
@@ -1155,6 +1271,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
         </button>
       </div>
       <div class="error-card" id="error-card" hidden></div>
+      <h2 class="postcard-heading" id="postcard-heading">הגלויה שלך</h2>
       <div class="memory-stage" id="memory-stage">
         <div class="visual-output" id="visual-output" aria-live="polite"></div>
       </div>
@@ -1172,7 +1289,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
             <div class="add-word-row" id="add-word-row">
               <button type="button" class="add-word-btn" id="add-word-btn"><span>הוספת מילה</span><img src="/memory-processor/assets/icons/add-word.svg" alt="" data-icon-default="/memory-processor/assets/icons/add-word.svg" data-icon-disabled="/memory-processor/assets/icons/add-word-disabled-figma.svg"></button>
               <input class="add-word-input" id="add-word-input" type="text" dir="rtl" maxlength="30" placeholder="הוספת מילה">
-              <button type="button" class="add-word-confirm" id="add-word-confirm" disabled aria-label="אישור הוספת מילה"><img src="/memory-processor/assets/icons/add-word.svg" alt=""></button>
+              <button type="button" class="add-word-confirm" id="add-word-confirm" disabled aria-label="אישור הוספת מילה"><img src="/memory-processor/assets/icons/add-word-confirm-default-figma.svg" alt="" data-icon-default="/memory-processor/assets/icons/add-word-confirm-active-figma.svg" data-icon-disabled="/memory-processor/assets/icons/add-word-confirm-default-figma.svg"></button>
               <p class="add-word-limit-hint" id="add-word-limit-hint" hidden>ניתן לבחור עד 10 מילים מייצגות</p>
             </div>
           </div>
@@ -1180,20 +1297,22 @@ textarea#memory-input[aria-invalid="true"]:hover{
 
         <section class="side-section narrator-section">
           <h2 class="side-heading">ייצוג המספר.ת</h2>
+          <p class="narrator-gender-value" id="narrator-gender-value">נקבה</p>
           <p class="side-copy">כדי שהמערכת תוכל לייצג את המספר.ת בצורה נאמנה בעזרת פיקטוגרמות, יש לבחור את אופן הייצוג.</p>
-          <div class="narrator-gender-picker" dir="ltr" id="narrator-gender-picker">
-            <label><input type="radio" name="narrator-gender" value="male"> זכר</label>
+          <div class="narrator-gender-picker" dir="rtl" id="narrator-gender-picker">
             <label><input type="radio" name="narrator-gender" value="female" checked> נקבה</label>
+            <label><input type="radio" name="narrator-gender" value="male"> זכר</label>
           </div>
         </section>
 
         <section class="side-section visual-settings pictogram-section">
-          <h2 class="side-heading" id="visual-settings-heading" style="margin-bottom:calc(16 * var(--figma-unit))">פיקטוגרמות</h2>
+          <h2 class="side-heading" id="visual-settings-heading">פיקטוגרמות</h2>
+          <p class="visual-params-copy" id="visual-params-copy">הפרמטרים מייצגים היבטים שונים של הזיכרון, המשפיעים על ייצוגו.</p>
           <div class="pictogram-strip" id="pictogram-strip"></div>
         </section>
 
         <section class="side-section visual-settings">
-          <h2 class="side-heading" style="margin-bottom:calc(16 * var(--figma-unit))">מקור הזיכרון</h2>
+          <h2 class="side-heading">מקור הזיכרון</h2>
           <div class="source-toggle" id="design-source">
             <button type="button" data-source="0">זיכרון אישי</button>
             <button type="button" data-source="1">זיכרון מתווך</button>
@@ -1207,23 +1326,32 @@ textarea#memory-input[aria-invalid="true"]:hover{
         <section class="side-section visual-settings">
           <div class="range-row">
             <label for="design-frequency">באיזו תדירות הזיכרון חוזר?</label>
-            <div class="range-control"><input type="range" id="design-frequency" min="0" max="100" value="0"></div>
-            <div class="range-ends"><span>לעיתים רחוקות</span><span>לעיתים קרובות</span></div>
+            <div class="range-control">
+              <span class="range-value-bubble" aria-hidden="true">0%</span>
+              <input type="range" id="design-frequency" min="0" max="100" value="0" data-range-key="memoryFrequency">
+            </div>
+            <div class="range-ends"><span>רחוקה</span><span>קרובה</span></div>
           </div>
         </section>
 
         <section class="side-section visual-settings">
           <div class="range-row">
             <label for="design-clarity">עד כמה הזיכרון עדיין ברור?</label>
-            <div class="range-control"><input type="range" id="design-clarity" min="0" max="100" value="0"></div>
-            <div class="range-ends"><span>עמום</span><span>חד</span></div>
+            <div class="range-control">
+              <span class="range-value-bubble" aria-hidden="true">0%</span>
+              <input type="range" id="design-clarity" min="0" max="100" value="0" data-range-key="memoryClarity">
+            </div>
+            <div class="range-ends"><span>חד</span><span>עמום</span></div>
           </div>
         </section>
 
         <section class="side-section visual-settings">
           <div class="range-row">
             <label for="design-impact">עד כמה הזיכרון השפיע עלייך?</label>
-            <div class="range-control"><input type="range" id="design-impact" min="0" max="100" value="0"></div>
+            <div class="range-control">
+              <span class="range-value-bubble" aria-hidden="true">0%</span>
+              <input type="range" id="design-impact" min="0" max="100" value="0" data-range-key="memoryImpact">
+            </div>
             <div class="range-ends"><span>הרבה</span><span>מעט</span></div>
           </div>
         </section>
@@ -1231,7 +1359,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
       </div>
       <div class="sidebar-scroll-indicator" id="sidebar-scroll-indicator" aria-hidden="true"><span></span></div>
       <div class="sidebar-action">
-        <button type="button" class="create-visual-btn" id="create-visual-btn">עיצוב גלויה</button>
+        <button type="button" class="create-visual-btn" id="create-visual-btn">רישום זיכרון</button>
       </div>
     </aside>
   </main>
@@ -2428,8 +2556,7 @@ async function renderCatalogSection(vrpResult){
 }
 
 function analyzeBtnLabel(){
-  if(document.getElementById('app')?.classList.contains('is-editing-memory'))return 'זיהוי מילים מייצגות';
-  return currentResult?'עדכון מילים מייצגות':'זיהוי מילים מייצגות';
+  return 'עיבוד זיכרון';
 }
 
 function isEditingMemory(){return !!document.getElementById('app')?.classList.contains('is-editing-memory');}
@@ -2469,11 +2596,10 @@ function enterEditMemory(){
   editMemorySnapshot=input?input.value:'';
   app.classList.add('is-editing-memory');
   setSidebarInert(true);
-  memoryWordLimitError=false;
   const memoryCount=document.getElementById('entry-count');
   if(memoryCount)memoryCount.style.color='';
   const btn=document.getElementById('analyze-btn');
-  if(btn&&!btn.querySelector('.spinner'))btn.textContent='זיהוי מילים מייצגות';
+  if(btn&&!btn.querySelector('.spinner'))btn.textContent='עיבוד זיכרון';
   syncMemoryInputEditable();
   syncEntryHeading();
   if(input){
@@ -2506,24 +2632,25 @@ function cancelEditMemory(){
     input.value=editMemorySnapshot;
     input.dir=input.value.match(/[\u0590-\u05FF]/)?'rtl':'auto';
   }
-  memoryWordLimitError=false;
   exitEditMemory();
-  if(input)rememberAcceptedMemoryValue(input.value);
+  if(input)rememberMemoryValue(input.value);
   updateWordCount();
   syncMemoryInputPlaceholder(input);
 }
 
 /* ─── Analyze ─── */
 async function analyze(){
-  const typedText=document.getElementById('memory-input').value.trim();
-  const text=typedText||MOCK_MEMORY;
-  if(!text)return;
-  if(usesApiMode()&&typedText&&countMemoryWords(typedText)>MAX_MEMORY_WORDS){
+  const inputEl=document.getElementById('memory-input');
+  const raw=inputEl?.value??'';
+  if(isMemoryLimitErrorActive(raw)){
     updateWordCount();
     return;
   }
+  const typedText=raw.trim();
+  const text=typedText||MOCK_MEMORY;
+  if(!text)return;
   const btn=document.getElementById('analyze-btn');
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> מעבד את הזיכרון';
+  btn.disabled=true;btn.textContent='מעבד זיכרון…';
   document.getElementById('error-card').hidden=true;
   document.getElementById('results').innerHTML='';
   document.getElementById('visual-output').innerHTML='';
@@ -3023,19 +3150,41 @@ function cloneSequenceSvg(source){
 }
 
 function syncVisualOutput(){
-  const source=document.querySelector('#results .seq-display svg');
   const output=document.getElementById('visual-output');
   if(!output)return;
   if(!document.getElementById('app')?.classList.contains('has-visual-result')){
     output.innerHTML='';
     return;
   }
-  if(source){
-    const memory=document.createElement('p');
-    memory.className='visual-memory-text';
-    memory.textContent=currentResult?.coreNarrative||document.getElementById('memory-input')?.value.trim()||'';
-    output.replaceChildren(cloneSequenceSvg(source),memory);
-  }else output.innerHTML='';
+  // Prefer individual pictograms from the catalog strip / results (Figma 1006:14426).
+  const thumbs=[...document.querySelectorAll('#pictogram-strip img.panel-pictogram, #pictogram-strip svg')];
+  const resultSvgs=[...document.querySelectorAll('#results .cat-svg-wrap svg')].slice(0,10);
+  const sources=thumbs.length?thumbs:resultSvgs;
+  if(sources.length){
+    const row=document.createElement('div');
+    row.className='visual-seq-row';
+    sources.forEach(node=>{
+      if(node.tagName==='IMG'){
+        const image=document.createElement('img');
+        image.src=node.src;
+        image.alt='';
+        image.draggable=false;
+        row.appendChild(image);
+      }else{
+        const image=document.createElement('img');
+        image.alt='';
+        image.draggable=false;
+        const markup=new XMLSerializer().serializeToString(node);
+        image.src=`data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`;
+        row.appendChild(image);
+      }
+    });
+    output.replaceChildren(row);
+    return;
+  }
+  const source=document.querySelector('#results .seq-display svg');
+  if(source)output.replaceChildren(cloneSequenceSvg(source));
+  else output.innerHTML='';
 }
 
 function syncPictogramStrip(){
@@ -3066,15 +3215,21 @@ function syncRangeVisual(input){
   const value=Number(input.value)||0;
   const progress=((value-min)/(max-min))*100;
   const position=100-Math.max(0,Math.min(100,progress));
+  const control=input.closest('.range-control');
+  const key=input.dataset.rangeKey||'';
+  const percent=Math.round(expressiveRangeValue(key,value));
+  if(control)control.style.setProperty('--slider-position',`${position}%`);
   input.style.setProperty('--slider-position',`${position}%`);
+  const bubble=control?.querySelector('.range-value-bubble');
+  if(bubble)bubble.textContent=`${percent}%`;
 }
 
 function designRangeValue(key,expressiveValue){
-  return key==='memoryFrequency'||key==='memoryClarity'?100-Number(expressiveValue):Number(expressiveValue);
+  return key==='memoryFrequency'?100-Number(expressiveValue):Number(expressiveValue);
 }
 
 function expressiveRangeValue(key,designValue){
-  return key==='memoryFrequency'||key==='memoryClarity'?100-Number(designValue):Number(designValue);
+  return key==='memoryFrequency'?100-Number(designValue):Number(designValue);
 }
 
 function syncSidebarScrollIndicator(){
@@ -3103,12 +3258,19 @@ function syncDesignUI(){
   exitEditMemory();
   const heading=document.getElementById('entry-heading');
   if(heading)heading.textContent=hasResults?(getHeadingPreviewText()||'הזיכרון שלך'):'איזה זיכרון היית רוצה לשמר?';
+  const hasVisual=!!app?.classList.contains('has-visual-result');
   const chips=document.getElementById('rep-chips');
   if(chips){
-    chips.innerHTML=designRepresentativeWords.map((word,index)=>`<span class="rep-chip" draggable="true" data-word-index="${index}"><span>${esc(word)}</span><button type="button" draggable="false" data-remove-word="${index}" aria-label="הסרת ${esc(word)}"><img src="/memory-processor/assets/icons/remove-word-figma.svg" alt="" draggable="false"></button></span>`).join('');
+    chips.innerHTML=designRepresentativeWords.map((word,index)=>`<span class="rep-chip" draggable="${hasVisual?'false':'true'}" data-word-index="${index}"><span>${esc(word)}</span><button type="button" draggable="false" data-remove-word="${index}" aria-label="הסרת ${esc(word)}"><img src="/memory-processor/assets/icons/remove-word-figma.svg" alt="" draggable="false"></button></span>`).join('');
   }
   const count=document.getElementById('rep-count');
   if(count)count.textContent=`[${designRepresentativeWords.length}/10]`;
+  const genderValue=document.getElementById('narrator-gender-value');
+  if(genderValue)genderValue.textContent=getNarratorGender()==='female'?'נקבה':'זכר';
+  const visualHeading=document.getElementById('visual-settings-heading');
+  if(visualHeading)visualHeading.textContent=hasVisual?'ייצוג חזותי':'פיקטוגרמות';
+  const visualCopy=document.getElementById('visual-params-copy');
+  if(visualCopy)visualCopy.hidden=!hasVisual;
   const atWordLimit=designRepresentativeWords.length>=10;
   const addRow=document.getElementById('add-word-row');
   const addBtn=document.getElementById('add-word-btn');
@@ -3137,7 +3299,7 @@ function syncDesignUI(){
   const create=document.getElementById('create-visual-btn');
   if(create){
     create.disabled=!hasResults;
-    create.textContent=app?.classList.contains('has-visual-result')?'הדפסת זיכרון':'עיצוב גלויה';
+    create.textContent=hasVisual?'הדפסת זיכרון':'רישום זיכרון';
   }
   const params=getExpressiveParams();
   document.querySelectorAll('#design-source button').forEach(button=>{
@@ -3148,8 +3310,6 @@ function syncDesignUI(){
   relation?.classList.toggle('is-visible',params.memorySource>0);
   const relationInput=document.querySelector(`input[name="mediated-relation"][value="${params.memorySource===2?2:1}"]`);
   if(relationInput)relationInput.checked=true;
-  const visualHeading=document.getElementById('visual-settings-heading');
-  if(visualHeading)visualHeading.textContent='פיקטוגרמות';
   [['design-frequency','memoryFrequency'],['design-clarity','memoryClarity'],['design-impact','memoryImpact']].forEach(([id,key])=>{
     const input=document.getElementById(id);
     if(input){
@@ -3157,7 +3317,7 @@ function syncDesignUI(){
       syncRangeVisual(input);
     }
   });
-  if(!app?.classList.contains('has-visual-result'))syncPictogramStrip();
+  syncPictogramStrip();
   syncVisualOutput();
   requestAnimationFrame(syncSidebarScrollIndicator);
 }
@@ -3172,7 +3332,7 @@ async function createDesignedVisual(){
   }
   const old=btn.textContent;
   const chosenParams=Object.assign({},expressiveParams);
-  btn.disabled=true;btn.textContent='יוצר ייצוג חזותי…';
+  btn.disabled=true;btn.textContent='רושם זיכרון…';
   try{
     if(processorMode==='anthropic'&&currentResult){
       await previewFullApiPictograms();
@@ -3186,9 +3346,7 @@ async function createDesignedVisual(){
     const source=document.querySelector('#results .seq-display svg');
     if(!source)return;
     app?.classList.add('has-visual-result');
-    syncPictogramStrip();
-    syncVisualOutput();
-    requestAnimationFrame(syncSidebarScrollIndicator);
+    syncDesignUI();
   }finally{
     btn.disabled=false;
     btn.textContent=app?.classList.contains('has-visual-result')?'הדפסת זיכרון':old;
@@ -3387,7 +3545,19 @@ function bindDesignedInterface(){
   const exitAddWordEditing=()=>{
     addRow?.classList.remove('is-editing');
     if(addInput)addInput.value='';
-    if(addConfirm)addConfirm.disabled=true;
+    if(addConfirm){
+      addConfirm.disabled=true;
+      const icon=addConfirm.querySelector('img');
+      if(icon)icon.src=icon.dataset.iconDisabled||'/memory-processor/assets/icons/add-word-confirm-default-figma.svg';
+    }
+  };
+  const syncAddWordConfirmIcon=()=>{
+    if(!addConfirm)return;
+    const icon=addConfirm.querySelector('img');
+    if(!icon)return;
+    const on=icon.dataset.iconDefault||'/memory-processor/assets/icons/add-word-confirm-active-figma.svg';
+    const off=icon.dataset.iconDisabled||'/memory-processor/assets/icons/add-word-confirm-default-figma.svg';
+    icon.src=addConfirm.disabled?off:on;
   };
   const submitAddWord=()=>{
     const word=addInput?.value.trim();
@@ -3404,14 +3574,22 @@ function bindDesignedInterface(){
     addRow?.classList.add('is-editing');
     if(addInput){addInput.value='';addInput.focus();}
     if(addConfirm)addConfirm.disabled=true;
+    syncAddWordConfirmIcon();
   });
   addConfirm?.addEventListener('click',submitAddWord);
   addInput?.addEventListener('input',()=>{
     if(addConfirm)addConfirm.disabled=!addInput.value.trim();
+    syncAddWordConfirmIcon();
   });
   addInput?.addEventListener('keydown',event=>{
     if(event.key==='Enter'){event.preventDefault();submitAddWord();}
     if(event.key==='Escape'){event.preventDefault();exitAddWordEditing();}
+  });
+  // Clicking anywhere outside the open add-word controls cancels and discards typed text.
+  document.addEventListener('pointerdown',event=>{
+    if(!addRow?.classList.contains('is-editing'))return;
+    if(event.target instanceof Node&&addRow.contains(event.target))return;
+    exitAddWordEditing();
   });
   const repChips=document.getElementById('rep-chips');
   repChips?.addEventListener('click',event=>{
@@ -3442,7 +3620,10 @@ function bindDesignedInterface(){
       'left:0',
       'margin:0',
       'pointer-events:none',
-      'direction:rtl',
+      // Match .rep-chip (ltr) so the close icon stays on the word’s right while dragging.
+      'direction:ltr',
+      'display:inline-flex',
+      'align-items:center',
       'color:#000',
       'background:#fff',
       'border:1px solid var(--design-line)',
@@ -3547,7 +3728,19 @@ function bindDesignedInterface(){
     });
   });
   const bindRange=(id,key)=>{
-    document.getElementById(id)?.addEventListener('input',event=>{
+    const input=document.getElementById(id);
+    if(!input)return;
+    const control=input.closest('.range-control');
+    const setScrubbing=active=>control?.classList.toggle('is-scrubbing',!!active);
+    input.addEventListener('pointerdown',event=>{
+      setScrubbing(true);
+      try{input.setPointerCapture(event.pointerId);}catch(_){}
+    });
+    input.addEventListener('pointerup',()=>setScrubbing(false));
+    input.addEventListener('pointercancel',()=>setScrubbing(false));
+    input.addEventListener('lostpointercapture',()=>setScrubbing(false));
+    input.addEventListener('blur',()=>setScrubbing(false));
+    input.addEventListener('input',event=>{
       expressiveParams[key]=expressiveRangeValue(key,event.target.value);
       syncRangeVisual(event.target);
       refreshExpressiveSequenceDisplay();syncVisualOutput();
@@ -3563,75 +3756,64 @@ CAT.init();
 
 const MAX_MEMORY_WORDS=20;
 const MEMORY_WORD_LIMIT_MSG='20/20 מילים';
-/** Set only when the user tries to type past 20 words. Cleared once under 20. */
-let memoryWordLimitError=false;
-/** Last textarea value that respects the 20-word rules (used to undo blocked inserts). */
-let lastAcceptedMemoryValue='';
+/** Snapshot used only to undo an insert that slipped through while the error was active. */
+let lastMemoryValue='';
 
 function countMemoryWords(text){
   const trimmed=(text||'').trim();
   return trimmed?trimmed.split(/\s+/).filter(Boolean).length:0;
 }
 
-function isWhitespaceOnly(text){
-  return !!text&&/^\s+$/.test(text);
+/**
+ * Error is content-based (not cursor/history): active whenever anything exists
+ * after the 20th word — a trailing space, more words, or any other characters.
+ */
+function isMemoryLimitErrorActive(text){
+  const raw=text||'';
+  const re=/\S+/g;
+  const ends=[];
+  let match;
+  while((match=re.exec(raw))!==null)ends.push(match.index+match[0].length);
+  if(ends.length>MAX_MEMORY_WORDS)return true;
+  if(ends.length<MAX_MEMORY_WORDS)return false;
+  return raw.length>ends[MAX_MEMORY_WORDS-1];
 }
 
 function isSpaceKeyEvent(event){
   return event.key===' '||event.key==='Spacebar'||event.code==='Space';
 }
 
-/**
- * Accepted: ≤20 words.
- * Trailing space at exactly 20 is allowed so a blocked 21st word cannot “glue”
- * onto word 20 (space stays; the next character is rejected as word 21).
- */
-function isAcceptedMemoryValue(value){
-  return countMemoryWords(value)<=MAX_MEMORY_WORDS;
+/** While error is active, only insertion is blocked — deletion is always allowed. */
+function blocksMemoryInsert(current){
+  return isMemoryLimitErrorActive(current);
 }
 
-function clampMemoryToWordLimit(text){
-  const trimmed=(text||'').trim();
-  if(!trimmed)return '';
-  const words=trimmed.split(/\s+/).filter(Boolean);
-  if(words.length<=MAX_MEMORY_WORDS)return words.join(' ');
-  return words.slice(0,MAX_MEMORY_WORDS).join(' ');
+function rememberMemoryValue(value){
+  lastMemoryValue=value??'';
 }
 
-function rememberAcceptedMemoryValue(value){
-  lastAcceptedMemoryValue=value??'';
-}
-
-function revertMemoryInputToAccepted(input){
+function revertMemoryInsert(input){
   if(!input)return;
-  memoryWordLimitError=true;
-  if(input.value===lastAcceptedMemoryValue)return;
-  input.value=lastAcceptedMemoryValue;
-  const caret=lastAcceptedMemoryValue.length;
+  if(input.value===lastMemoryValue)return;
+  input.value=lastMemoryValue;
+  const caret=Math.min(input.selectionStart??lastMemoryValue.length,lastMemoryValue.length);
   input.setSelectionRange(caret,caret);
-}
-
-/** Block inserts that would create a 21st word. */
-function blocksMemoryInputAtLimit(current,next,inserted){
-  return countMemoryWords(next)>MAX_MEMORY_WORDS;
 }
 
 function updateWordCount(){
   const input=document.getElementById('memory-input');
   const raw=input?.value??'';
-  if(isAcceptedMemoryValue(raw))rememberAcceptedMemoryValue(raw);
+  rememberMemoryValue(raw);
   const text=raw.trim();
   const n=countMemoryWords(raw);
+  const errorActive=isMemoryLimitErrorActive(raw);
+  const atLimit=n>=MAX_MEMORY_WORDS||errorActive;
   const wcEl=document.getElementById('word-count');
   const designCount=document.getElementById('entry-count');
-  const atLimit=n>=MAX_MEMORY_WORDS;
-  const overLimit=n>MAX_MEMORY_WORDS;
-  if(n<MAX_MEMORY_WORDS)memoryWordLimitError=false;
-  const countIsError=memoryWordLimitError;
-  wcEl.textContent=text?(n+' word'+(n!==1?'s':'')+(countIsError?' — max 20':'')):'';
+  wcEl.textContent=text?(n+' word'+(n!==1?'s':'')+(errorActive?' — max 20':'')):'';
   if(designCount){
     designCount.textContent=atLimit?MEMORY_WORD_LIMIT_MSG:`${n}/20 מילים`;
-    designCount.classList.toggle('is-at-limit',countIsError);
+    designCount.classList.toggle('is-at-limit',errorActive);
     designCount.style.color='';
   }
   const heading=document.getElementById('entry-heading');
@@ -3641,15 +3823,14 @@ function updateWordCount(){
       ?(getHeadingPreviewText()||'הזיכרון שלך')
       :'איזה זיכרון היית רוצה לשמר?';
   }
-  input?.setAttribute('aria-invalid',(overLimit||memoryWordLimitError)?'true':'false');
-  wcEl.style.color=countIsError?'#9B3010':'';
+  input?.setAttribute('aria-invalid',errorActive?'true':'false');
+  wcEl.style.color=errorActive?'#9B3010':'';
   const errorMsg=document.getElementById('memory-error-msg');
-  // Show only after an over-limit attempt (or if somehow over 20) — not merely for a valid 20/20 memory.
-  if(errorMsg){errorMsg.hidden=!(overLimit||memoryWordLimitError);}
+  if(errorMsg)errorMsg.hidden=!errorActive;
   const wrap=input?.closest('.memory-input-wrap');
-  if(wrap){wrap.classList.toggle('has-content',!!text);}
+  if(wrap)wrap.classList.toggle('has-content',!!text);
   const analyzeBtn=document.getElementById('analyze-btn');
-  analyzeBtn.disabled=!text||overLimit;
+  analyzeBtn.disabled=!text||errorActive;
   if(analyzeBtn&&!analyzeBtn.querySelector('.spinner'))analyzeBtn.textContent=analyzeBtnLabel();
 }
 
@@ -3699,7 +3880,7 @@ function syncMemoryInputPlaceholder(input){
 
 /* ─── Textarea ─── */
 const memoryInputEl=document.getElementById('memory-input');
-rememberAcceptedMemoryValue(memoryInputEl?.value||'');
+rememberMemoryValue(memoryInputEl?.value||'');
 memoryInputEl?.addEventListener('focus',event=>{
   syncMemoryInputPlaceholder(event.currentTarget);
 });
@@ -3709,52 +3890,36 @@ memoryInputEl?.addEventListener('blur',event=>{
 function rejectMemoryInsert(event,input){
   event.preventDefault();
   if(typeof event.stopImmediatePropagation==='function')event.stopImmediatePropagation();
-  memoryWordLimitError=true;
-  revertMemoryInputToAccepted(input);
+  revertMemoryInsert(input);
   updateWordCount();
 }
 memoryInputEl?.addEventListener('beforeinput',event=>{
   if(event.isComposing)return;
+  // Deletion is always allowed; only insertion is gated by the error state.
   if(!event.inputType.startsWith('insert'))return;
   const input=event.currentTarget;
-  const start=input.selectionStart??input.value.length;
-  const end=input.selectionEnd??start;
   // Paste/drop: handled in `paste`.
   if(event.inputType==='insertFromPaste'||event.inputType==='insertFromDrop')return;
-  let inserted=event.data;
-  if(event.inputType==='insertLineBreak'||event.inputType==='insertParagraph')inserted='\n';
-  // Key-repeat space sometimes arrives as insertText with null data — treat as space.
-  if(event.inputType==='insertText'&&(inserted===null||inserted===undefined)){
-    inserted=' ';
-  }
-  inserted=inserted??'';
-  const next=input.value.slice(0,start)+inserted+input.value.slice(end);
-  if(blocksMemoryInputAtLimit(input.value,next,inserted)||!isAcceptedMemoryValue(next)){
-    rejectMemoryInsert(event,input);
-  }
+  if(blocksMemoryInsert(input.value))rejectMemoryInsert(event,input);
 },true);
 memoryInputEl?.addEventListener('paste',event=>{
-  event.preventDefault();
   const input=event.currentTarget;
-  const pasted=(event.clipboardData||window.clipboardData)?.getData('text')||'';
-  const start=input.selectionStart??input.value.length;
-  const end=input.selectionEnd??start;
-  const combined=input.value.slice(0,start)+pasted+input.value.slice(end);
-  const over=countMemoryWords(combined)>MAX_MEMORY_WORDS;
-  if(over)memoryWordLimitError=true;
-  const next=over?clampMemoryToWordLimit(combined):combined;
-  input.setRangeText(next,0,input.value.length,'end');
-  rememberAcceptedMemoryValue(next);
-  input.dispatchEvent(new Event('input',{bubbles:true}));
+  // While error is active, block all insertion — including paste.
+  if(blocksMemoryInsert(input.value)){
+    event.preventDefault();
+    updateWordCount();
+    return;
+  }
+  // Otherwise allow paste even if it creates content after the 20th word;
+  // the error state is then derived from the resulting text.
 });
 memoryInputEl?.addEventListener('input',e=>{
   if(e.isComposing)return;
   const input=e.target;
   if(!input.value.trim())syncMemoryInputPlaceholder(input);
-  if(!isAcceptedMemoryValue(input.value)){
-    revertMemoryInputToAccepted(input);
-  }else{
-    rememberAcceptedMemoryValue(input.value);
+  // If an insert slipped through while error was active, undo it.
+  if(blocksMemoryInsert(lastMemoryValue)&&input.value!==lastMemoryValue&&input.value.length>lastMemoryValue.length){
+    revertMemoryInsert(input);
   }
   updateWordCount();
   input.dir=input.value.match(/[\u0590-\u05FF]/)?'rtl':'auto';
@@ -3765,27 +3930,12 @@ memoryInputEl?.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey)&&e.key==='Enter')analyze();
   const input=e.currentTarget;
   if(!input)return;
-  const start=input.selectionStart??0;
-  const end=input.selectionEnd??0;
   const isSpace=isSpaceKeyEvent(e);
   const isEnter=e.key==='Enter';
   const isPrintable=e.key.length===1&&!e.metaKey&&!e.ctrlKey&&!e.altKey;
   if(!(isPrintable||isSpace||isEnter))return;
-  const inserted=isEnter?'\n':(isSpace?' ':e.key);
-  const next=input.value.slice(0,start)+inserted+input.value.slice(end);
-  if(blocksMemoryInputAtLimit(input.value,next,inserted)||!isAcceptedMemoryValue(next)){
-    rejectMemoryInsert(e,input);
-  }
+  if(blocksMemoryInsert(input.value))rejectMemoryInsert(e,input);
 },true);
-memoryInputEl?.addEventListener('keyup',e=>{
-  if(e.isComposing)return;
-  if(!isSpaceKeyEvent(e)&&e.key!=='Enter')return;
-  const input=e.currentTarget;
-  if(!isAcceptedMemoryValue(input.value)){
-    revertMemoryInputToAccepted(input);
-    updateWordCount();
-  }
-});
 
 /* ─── Click delegation (v5 pattern) ─── */
 document.addEventListener('click',function(e){
