@@ -1168,6 +1168,95 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .create-visual-btn{width:237px;height:39px;padding:10px 24px;border-radius:8px;font-size:19px;line-height:20px}
 }
 
+/* Print: 1:1 postcard column (defeat narrow print viewport / mobile rules) */
+@media print{
+  @page{size:landscape;margin:8mm}
+  :root{--figma-unit:1px!important}
+  html,body{
+    margin:0!important;padding:0!important;min-height:0!important;background:#fff!important;color:#000!important;
+    print-color-adjust:exact;-webkit-print-color-adjust:exact
+  }
+  .site-header,
+  .utility-drawer,
+  .design-sidebar,
+  .archive-shell,
+  .error-card,
+  .edit-memory-btn,
+  .cancel-edit-btn,
+  .input-footer-wrap,
+  .entry-count,
+  .memory-error-msg{display:none!important}
+  .app{
+    max-width:none!important;min-height:0!important;height:auto!important;width:auto!important;
+    margin:0!important;padding:0!important;background:#fff!important
+  }
+  .workspace{
+    display:block!important;width:auto!important;height:auto!important;min-height:0!important;gap:0!important
+  }
+  .app.has-results.has-visual-result .memory-main,
+  .memory-main{
+    display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;
+    width:1342px!important;height:898px!important;max-width:none!important;margin:0 auto!important;
+    transform-origin:top center
+  }
+  .app.has-results.has-visual-result .postcard-heading,
+  .postcard-heading{
+    display:block!important;width:1111px!important;max-width:none!important;margin:0!important;
+    font-family:var(--font-body)!important;font-size:27px!important;font-weight:500!important;
+    line-height:28px!important;color:#000!important;text-align:right!important;direction:rtl
+  }
+  .app.has-results.has-visual-result .memory-entry,
+  .memory-entry{
+    position:relative!important;flex:0 0 auto!important;display:flex!important;flex-direction:column!important;
+    align-items:stretch!important;width:926px!important;max-width:none!important;min-height:0!important;
+    margin:0!important;gap:24px!important;direction:rtl
+  }
+  .app.has-results.has-visual-result .entry-heading-row,
+  .entry-heading-row{
+    justify-content:flex-end!important;width:100%!important;min-height:32px!important;margin:0!important
+  }
+  .app.has-results.has-visual-result .entry-heading,
+  .app.has-results.has-visual-result .entry-heading-row .entry-heading,
+  .entry-heading{
+    width:100%!important;height:auto!important;margin:0!important;
+    font-family:var(--font-body)!important;font-size:27px!important;font-weight:500!important;
+    line-height:28px!important;text-align:right!important;color:#000!important;direction:rtl
+  }
+  .memory-input-wrap{
+    position:relative!important;width:100%!important;height:90px!important;margin:0!important
+  }
+  textarea#memory-input{
+    width:100%!important;height:100%!important;min-height:0!important;max-height:none!important;
+    padding:16px 20px 36px!important;resize:none!important;overflow:hidden!important;
+    border:1px solid var(--design-line)!important;border-radius:8px!important;background:var(--design-blue-soft)!important;
+    color:#000!important;font-family:var(--font-mono)!important;font-size:15px!important;font-weight:400!important;
+    line-height:20px!important;text-align:right!important;box-shadow:none!important;outline:none!important
+  }
+  .app.has-results.has-visual-result .memory-stage,
+  .memory-stage{
+    display:flex!important;align-items:center!important;justify-content:center!important;
+    width:1342px!important;max-width:none!important;height:678px!important;min-height:678px!important;
+    margin-top:16px!important;padding:0!important;box-sizing:border-box!important;
+    border:1px solid var(--design-line)!important;border-radius:8px!important;background:#fff!important;
+    overflow:hidden!important;page-break-inside:avoid;break-inside:avoid
+  }
+  .app.has-visual-result .visual-output,
+  .visual-output{
+    position:relative!important;display:block!important;width:100%!important;height:100%!important;
+    min-height:100%!important;overflow:hidden!important
+  }
+  .app.has-visual-result .visual-output>svg,
+  .visual-output>svg{
+    position:absolute!important;left:212px!important;top:163px!important;
+    width:966px!important;height:auto!important;max-width:none!important;max-height:none!important;display:block!important
+  }
+  .visual-memory-text{
+    display:block!important;position:absolute!important;top:536.55px!important;right:164.8px!important;
+    width:405px!important;margin:0!important;direction:rtl!important;text-align:right!important;color:#000!important;
+    font-family:var(--font-display)!important;font-size:22px!important;font-weight:700!important;line-height:25px!important
+  }
+}
+
 </style>
 </head>
 <body>
@@ -3344,6 +3433,30 @@ function syncDesignUI(){
   });
 }
 
+const POSTCARD_PRINT_W=1342;
+const POSTCARD_PRINT_H=898;
+
+function clearPostcardPrintFit(){
+  const main=document.querySelector('.memory-main');
+  if(!main)return;
+  main.style.zoom='';
+  main.style.transform='';
+}
+
+function fitPostcardForPrint(){
+  const app=document.getElementById('app');
+  const main=document.querySelector('.memory-main');
+  if(!main||!app?.classList.contains('has-visual-result'))return;
+  clearPostcardPrintFit();
+  // Printable area approximates the print dialog page (minus @page margins).
+  const availW=Math.max(640,window.innerWidth||POSTCARD_PRINT_W);
+  const availH=Math.max(480,window.innerHeight||POSTCARD_PRINT_H);
+  const scale=Math.min(1,availW/POSTCARD_PRINT_W,availH/POSTCARD_PRINT_H);
+  if(scale>=0.999)return;
+  if('zoom' in main.style)main.style.zoom=String(scale);
+  else main.style.transform=`scale(${scale})`;
+}
+
 async function createDesignedVisual(){
   const btn=document.getElementById('create-visual-btn');
   if(!btn)return;
@@ -3563,6 +3676,8 @@ function bindDesignedInterface(){
   document.getElementById('edit-memory-btn')?.addEventListener('click',enterEditMemory);
   document.getElementById('cancel-edit-btn')?.addEventListener('click',cancelEditMemory);
   document.getElementById('create-visual-btn')?.addEventListener('click',createDesignedVisual);
+  window.addEventListener('beforeprint',fitPostcardForPrint);
+  window.addEventListener('afterprint',clearPostcardPrintFit);
   const sidebarContent=document.querySelector('.sidebar-content');
   sidebarContent?.addEventListener('scroll',syncSidebarScrollIndicator,{passive:true});
   if(sidebarContent&&window.ResizeObserver)new ResizeObserver(syncSidebarScrollIndicator).observe(sidebarContent);
