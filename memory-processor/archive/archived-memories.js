@@ -1,4 +1,14 @@
-/** Hardcoded archive memories — list titles + optional detail/hover fields. */
+/**
+ * Archive catalog.
+ *
+ * Detail screens are Figma frame exports (1920×1080 PNG/SVG) — two states per memory:
+ *   frames.default  — click / idle detail
+ *   frames.hover    — hover memory text (representative words + pictogram strip, no chevron)
+ *
+ * To add a memory: export those two frames from Figma into
+ *   memory-processor/assets/archive/NNN/detail-{default,hover}.png
+ * and set ready:true + frames paths below (list title comes from `titles`).
+ */
 (function (global) {
   const titles = [
     'גן, בריכה, סבא',
@@ -65,11 +75,35 @@
 
   const ARCHIVED_MEMORIES = titles.map((title, i) => {
     const id = String(i + 1).padStart(3, '0');
-    const row = { id, title, ready: false, frequency: null, clarity: null, impact: null,
-      sourceLabel: null, author: null, body: null, previewPictogram: null, stripPictogram: null };
+    const row = {
+      id,
+      title,
+      ready: false,
+      frequency: null,
+      clarity: null,
+      impact: null,
+      previewPictogram: null,
+      frames: null,
+    };
     const extra = ({
-      '001': {'frequency': 9, 'clarity': 36, 'impact': 71, 'sourceLabel': 'אישי', 'author': 'מעיין', 'body': 'שהייתי בגן והלכנו לבריכה והייתי רואה את סבא וסבתא שם הייתי מבקשת ללכת אליהם הביתה. סבא תמיד הסכים.', 'previewPictogram': '/memory-processor/assets/archive/001/preview.svg', 'stripPictogram': '/memory-processor/assets/archive/001/strip.svg', 'ready': true},
-      '002': {'frequency': 100, 'clarity': 61, 'impact': 10, 'previewPictogram': '/memory-processor/assets/archive/002/preview.png', 'ready': false},
+      '001': {
+        frequency: 9,
+        clarity: 36,
+        impact: 71,
+        previewPictogram: '/memory-processor/assets/archive/001/preview.svg',
+        ready: true,
+        frames: {
+          default: '/memory-processor/assets/archive/001/detail-default.png',
+          hover: '/memory-processor/assets/archive/001/detail-hover.png',
+        },
+      },
+      '002': {
+        frequency: 100,
+        clarity: 61,
+        impact: 10,
+        previewPictogram: '/memory-processor/assets/archive/002/preview.png',
+        ready: false,
+      },
     })[id];
     if (extra) Object.assign(row, extra);
     return row;
@@ -77,4 +111,3 @@
 
   global.ArchivedMemories = ARCHIVED_MEMORIES;
 })(typeof globalThis !== 'undefined' ? globalThis : window);
-
