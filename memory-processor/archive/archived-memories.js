@@ -129,6 +129,60 @@
           hover: '/memory-processor/assets/archive/003/detail-hover.svg',
         },
       },
+      '004': {
+        frequency: 100,
+        clarity: 100,
+        impact: 100,
+        previewPictogram: '/memory-processor/assets/archive/004/preview.svg',
+        // Hover a Memory — pictogram at ~x:1625 y:582 w:213 h:202 (top-right)
+        previewPlacement: 'top',
+        previewFigmaTop: 582,
+        ready: true,
+        frames: {
+          default: '/memory-processor/assets/archive/004/detail-default.svg',
+          hover: '/memory-processor/assets/archive/004/detail-hover.svg',
+        },
+      },
+      '005': {
+        frequency: 26,
+        clarity: 100,
+        impact: 2,
+        previewPictogram: '/memory-processor/assets/archive/005/preview.svg',
+        previewPlacement: 'bottom',
+        ready: true,
+        frames: {
+          default: '/memory-processor/assets/archive/005/detail-default.svg',
+          hover: '/memory-processor/assets/archive/005/detail-hover.svg',
+        },
+      },
+      '006': {
+        frequency: 100,
+        clarity: 98,
+        impact: 77,
+        previewPictogram: '/memory-processor/assets/archive/006/preview.svg',
+        // Hover a Memory — pictogram at ~y:473 (top-right, below default 366)
+        previewPlacement: 'top',
+        previewFigmaTop: 473,
+        ready: true,
+        frames: {
+          default: '/memory-processor/assets/archive/006/detail-default.svg',
+          hover: '/memory-processor/assets/archive/006/detail-hover.svg',
+        },
+      },
+      '007': {
+        frequency: 27,
+        clarity: 48,
+        impact: 10,
+        previewPictogram: '/memory-processor/assets/archive/007/preview.svg',
+        // Hover a Memory — dotted portrait ~x:1629 y:100
+        previewPlacement: 'top',
+        previewFigmaTop: 100,
+        ready: true,
+        frames: {
+          default: '/memory-processor/assets/archive/007/detail-default.svg',
+          hover: '/memory-processor/assets/archive/007/detail-hover.svg',
+        },
+      },
     })[id];
     if (extra) Object.assign(row, extra);
     return row;
