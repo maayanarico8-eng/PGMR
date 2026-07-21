@@ -334,6 +334,10 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
   display:grid;grid-template-columns:minmax(0,calc(1342 * var(--figma-unit))) calc(392 * var(--figma-unit));
   gap:calc(20 * var(--figma-unit));height:calc(898 * var(--figma-unit));min-height:0
 }
+.app:not(.has-results) .workspace{
+  grid-template-columns:minmax(0,1fr);height:auto;min-height:0
+}
+.app:not(.has-results) .memory-main{width:100%;height:auto}
 .memory-main{width:calc(1342 * var(--figma-unit));height:calc(898 * var(--figma-unit));min-width:0;display:flex;flex-direction:column}
 .memory-entry{
   width:calc(926 * var(--figma-unit));min-height:calc(204 * var(--figma-unit));margin:0 0 0 auto;
@@ -358,12 +362,16 @@ textarea#memory-input{
   line-height:calc(20 * var(--figma-unit));text-align:right;overflow:hidden
 }
 textarea#memory-input::placeholder{color:var(--design-muted);opacity:1}
-textarea#memory-input:hover:not(:focus):not([aria-invalid="true"]){border-color:var(--design-muted)}
-textarea#memory-input:focus{border-color:var(--design-blue);outline:none}
+textarea#memory-input:hover:not(:focus):not(:focus-visible):not([aria-invalid="true"]){border-color:var(--design-muted)}
+textarea#memory-input:focus,
+textarea#memory-input:focus-visible{
+  border-color:var(--design-blue);outline:none;box-shadow:none
+}
 textarea#memory-input[aria-invalid="true"],
 textarea#memory-input[aria-invalid="true"]:focus,
+textarea#memory-input[aria-invalid="true"]:focus-visible,
 textarea#memory-input[aria-invalid="true"]:hover{
-  border-color:var(--design-error)
+  border-color:var(--design-error);outline:none;box-shadow:none
 }
 .input-footer{width:100%;height:calc(39 * var(--figma-unit));display:flex;justify-content:flex-start;align-items:center;margin:0}
 .word-count{display:none}
@@ -393,17 +401,22 @@ textarea#memory-input[aria-invalid="true"]:hover{
   cursor:default;border-color:var(--design-line)
 }
 .app.has-results:not(.is-editing-memory) textarea#memory-input:hover:not([aria-invalid="true"]),
-.app.has-results:not(.is-editing-memory) textarea#memory-input:focus{
-  border-color:var(--design-line);outline:none
+.app.has-results:not(.is-editing-memory) textarea#memory-input:focus,
+.app.has-results:not(.is-editing-memory) textarea#memory-input:focus-visible{
+  border-color:var(--design-line);outline:none;box-shadow:none
 }
 .app.is-editing-memory .edit-memory-btn{display:none}
 .app.is-editing-memory .input-footer{visibility:visible}
 .app.is-editing-memory .entry-count:not(.is-at-limit){color:#000}
 .app.is-editing-memory textarea#memory-input:not([aria-invalid="true"]){border-color:var(--design-blue);cursor:text}
-.app.is-editing-memory textarea#memory-input:not([aria-invalid="true"]):focus{border-color:var(--design-blue);outline:none}
+.app.is-editing-memory textarea#memory-input:not([aria-invalid="true"]):focus,
+.app.is-editing-memory textarea#memory-input:not([aria-invalid="true"]):focus-visible{
+  border-color:var(--design-blue);outline:none;box-shadow:none
+}
 .app.is-editing-memory textarea#memory-input[aria-invalid="true"],
-.app.is-editing-memory textarea#memory-input[aria-invalid="true"]:focus{
-  border-color:var(--design-error);cursor:text
+.app.is-editing-memory textarea#memory-input[aria-invalid="true"]:focus,
+.app.is-editing-memory textarea#memory-input[aria-invalid="true"]:focus-visible{
+  border-color:var(--design-error);cursor:text;outline:none;box-shadow:none
 }
 .app.is-editing-memory .design-sidebar{pointer-events:none}
 .app.is-editing-memory .design-sidebar .side-heading,
@@ -438,6 +451,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .app.is-editing-memory .design-sidebar .create-visual-btn:disabled{
   background:#e9f3ff;border:1px solid var(--design-line);color:var(--design-muted);cursor:default
 }
+.app:not(.has-results) .memory-stage{display:none}
 .memory-stage{
   width:100%;height:calc(678 * var(--figma-unit));min-height:0;flex:none;margin-top:calc(16 * var(--figma-unit));
   border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));
@@ -815,7 +829,10 @@ textarea#memory-input[aria-invalid="true"]:hover{
         <h1 class="entry-heading" id="entry-heading">איזה זיכרון היית רוצה לשמר?</h1>
         <span class="entry-count" id="entry-count">0/20 מילים</span>
         <div class="memory-input-wrap">
-          <textarea id="memory-input" dir="rtl" rows="2" maxlength="500" placeholder="הכניסו זיכרון עד 20 מילים"></textarea>
+          <textarea id="memory-input" dir="rtl" rows="2" maxlength="500"
+            data-placeholder-default="הכניסו זיכרון עד 20 מילים"
+            data-placeholder-focus=""
+            placeholder="הכניסו זיכרון עד 20 מילים"></textarea>
         </div>
         <div class="input-footer">
           <span class="word-count" id="word-count"></span>
@@ -2096,6 +2113,7 @@ function enterEditMemory(){
   syncMemoryInputEditable();
   const input=document.getElementById('memory-input');
   if(input){
+    syncMemoryInputPlaceholder(input);
     input.focus();
     const len=input.value.length;
     input.setSelectionRange(len,len);
@@ -3079,8 +3097,23 @@ document.querySelectorAll('.mode-btn').forEach(btn=>{
   });
 });
 
+function syncMemoryInputPlaceholder(input){
+  if(!input)return;
+  const defaultText=input.dataset.placeholderDefault||'';
+  const focusText=input.dataset.placeholderFocus??'';
+  const useFocus=document.activeElement===input&&!input.value.trim();
+  input.placeholder=useFocus?focusText:defaultText;
+}
+
 /* ─── Textarea ─── */
-document.getElementById('memory-input').addEventListener('beforeinput',event=>{
+const memoryInputEl=document.getElementById('memory-input');
+memoryInputEl?.addEventListener('focus',event=>{
+  syncMemoryInputPlaceholder(event.currentTarget);
+});
+memoryInputEl?.addEventListener('blur',event=>{
+  syncMemoryInputPlaceholder(event.currentTarget);
+});
+memoryInputEl?.addEventListener('beforeinput',event=>{
   if(!event.inputType.startsWith('insert'))return;
   const input=event.currentTarget;
   const start=input.selectionStart??input.value.length;
@@ -3097,7 +3130,7 @@ document.getElementById('memory-input').addEventListener('beforeinput',event=>{
     updateWordCount();
   }
 });
-document.getElementById('memory-input').addEventListener('paste',event=>{
+memoryInputEl?.addEventListener('paste',event=>{
   event.preventDefault();
   const input=event.currentTarget;
   const pasted=(event.clipboardData||window.clipboardData)?.getData('text')||'';
@@ -3111,8 +3144,9 @@ document.getElementById('memory-input').addEventListener('paste',event=>{
   input.setRangeText(next,0,input.value.length,'end');
   input.dispatchEvent(new Event('input',{bubbles:true}));
 });
-document.getElementById('memory-input').addEventListener('input',e=>{
+memoryInputEl?.addEventListener('input',e=>{
   const input=e.target;
+  if(!input.value.trim())syncMemoryInputPlaceholder(input);
   if(exceedsMemoryWordLimit(input.value)){
     memoryWordLimitError=true;
     const clamped=clampMemoryToWordLimit(input.value);
@@ -3127,7 +3161,7 @@ document.getElementById('memory-input').addEventListener('input',e=>{
   input.dir=input.value.match(/[\u0590-\u05FF]/)?'rtl':'auto';
 });
 document.getElementById('analyze-btn').addEventListener('click',analyze);
-document.getElementById('memory-input').addEventListener('keydown',e=>{
+memoryInputEl?.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey)&&e.key==='Enter')analyze();
 });
 
