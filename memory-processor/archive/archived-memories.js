@@ -5,10 +5,14 @@
  *   frames.default  — click / idle detail
  *   frames.hover    — hover memory text (representative words + pictogram strip, no chevron)
  *
- * To add a memory: export those two frames from Figma into
+ * List hover comes from the separate “Hover a Memory” Figma frame:
+ *   crop → previewPictogram; read % → frequency / clarity / impact;
+ *   previewPlacement 'top'|'bottom'; optional previewFigmaTop when top Y ≠ 366.72.
+ *
+ * To add a memory: export Click / Hover-text / Hover-a-Memory from Figma into
  *   memory-processor/assets/archive/NNN/detail-{default,hover}.{png|svg}
- * (optional list hover pictogram → previewPictogram), then set ready:true + frames
- * paths below (list title comes from `titles`).
+ *   + preview crop, then set ready:true + frames + list-hover fields below
+ * (list title comes from `titles`). See archive/ADDING-MEMORIES.md.
  */
 (function (global) {
   const titles = [
@@ -91,11 +95,12 @@
         frequency: 9,
         clarity: 36,
         impact: 71,
-        previewPictogram: '/memory-processor/assets/archive/001/preview.svg',
+        previewPictogram: '/memory-processor/assets/archive/001/preview.png',
+        previewPlacement: 'top',
         ready: true,
         frames: {
-          default: '/memory-processor/assets/archive/001/detail-default.png',
-          hover: '/memory-processor/assets/archive/001/detail-hover.png',
+          default: '/memory-processor/assets/archive/001/detail-default.svg',
+          hover: '/memory-processor/assets/archive/001/detail-hover.svg',
         },
       },
       '002': {
@@ -103,10 +108,25 @@
         clarity: 61,
         impact: 10,
         previewPictogram: '/memory-processor/assets/archive/002/preview.png',
+        previewPlacement: 'bottom',
         ready: true,
         frames: {
           default: '/memory-processor/assets/archive/002/detail-default.svg',
           hover: '/memory-processor/assets/archive/002/detail-hover.svg',
+        },
+      },
+      '003': {
+        frequency: 78,
+        clarity: 83,
+        impact: 24,
+        previewPictogram: '/memory-processor/assets/archive/003/preview.png',
+        // Figma Hover a Memory — pictogram at x:1629 y:142 w:208 h:195 (top-right)
+        previewPlacement: 'top',
+        previewFigmaTop: 142,
+        ready: true,
+        frames: {
+          default: '/memory-processor/assets/archive/003/detail-default.svg',
+          hover: '/memory-processor/assets/archive/003/detail-hover.svg',
         },
       },
     })[id];

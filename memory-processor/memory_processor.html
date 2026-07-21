@@ -3099,11 +3099,19 @@ function setArchiveHover(memory,row){
     document.getElementById('archive-hover-frequency').textContent=pct(memory.frequency);
     document.getElementById('archive-hover-clarity').textContent=pct(memory.clarity);
     document.getElementById('archive-hover-impact').textContent=pct(memory.impact);
-    preview.classList.toggle('is-bottom-preview',memory.id!=='001');
+    const placement=memory.previewPlacement||(memory.id==='001'?'top':'bottom');
+    preview.classList.toggle('is-bottom-preview',placement==='bottom');
+    // Optional Figma absolute Y for top-slot pictograms that aren't the 001 default (366.72)
+    if(placement==='top'&&memory.previewFigmaTop!=null){
+      pic.style.top=`calc((${Number(memory.previewFigmaTop)} - 119) * var(--figma-unit))`;
+    }else{
+      pic.style.top='';
+    }
     preview.classList.add('is-visible');
     preview.setAttribute('aria-hidden','false');
   }else{
     pic.innerHTML='';
+    pic.style.top='';
     preview.classList.remove('is-visible','is-bottom-preview');
     preview.setAttribute('aria-hidden','true');
   }

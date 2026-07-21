@@ -1,11 +1,11 @@
 # Adding archived memories (Figma frame exports)
 
-Use this when wiring the next archive memory (003, 004, … ~70). No hand-laid detail HTML/CSS per memory — each memory is **Figma exports + a small data entry**.
+Use this when wiring the next archive memory (004, 005, … ~70). No hand-laid detail HTML/CSS per memory — each memory is **Figma exports + a small data entry**.
 
 Live site: https://pgmr-two.vercel.app  
 Local: `npm run dev` → http://localhost:3000 — lock viewport **1920×1080** for 1:1 checks.
 
-Reference examples already live: **001**, **002**.
+Reference examples already live: **001**, **002**, **003** (all use SVG detail frames + a cropped `preview.png` from Hover a Memory).
 
 ---
 
@@ -13,7 +13,7 @@ Reference examples already live: **001**, **002**.
 
 | State | What the user sees | Asset |
 |--------|-------------------|--------|
-| List hover | HTML list + pictogram + % params (not a full-page export) | `previewPictogram` (optional crop) |
+| List hover | HTML list + pictogram + % params (not a full-page export) | Crop `previewPictogram` from **Hover a Memory** + `frequency` / `clarity` / `impact` |
 | Detail idle | Full 1920×1080 frame | `frames.default` |
 | Detail text hover | Same frame with representative words + pictogram bank strip (**no chevron**, no bank toggle) | `frames.hover` |
 
@@ -25,16 +25,32 @@ Transparent hit overlays (nav, archive/generator links, text-hover zone) live on
 
 ## 1. Export from Figma
 
-From the archive detail frames for that memory (1920×1080), export:
+From the archive frames for that memory (1920×1080), export **all three**:
 
-| Figma / export name (typical) | Save as |
-|-------------------------------|---------|
-| Click / idle detail | `detail-default.png` or `.svg` |
-| Hover memory text (representative words) | `detail-hover.png` or `.svg` |
+| Figma / export name (typical) | Used for | Save as |
+|-------------------------------|----------|---------|
+| **Hover a Memory** | List-row hover — source for pictogram crop + read the three % values | keep for cropping (do not ship the full frame) |
+| **Click on Memory** | Detail idle | `detail-default.png` or `.svg` |
+| **Hover on Memory Text – Reveal Representative Words** | Detail text hover | `detail-hover.png` or `.svg` |
 
-Optional for list hover: a pictogram crop (or reuse an existing preview asset) → `preview.png` / `preview.svg`.
+From **Hover a Memory**, also note:
 
-PNG or SVG both work (`<img src>`). Prefer whatever Figma exports cleanly at 1920×1080.
+1. The list-hover pictogram on the right (crop only that graphic).
+2. The three percentages shown with the params:
+   - תדירות הזיכרון → `frequency`
+   - בהירות הזיכרון → `clarity`
+   - השפעת הזיכרון → `impact`
+
+PNG or SVG both work for detail frames (`<img src>`). Prefer whatever Figma exports cleanly at 1920×1080.
+
+### Preview pictogram crop
+
+| Placement | Typical Figma box | Catalog |
+|-----------|-------------------|---------|
+| Top-right (001, 003, …) | ~`x:1629` `w:208` `h:195` — **Y varies per memory** | `previewPlacement: 'top'` + `previewFigmaTop: <Y>` when Y ≠ 366.72 |
+| Bottom-right (002, …) | `x:1504` `y:806` `w:343` `h:206` | `previewPlacement: 'bottom'` |
+
+Save the crop as `preview.png` or `preview.svg` (white/`#FCFCFC` background). Do **not** commit the full Hover a Memory frame into `assets/archive/NNN/`.
 
 ---
 
@@ -42,19 +58,19 @@ PNG or SVG both work (`<img src>`). Prefer whatever Figma exports cleanly at 192
 
 ```text
 memory-processor/assets/archive/NNN/
-  detail-default.png   # or .svg
-  detail-hover.png     # or .svg
-  preview.png          # optional — list hover pictogram
+  detail-default.png   # or .svg  ← Click on Memory
+  detail-hover.png     # or .svg  ← Hover on Memory Text
+  preview.png          # crop from Hover a Memory (required for list hover UI)
 ```
 
-`NNN` is zero-padded: `003`, `004`, …
+`NNN` is zero-padded: `004`, `005`, …
 
-Example for 002:
+Example for 003:
 
 ```text
-memory-processor/assets/archive/002/detail-default.svg
-memory-processor/assets/archive/002/detail-hover.svg
-memory-processor/assets/archive/002/preview.png
+memory-processor/assets/archive/003/detail-default.svg
+memory-processor/assets/archive/003/detail-hover.svg
+memory-processor/assets/archive/003/preview.png
 ```
 
 ---
@@ -69,15 +85,17 @@ Edit only:
 2. Add (or extend) an entry in the `extra` map:
 
 ```js
-'003': {
-  frequency: 12,          // % shown on list hover
-  clarity: 40,
-  impact: 55,
-  previewPictogram: '/memory-processor/assets/archive/003/preview.png', // optional
-  ready: true,            // required — row becomes clickable
+'004': {
+  frequency: 78,          // from Hover a Memory — תדירות הזיכרון
+  clarity: 83,            // בהירות הזיכרון
+  impact: 24,             // השפעת הזיכרון
+  previewPictogram: '/memory-processor/assets/archive/004/preview.png',
+  previewPlacement: 'top', // or 'bottom' — match Figma
+  previewFigmaTop: 142,    // only when top Y ≠ 001’s default 366.72
+  ready: true,             // required — row becomes clickable
   frames: {
-    default: '/memory-processor/assets/archive/003/detail-default.png',
-    hover: '/memory-processor/assets/archive/003/detail-hover.png',
+    default: '/memory-processor/assets/archive/004/detail-default.svg',
+    hover: '/memory-processor/assets/archive/004/detail-hover.svg',
   },
 },
 ```
@@ -86,20 +104,24 @@ Rules:
 
 - `ready: true` **and** `frames.default` are required for click → detail.
 - `frames.hover` is required for text-hover swap.
+- List hover needs `previewPictogram` **and** the three % fields — otherwise the row hover panel stays empty.
+- `previewPlacement: 'top' | 'bottom'` — use `'bottom'` when the pictogram sits in the 1504×806 slot (like 002).
+- `previewFigmaTop` — Figma absolute Y for top-slot pictograms that are not at 366.72 (003 uses `142`).
 - Paths are site-root absolute (`/memory-processor/assets/...`).
 - Do **not** add layout HTML/CSS for the detail content of that memory.
 - Do **not** add a `frames.bank` field (removed from the product).
+- Do **not** ship the full **Hover a Memory** frame as a detail asset — HTML builds the list; only the pictogram crop + % numbers are used.
 
 ---
 
 ## 4. QA checklist (1920×1080)
 
 1. Open **ארכיון** — new title appears in the list (from `titles`).
-2. Hover the row — if `previewPictogram` is set, pictogram + % params show.
+2. Hover the row — pictogram appears in the correct Figma slot + % params match the export.
 3. Click the row — full `detail-default` fills the viewport (pixel-match Figma).
 4. Hover the memory text area — swaps to `detail-hover` (rep words + pictogram strip, no chevron).
 5. Mouse leave text — back to `detail-default`.
-6. Bottom `<` / `>` shuffle among memories that have `frames` (001, 002, …).
+6. Bottom `<` / `>` shuffle among memories that have `frames` (001, 002, 003, …).
 7. Header hits: **ארכיון** → list, **מחולל זיכרונות** → generator.
 
 ---
@@ -108,6 +130,7 @@ Rules:
 
 ```bash
 # from repo root — only the new assets + archived-memories.js
+# (include memory_processor.html only if previewPlacement / previewFigmaTop behavior changed)
 git add memory-processor/archive/archived-memories.js memory-processor/assets/archive/NNN/
 git commit -m "Add archive memory NNN via Figma frame exports."
 git push origin main
@@ -121,6 +144,8 @@ Production alias: https://pgmr-two.vercel.app
 ## What not to do
 
 - Rebuild detail layout in HTML/CSS to “match Figma” — export the frame instead.
+- Skip **Hover a Memory** — without the crop + %, list hover is incomplete.
+- Commit the full Hover a Memory 1920×1080 frame into `assets/archive/NNN/` (unused by the app).
 - Add a bank open/close interaction or `detail-bank` asset.
 - Commit leftover unused SVGs from old experiments (`bank/`, chevrons, etc.) unless something still references them.
 - Change shared hit-overlay CSS unless a new memory’s text block is clearly outside the shared zone (`.archive-hit-body` in `memory_processor.html`). Prefer keeping one shared zone.
@@ -132,6 +157,6 @@ Production alias: https://pgmr-two.vercel.app
 | File | Role |
 |------|------|
 | `memory-processor/archive/archived-memories.js` | Titles + per-memory `ready` / `frames` / list preview params |
-| `memory-processor/assets/archive/NNN/*` | Figma exports for that memory |
+| `memory-processor/assets/archive/NNN/*` | Figma exports for that memory (`detail-*` + `preview`) |
 | `memory-processor/memory_processor.html` | List UI + detail shell (one `<img>` + hit overlays) — rarely edit when adding memories |
 | This doc | Workflow for Maayan / other chats with no prior context |
