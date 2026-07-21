@@ -296,6 +296,8 @@ textarea:focus{border-color:var(--b1)}
 .bank-list-meta{font-size:10px;color:var(--t3);margin-top:2px}
 
 /* ── Maayan web interface ─────────────────────────────────────────────── */
+@font-face{font-family:"PGMR Masada";src:url("/memory-processor/assets/fonts/Masada-Medium.otf") format("opentype");font-style:normal;font-weight:500;font-display:swap}
+@font-face{font-family:"PGMR Masada";src:url("/memory-processor/assets/fonts/Masada-Demi.otf") format("opentype");font-style:normal;font-weight:600;font-display:swap}
 @font-face{font-family:"PGMR Masada";src:url("/memory-processor/assets/fonts/Masada-Bold.otf") format("opentype");font-style:normal;font-weight:700;font-display:swap}
 @font-face{font-family:"PGMR Narkiss Block";src:url("/memory-processor/assets/fonts/NarkissBlock-Regular.otf") format("opentype");font-style:normal;font-weight:400;font-display:swap}
 @font-face{font-family:"PGMR Narkiss Block";src:url("/memory-processor/assets/fonts/NarkissBlock-Medium.otf") format("opentype");font-style:normal;font-weight:500;font-display:swap}
@@ -321,16 +323,29 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .app{width:100%;max-width:1920px;min-height:100vh;margin:0 auto;padding:0 calc(83 * var(--figma-unit)) calc(63 * var(--figma-unit));background:#fcfcfc}
 .site-header{
   height:calc(119 * var(--figma-unit));padding-top:calc(54.46875 * var(--figma-unit));
-  display:flex;align-items:flex-start;justify-content:flex-end;direction:ltr;gap:calc(46 * var(--figma-unit))
+  display:flex;align-items:flex-start;justify-content:space-between;direction:ltr;gap:calc(24 * var(--figma-unit))
 }
-.site-brand{
-  color:#000;text-decoration:none;white-space:nowrap;font-family:var(--font-mono-bold);font-size:calc(18 * var(--figma-unit));
-  font-weight:700;line-height:calc(19 * var(--figma-unit))
+.site-header-left{
+  display:flex;align-items:flex-start;gap:calc(16 * var(--figma-unit));min-width:0
 }
+.site-tagline{
+  display:none;margin:0;color:#000;white-space:nowrap;font-family:var(--font-display);font-weight:600;
+  font-size:calc(21 * var(--figma-unit));line-height:calc(19 * var(--figma-unit));text-align:right
+}
+.app.is-archive .site-tagline{display:block}
 .utility-toggle{
   border:0;background:none;padding:0;cursor:pointer;color:#000;white-space:nowrap;font-family:var(--font-mono);
-  font-size:calc(18 * var(--figma-unit));font-weight:400;line-height:calc(19 * var(--figma-unit))
+  font-size:calc(14 * var(--figma-unit));font-weight:400;line-height:calc(19 * var(--figma-unit));opacity:.55
 }
+.utility-toggle:hover{opacity:1}
+.site-nav{
+  display:flex;align-items:flex-start;justify-content:flex-end;gap:calc(46 * var(--figma-unit));flex-shrink:0
+}
+.site-nav-link{
+  border:0;background:none;padding:0;cursor:pointer;color:#000;text-decoration:none;white-space:nowrap;
+  font-family:var(--font-mono);font-size:calc(18 * var(--figma-unit));font-weight:400;line-height:calc(19 * var(--figma-unit))
+}
+.site-nav-link.is-active{font-family:var(--font-mono-bold);font-weight:700}
 .workspace{
   display:grid;grid-template-columns:minmax(0,calc(1342 * var(--figma-unit))) calc(392 * var(--figma-unit));
   gap:calc(20 * var(--figma-unit));height:calc(898 * var(--figma-unit));min-height:0
@@ -714,7 +729,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .create-visual-btn:disabled{background:#eaf4ff;color:#aaa}
 
 .utility-drawer{
-  position:fixed;z-index:20;inset:64px 20px 20px auto;width:min(460px,calc(100vw - 40px));overflow:auto;
+  position:fixed;z-index:20;inset:64px auto 20px 20px;width:min(460px,calc(100vw - 40px));overflow:auto;
   border:1px solid #d8d8d8;border-radius:8px;background:#fff;box-shadow:0 16px 60px rgba(0,0,0,.15);padding:18px
 }
 .utility-drawer[hidden]{display:none}
@@ -726,10 +741,197 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .processor-details summary{cursor:pointer;font-size:11px;color:var(--t3)}
 .processor-details #results{margin-top:20px}
 
+/* ── Archive view ─────────────────────────────────────────────────────── */
+.app.is-archive .workspace{display:none}
+.app.is-archive{padding-bottom:0;min-height:100vh}
+.archive-shell{display:none;position:relative;width:100%}
+.app.is-archive .archive-shell{
+  display:block;
+  min-height:calc(100vh - 119 * var(--figma-unit));
+  height:calc(100vh - 119 * var(--figma-unit))
+}
+.app.is-archive-detail .archive-shell{height:auto;min-height:calc(961 * var(--figma-unit))}
+.app.is-archive-detail .archive-list-view{display:none}
+.app.is-archive:not(.is-archive-detail) .archive-detail-view{display:none}
+.archive-memory-list{
+  display:flex;flex-direction:column;align-items:flex-end;width:calc(1342 * var(--figma-unit));
+  height:100%;overflow-x:hidden;overflow-y:auto;margin:0;
+  scrollbar-width:none
+}
+.archive-memory-list::-webkit-scrollbar{display:none}
+.archive-memory-row{
+  display:flex;align-items:flex-start;justify-content:flex-end;gap:calc(48 * var(--figma-unit));
+  width:100%;padding-top:calc(4 * var(--figma-unit));
+  border-top:calc(2 * var(--figma-unit)) solid transparent;
+  border-bottom:calc(1 * var(--figma-unit)) solid var(--design-muted);
+  box-sizing:border-box;cursor:default;color:#000;text-align:right;
+  font-family:var(--font-display);font-weight:600;font-size:calc(70 * var(--figma-unit));
+  line-height:calc(110 * var(--figma-unit))
+}
+.archive-memory-row.is-ready{cursor:pointer}
+.archive-memory-row.is-hovered{
+  align-items:center;justify-content:center;
+  border-top:calc(2 * var(--figma-unit)) solid #000;
+  border-bottom:calc(2 * var(--figma-unit)) solid #000
+}
+.archive-row-index{
+  display:none;align-items:center;flex-shrink:0;font-family:var(--font-display);font-weight:600;
+  font-size:calc(70 * var(--figma-unit));line-height:calc(110 * var(--figma-unit))
+}
+.archive-memory-row.is-hovered .archive-row-index{display:flex}
+.archive-row-index-bracket{width:calc(13.61 * var(--figma-unit));flex-shrink:0}
+.archive-row-title{flex:1 0 0;min-width:0}
+.archive-row-parens{
+  display:flex;align-items:center;gap:calc(40 * var(--figma-unit));width:calc(74 * var(--figma-unit));flex-shrink:0
+}
+.archive-memory-row.is-hovered .archive-row-parens .archive-paren-open{display:none}
+.archive-paren-open,.archive-paren-close{flex:1 0 0;min-width:0}
+.archive-list-view{position:relative;width:100%;height:100%;overflow:hidden}
+/* Figma 1920 frame: ארכיון right edge = 1762+75 = 1837 (= content right with 83px pad).
+   Pictogram / params use the same content-right edge so hover assets stay 1:1 with nav. */
+.archive-hover-preview{
+  position:absolute;left:0;right:0;top:0;bottom:0;display:none;pointer-events:none;z-index:3
+}
+.archive-hover-preview.is-visible{display:block}
+.app.is-archive-detail .archive-hover-preview{display:none}
+.archive-hover-pictogram{
+  /* Figma Union 1062:95244 — x:1629.71 y:366.72 w:207.22 h:194.11; right = ארכיון right */
+  position:absolute;right:0;top:calc((366.719482421875 - 119) * var(--figma-unit));
+  width:calc(207.220703125 * var(--figma-unit));height:calc(194.10548400878906 * var(--figma-unit));
+  overflow:hidden
+}
+.archive-hover-preview.is-bottom-preview .archive-hover-pictogram{
+  /* Figma grandfather 16 1050:38858 — x:1504 y:806 w:343 h:206; right edge flush to ארכיון */
+  top:calc((806 - 119) * var(--figma-unit));
+  width:calc(343 * var(--figma-unit));height:calc(206 * var(--figma-unit))
+}
+.archive-hover-pictogram img{
+  display:block;width:100%;height:100%;object-fit:fill;object-position:right center
+}
+.archive-hover-params{
+  /* Figma Parameters 1050:33496 — x:1464 y:816.11 w:251.01 h:121
+     Anchor from bottom so it stays 1:1 with the 1080 frame (not mixed with 100vh top math). */
+  position:absolute;
+  left:calc((1464 - 83) * var(--figma-unit));
+  top:auto;
+  bottom:calc((1080 - 816.113525390625 - 121) * var(--figma-unit));
+  width:calc(251.013916015625 * var(--figma-unit));
+  height:calc(121 * var(--figma-unit));
+  display:flex;flex-direction:column;align-items:stretch;gap:calc(32 * var(--figma-unit));
+  font-family:var(--font-mono);font-size:calc(18 * var(--figma-unit));
+  line-height:calc(19 * var(--figma-unit));color:#000;text-align:right
+}
+.archive-hover-param{
+  /* Figma row: items-center, h:19, gap:30 */
+  display:flex;align-items:center;justify-content:flex-start;gap:calc(30 * var(--figma-unit));
+  width:100%;height:calc(19 * var(--figma-unit));flex-shrink:0
+}
+.archive-hover-param-value{
+  width:calc(44.7265625 * var(--figma-unit));flex-shrink:0;text-align:right;white-space:nowrap;
+  font-size:calc(18 * var(--figma-unit));line-height:calc(19 * var(--figma-unit));
+  display:flex;align-items:center;justify-content:flex-end;height:100%;
+  /* Mono digits sit optically high vs Hebrew — nudge to Figma baseline */
+  padding-top:calc(4 * var(--figma-unit));box-sizing:border-box
+}
+.archive-hover-param-label{
+  width:calc(176.287353515625 * var(--figma-unit));flex-shrink:0;text-align:right;
+  font-size:calc(18 * var(--figma-unit));line-height:calc(19 * var(--figma-unit));
+  display:flex;align-items:center;justify-content:flex-end;height:100%
+}
+
+.archive-detail-view{position:relative;width:100%;min-height:calc(961 * var(--figma-unit))}
+.archive-detail-title{
+  display:flex;align-items:center;gap:calc(48 * var(--figma-unit));width:calc(1342 * var(--figma-unit));
+  height:calc(110 * var(--figma-unit));margin-top:calc(5 * var(--figma-unit));color:#000;text-align:right;
+  font-family:var(--font-display);font-weight:600;font-size:calc(70 * var(--figma-unit));
+  line-height:calc(110 * var(--figma-unit))
+}
+.archive-detail-index{display:flex;align-items:center;flex-shrink:0}
+.archive-detail-index-bracket{width:calc(13.61 * var(--figma-unit))}
+.archive-detail-title-text{flex:1 0 0;min-width:0;margin:0}
+.archive-detail-title-close{width:calc(74 * var(--figma-unit));flex-shrink:0;text-align:right}
+.archive-detail-main{position:relative;width:100%;min-height:calc(820 * var(--figma-unit))}
+.archive-detail-source{
+  position:absolute;top:calc(143 * var(--figma-unit));right:calc(83 * var(--figma-unit));
+  width:calc(269.29 * var(--figma-unit));display:flex;flex-direction:column;align-items:flex-end;
+  gap:calc(32 * var(--figma-unit));text-align:right;color:#000
+}
+.archive-detail-source-row{
+  display:flex;align-items:center;justify-content:flex-end;gap:calc(30 * var(--figma-unit));width:100%;
+  font-family:var(--font-mono);font-size:calc(18 * var(--figma-unit));line-height:calc(19 * var(--figma-unit))
+}
+.archive-detail-author{
+  margin:0;align-self:flex-start;font-family:var(--font-display);font-weight:500;
+  font-size:calc(21.5 * var(--figma-unit));line-height:calc(20 * var(--figma-unit))
+}
+.archive-detail-body{
+  position:absolute;top:calc(217 * var(--figma-unit));right:calc(290 * var(--figma-unit));
+  width:calc(393 * var(--figma-unit));margin:0;color:#000;text-align:right;
+  font-family:var(--font-display);font-weight:500;font-size:calc(22 * var(--figma-unit));
+  line-height:calc(25 * var(--figma-unit))
+}
+.archive-detail-strip{
+  position:absolute;top:calc(384 * var(--figma-unit));left:calc(220 * var(--figma-unit));
+  width:calc(774.438 * var(--figma-unit));height:calc(129.643 * var(--figma-unit))
+}
+.archive-detail-strip img{display:block;width:100%;height:100%;object-fit:contain}
+.archive-detail-bank{
+  position:absolute;top:calc(614 * var(--figma-unit));right:calc(320 * var(--figma-unit));
+  display:flex;align-items:center;gap:calc(22 * var(--figma-unit));
+  font-family:var(--font-mono);font-size:calc(18 * var(--figma-unit));line-height:calc(19 * var(--figma-unit));color:#000
+}
+.archive-detail-bank img{width:calc(24 * var(--figma-unit));height:calc(24 * var(--figma-unit));display:block}
+.archive-detail-aside{position:static}
+.archive-detail-preview{
+  /* Same right-edge rule as hover: flush to ארכיון / content right */
+  position:absolute;top:calc((366.719482421875 - 119) * var(--figma-unit));right:0;
+  width:calc(207.220703125 * var(--figma-unit));height:calc(194.10548400878906 * var(--figma-unit))
+}
+.archive-detail-preview img{display:block;width:100%;height:100%;object-fit:fill;object-position:right center}
+.archive-detail-params{
+  /* Same Figma params block — bottom-anchored within the detail shell */
+  position:absolute;
+  left:calc((1464 - 83) * var(--figma-unit));
+  top:auto;
+  bottom:calc((1080 - 816.113525390625 - 121) * var(--figma-unit));
+  width:calc(251.013916015625 * var(--figma-unit));
+  height:calc(121 * var(--figma-unit));
+  display:flex;flex-direction:column;align-items:stretch;gap:calc(32 * var(--figma-unit));
+  font-family:var(--font-mono);font-size:calc(18 * var(--figma-unit));line-height:calc(19 * var(--figma-unit));
+  color:#000;text-align:right
+}
+.archive-detail-nav{
+  position:absolute;left:calc(20 * var(--figma-unit));right:calc(20 * var(--figma-unit));
+  top:calc(856 * var(--figma-unit));display:flex;align-items:center;justify-content:space-between
+}
+.archive-detail-nav button{
+  border:0;background:none;padding:0;cursor:pointer;width:calc(60 * var(--figma-unit));height:calc(60 * var(--figma-unit));
+  display:flex;align-items:center;justify-content:center;opacity:.35
+}
+.archive-detail-nav button:not(:disabled){opacity:1;cursor:pointer}
+.archive-detail-nav button:disabled{cursor:default}
+.archive-detail-nav img{width:calc(24 * var(--figma-unit));height:calc(24 * var(--figma-unit));display:block}
+.archive-detail-nav .archive-nav-next img{transform:scaleX(-1)}
+
 @media(max-width:760px){
   .app{padding:0 16px 20px}
-  .site-header{height:72px;padding-top:26px;gap:28px}
-  .site-brand,.utility-toggle{font-size:16px;line-height:18px}
+  .site-header{height:72px;padding-top:26px;gap:16px}
+  .site-tagline{font-size:14px;line-height:16px;white-space:normal}
+  .site-nav{gap:20px}
+  .site-nav-link,.utility-toggle{font-size:16px;line-height:18px}
+  .archive-memory-list{width:100%;height:100%}
+  .app.is-archive .archive-shell{height:calc(100vh - 72px);min-height:calc(100vh - 72px)}
+  .archive-memory-row{font-size:28px;line-height:44px;gap:16px}
+  .archive-row-index{font-size:28px;line-height:44px}
+  .archive-hover-preview.is-visible{position:static;display:flex;flex-direction:column;align-items:flex-end;gap:16px;margin-top:24px;left:auto;right:auto;top:auto;bottom:auto}
+  .archive-hover-pictogram,.archive-hover-preview.is-bottom-preview .archive-hover-pictogram,
+  .archive-hover-params{position:static;width:auto;max-width:100%;height:auto;left:auto;right:auto;top:auto;bottom:auto}
+  .archive-hover-param-value{padding-top:0}
+  .archive-hover-params,.archive-detail-params{bottom:auto;top:auto;position:static;height:auto}
+  .archive-detail-title{width:100%;font-size:28px;line-height:40px;height:auto;flex-wrap:wrap}
+  .archive-detail-source,.archive-detail-body,.archive-detail-strip,.archive-detail-bank,
+  .archive-detail-preview,.archive-detail-params,.archive-detail-nav{position:static;width:100%;margin:16px 0;left:auto;right:auto;top:auto}
+  .archive-detail-main{min-height:0}
   .workspace{display:flex;flex-direction:column;min-height:auto}
   .memory-main{width:100%;height:auto}
   .memory-entry{width:100%;height:auto}
@@ -791,8 +993,14 @@ textarea#memory-input[aria-invalid="true"]:hover{
 <body>
 <div class="app" id="app">
   <header class="site-header">
-    <a href="#" class="site-brand">מחולל זיכרונות</a>
-    <button type="button" class="utility-toggle" id="utility-toggle">ארכיון</button>
+    <div class="site-header-left">
+      <button type="button" class="utility-toggle" id="utility-toggle" title="כלי עיבוד">כלים</button>
+      <p class="site-tagline">מכופתרת משבצות אוזניים ענקיות</p>
+    </div>
+    <nav class="site-nav" aria-label="ניווט ראשי">
+      <button type="button" class="site-nav-link is-active" id="nav-generator">מחולל זיכרונות</button>
+      <button type="button" class="site-nav-link" id="nav-archive">ארכיון</button>
+    </nav>
   </header>
 
   <div class="utility-drawer" id="utility-drawer" hidden>
@@ -950,7 +1158,82 @@ textarea#memory-input[aria-invalid="true"]:hover{
       </div>
     </aside>
   </main>
+
+  <div class="archive-shell" id="archive-shell">
+    <div class="archive-list-view" id="archive-list-view">
+      <div class="archive-memory-list" id="archive-memory-list" role="list"></div>
+    </div>
+    <aside class="archive-hover-preview" id="archive-hover-preview" aria-hidden="true">
+      <div class="archive-hover-pictogram" id="archive-hover-pictogram"></div>
+      <div class="archive-hover-params" id="archive-hover-params">
+        <div class="archive-hover-param">
+          <span class="archive-hover-param-value" id="archive-hover-frequency">—</span>
+          <span class="archive-hover-param-label">תדירות הזיכרון</span>
+        </div>
+        <div class="archive-hover-param">
+          <span class="archive-hover-param-value" id="archive-hover-clarity">—</span>
+          <span class="archive-hover-param-label">בהירות הזיכרון</span>
+        </div>
+        <div class="archive-hover-param">
+          <span class="archive-hover-param-value" id="archive-hover-impact">—</span>
+          <span class="archive-hover-param-label">השפעת הזיכרון</span>
+        </div>
+      </div>
+    </aside>
+
+    <div class="archive-detail-view" id="archive-detail-view">
+      <div class="archive-detail-title">
+        <div class="archive-detail-index">
+          <span class="archive-detail-index-bracket">[</span>
+          <span id="archive-detail-id">001</span>
+        </div>
+        <p class="archive-detail-title-text" id="archive-detail-title">גן, בריכה, סבא</p>
+        <div class="archive-detail-title-close">]</div>
+      </div>
+      <div class="archive-detail-main">
+        <div class="archive-detail-source">
+          <div class="archive-detail-source-row">
+            <span id="archive-detail-source-label">אישי</span>
+            <span>מקור הזיכרון</span>
+          </div>
+          <p class="archive-detail-author" id="archive-detail-author">מעיין</p>
+        </div>
+        <p class="archive-detail-body" id="archive-detail-body"></p>
+        <div class="archive-detail-strip" id="archive-detail-strip"></div>
+        <div class="archive-detail-bank">
+          <img src="/memory-processor/assets/archive/chevron.svg" alt="" width="24" height="24">
+          <span>בנק פיקטוגרמות</span>
+        </div>
+        <aside class="archive-detail-aside">
+          <div class="archive-detail-preview" id="archive-detail-preview"></div>
+          <div class="archive-detail-params">
+            <div class="archive-hover-param">
+              <span class="archive-hover-param-value" id="archive-detail-frequency">9%</span>
+              <span class="archive-hover-param-label">תדירות הזיכרון</span>
+            </div>
+            <div class="archive-hover-param">
+              <span class="archive-hover-param-value" id="archive-detail-clarity">36%</span>
+              <span class="archive-hover-param-label">בהירות הזיכרון</span>
+            </div>
+            <div class="archive-hover-param">
+              <span class="archive-hover-param-value" id="archive-detail-impact">71%</span>
+              <span class="archive-hover-param-label">השפעת הזיכרון</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+      <div class="archive-detail-nav">
+        <button type="button" id="archive-nav-prev" aria-label="חזרה לארכיון">
+          <img src="/memory-processor/assets/archive/chevron.svg" alt="">
+        </button>
+        <button type="button" class="archive-nav-next" id="archive-nav-next" disabled aria-label="זיכרון הבא">
+          <img src="/memory-processor/assets/archive/chevron.svg" alt="">
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
+<script src="/memory-processor/archive/archived-memories.js"></script>
 <script src="/memory-processor/engine/logger.js"></script>
 <script src="/memory-processor/engine/config.js"></script>
 <script src="/memory-processor/engine/catalog/entries.js"></script>
@@ -2838,11 +3121,121 @@ async function createDesignedVisual(){
   }
 }
 
+function pct(n){return n==null?'—':`${n}%`;}
+
+function showArchiveList(){
+  const app=document.getElementById('app');
+  app?.classList.add('is-archive');
+  app?.classList.remove('is-archive-detail');
+  document.getElementById('nav-archive')?.classList.add('is-active');
+  document.getElementById('nav-generator')?.classList.remove('is-active');
+  clearArchiveHover();
+}
+
+function showGeneratorView(){
+  const app=document.getElementById('app');
+  app?.classList.remove('is-archive','is-archive-detail');
+  document.getElementById('nav-generator')?.classList.add('is-active');
+  document.getElementById('nav-archive')?.classList.remove('is-active');
+  clearArchiveHover();
+}
+
+function clearArchiveHover(){
+  document.querySelectorAll('.archive-memory-row.is-hovered').forEach(el=>el.classList.remove('is-hovered'));
+  const preview=document.getElementById('archive-hover-preview');
+  preview?.classList.remove('is-visible');
+  if(preview)preview.setAttribute('aria-hidden','true');
+}
+
+function setArchiveHover(memory,row){
+  document.querySelectorAll('.archive-memory-row.is-hovered').forEach(el=>el.classList.remove('is-hovered'));
+  row?.classList.add('is-hovered');
+  const preview=document.getElementById('archive-hover-preview');
+  const pic=document.getElementById('archive-hover-pictogram');
+  if(!preview||!pic)return;
+  if(memory?.previewPictogram){
+    pic.innerHTML=`<img src="${memory.previewPictogram}" alt="">`;
+    document.getElementById('archive-hover-frequency').textContent=pct(memory.frequency);
+    document.getElementById('archive-hover-clarity').textContent=pct(memory.clarity);
+    document.getElementById('archive-hover-impact').textContent=pct(memory.impact);
+    preview.classList.toggle('is-bottom-preview',memory.id!=='001');
+    preview.classList.add('is-visible');
+    preview.setAttribute('aria-hidden','false');
+  }else{
+    pic.innerHTML='';
+    preview.classList.remove('is-visible','is-bottom-preview');
+    preview.setAttribute('aria-hidden','true');
+  }
+}
+
+function openArchiveDetail(memory){
+  if(!memory?.ready)return;
+  const app=document.getElementById('app');
+  app?.classList.add('is-archive','is-archive-detail');
+  document.getElementById('nav-archive')?.classList.add('is-active');
+  document.getElementById('nav-generator')?.classList.remove('is-active');
+  document.getElementById('archive-detail-id').textContent=memory.id;
+  document.getElementById('archive-detail-title').textContent=memory.title;
+  document.getElementById('archive-detail-source-label').textContent=memory.sourceLabel||'';
+  document.getElementById('archive-detail-author').textContent=memory.author||'';
+  document.getElementById('archive-detail-body').textContent=memory.body||'';
+  document.getElementById('archive-detail-frequency').textContent=pct(memory.frequency);
+  document.getElementById('archive-detail-clarity').textContent=pct(memory.clarity);
+  document.getElementById('archive-detail-impact').textContent=pct(memory.impact);
+  const strip=document.getElementById('archive-detail-strip');
+  const preview=document.getElementById('archive-detail-preview');
+  if(strip)strip.innerHTML=memory.stripPictogram?`<img src="${memory.stripPictogram}" alt="">`:'';
+  if(preview)preview.innerHTML=memory.previewPictogram?`<img src="${memory.previewPictogram}" alt="">`:'';
+  clearArchiveHover();
+}
+
+function renderArchiveList(){
+  const list=document.getElementById('archive-memory-list');
+  const memories=Array.isArray(globalThis.ArchivedMemories)?globalThis.ArchivedMemories:[];
+  if(!list)return;
+  list.innerHTML='';
+  memories.forEach((memory)=>{
+    const row=document.createElement('div');
+    row.className='archive-memory-row'+(memory.ready?' is-ready':'');
+    row.setAttribute('role','listitem');
+    row.dataset.id=memory.id;
+    row.innerHTML=`
+      <div class="archive-row-index" aria-hidden="true">
+        <span class="archive-row-index-bracket">[</span>
+        <span>${memory.id}</span>
+      </div>
+      <div class="archive-row-title">${memory.title}</div>
+      <div class="archive-row-parens" aria-hidden="true">
+        <span class="archive-paren-open">[</span>
+        <span class="archive-paren-close">]</span>
+      </div>`;
+    row.addEventListener('mouseenter',()=>setArchiveHover(memory,row));
+    row.addEventListener('click',()=>openArchiveDetail(memory));
+    list.appendChild(row);
+  });
+  list.onmouseleave=()=>clearArchiveHover();
+}
+
+function bindArchiveInterface(){
+  renderArchiveList();
+  document.getElementById('nav-archive')?.addEventListener('click',(e)=>{
+    e.preventDefault();
+    showArchiveList();
+  });
+  document.getElementById('nav-generator')?.addEventListener('click',(e)=>{
+    e.preventDefault();
+    showGeneratorView();
+  });
+  document.getElementById('archive-nav-prev')?.addEventListener('click',()=>showArchiveList());
+  document.getElementById('archive-nav-next')?.addEventListener('click',()=>showArchiveList());
+}
+
 function bindDesignedInterface(){
   const drawer=document.getElementById('utility-drawer');
   const setDrawer=open=>{if(drawer)drawer.hidden=!open;};
   document.getElementById('utility-toggle')?.addEventListener('click',()=>setDrawer(drawer?.hidden));
   document.getElementById('utility-close')?.addEventListener('click',()=>setDrawer(false));
+  bindArchiveInterface();
   document.getElementById('edit-memory-btn')?.addEventListener('click',enterEditMemory);
   document.getElementById('create-visual-btn')?.addEventListener('click',createDesignedVisual);
   const sidebarContent=document.querySelector('.sidebar-content');
