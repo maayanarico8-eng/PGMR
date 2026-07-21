@@ -6,8 +6,9 @@
  *   frames.hover    — hover memory text (representative words + pictogram strip, no chevron)
  *
  * To add a memory: export those two frames from Figma into
- *   memory-processor/assets/archive/NNN/detail-{default,hover}.png
- * and set ready:true + frames paths below (list title comes from `titles`).
+ *   memory-processor/assets/archive/NNN/detail-{default,hover}.{png|svg}
+ * (optional list hover pictogram → previewPictogram), then set ready:true + frames
+ * paths below (list title comes from `titles`).
  */
 (function (global) {
   const titles = [
@@ -102,7 +103,11 @@
         clarity: 61,
         impact: 10,
         previewPictogram: '/memory-processor/assets/archive/002/preview.png',
-        ready: false,
+        ready: true,
+        frames: {
+          default: '/memory-processor/assets/archive/002/detail-default.svg',
+          hover: '/memory-processor/assets/archive/002/detail-hover.svg',
+        },
       },
     })[id];
     if (extra) Object.assign(row, extra);
