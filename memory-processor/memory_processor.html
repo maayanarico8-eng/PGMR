@@ -504,11 +504,8 @@ textarea#memory-input[aria-invalid="true"]:hover{
   height:calc(39 * var(--figma-unit));box-sizing:border-box
 }
 .app.has-results .memory-stage{display:none}
-.app.has-results.has-visual-result .memory-stage{display:flex;margin-top:0}
-.app.has-results.has-visual-result .memory-main{
-  justify-content:flex-start;align-items:flex-end;height:calc(898 * var(--figma-unit));
-  gap:calc(16 * var(--figma-unit))
-}
+.app.has-results.has-visual-result .memory-stage{display:flex;margin-top:calc(16 * var(--figma-unit))}
+.app.has-results.has-visual-result .memory-main{justify-content:flex-start;height:calc(898 * var(--figma-unit))}
 .app.has-results.has-visual-result .memory-entry{
   flex:0 0 auto;width:calc(926 * var(--figma-unit));gap:calc(24 * var(--figma-unit));
   align-items:stretch;margin:0
@@ -587,29 +584,21 @@ textarea#memory-input[aria-invalid="true"]:hover{
   border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));
   display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff;padding:0
 }
-.app.has-results.has-visual-result .memory-stage{
-  width:calc(1111 * var(--figma-unit));max-width:100%;height:calc(633 * var(--figma-unit));
-  margin-top:0;padding:calc(24 * var(--figma-unit)) calc(50 * var(--figma-unit));
-  box-sizing:border-box
-}
 .visual-output{width:100%;height:100%;min-height:100%;display:flex;align-items:center;justify-content:center}
 .visual-output:empty::after{content:"";display:block}
 .visual-output svg{display:block;width:min(100%,856px);height:auto;max-height:360px}
-.app.has-visual-result .visual-output{
-  position:static;display:flex;align-items:center;justify-content:center;gap:0;overflow:auto
-}
+/* Match commit 94bfe2b: expressive sequence SVG + memory text, full pictogram scale */
+.app.has-visual-result .visual-output{position:relative;display:block}
 .app.has-visual-result .visual-output>svg{
-  position:static;left:auto;top:auto;width:auto;max-width:100%;height:auto;max-height:calc(100 * var(--figma-unit))
+  position:absolute;left:calc(212 * var(--figma-unit));top:calc(163 * var(--figma-unit));
+  width:calc(966 * var(--figma-unit));height:auto;max-height:none
 }
-.app.has-visual-result .visual-output .visual-seq-row{
-  display:flex;align-items:center;justify-content:center;gap:0;direction:ltr;flex-wrap:nowrap
+.visual-memory-text{
+  position:absolute;top:calc(536.55 * var(--figma-unit));right:calc(164.8 * var(--figma-unit));
+  width:calc(405 * var(--figma-unit));margin:0;direction:rtl;text-align:right;color:#000;
+  font-family:var(--font-display);font-size:calc(22 * var(--figma-unit));font-weight:700;
+  line-height:calc(25 * var(--figma-unit))
 }
-.app.has-visual-result .visual-output .visual-seq-row img,
-.app.has-visual-result .visual-output .visual-seq-row svg{
-  width:calc(100 * var(--figma-unit));height:calc(100 * var(--figma-unit));
-  max-width:none;max-height:none;display:block;object-fit:contain;flex-shrink:0
-}
-.visual-memory-text{display:none}
 .error-card{direction:rtl;margin:8px 0;color:#d42b2b;border-color:#f4a9a9;background:#fff7f7;font-size:11px}
 
 .design-sidebar{
@@ -1130,11 +1119,9 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .analyze-btn,.generate-vrp-btn{width:237px;height:39px;font-size:18px;line-height:20px;border-radius:8px;padding:9px 20px}
   .memory-stage,.app.has-results.has-visual-result .memory-stage{width:100%;height:360px;min-height:360px;margin-top:16px;border-radius:8px;padding:16px;display:flex}
   .app.has-results:not(.has-visual-result) .memory-stage{display:none}
-  .app.has-visual-result .memory-stage{padding:16px;display:flex;align-items:center;justify-content:center}
-  .app.has-visual-result .visual-output>svg{position:static;left:auto;top:auto;width:auto;max-width:100%;height:auto;max-height:100px}
-  .app.has-visual-result .visual-output .visual-seq-row img,
-  .app.has-visual-result .visual-output .visual-seq-row svg{width:72px;height:72px}
-  .visual-memory-text{display:none}
+  .app.has-visual-result .memory-stage{padding:0}
+  .app.has-visual-result .visual-output>svg{left:11%;top:20%;width:72%}
+  .visual-memory-text{top:auto;right:12%;bottom:10%;width:42%;font-size:18px;line-height:22px}
   .design-sidebar,.app.has-results .design-sidebar{width:100%;height:auto;min-height:620px;max-height:none;border-radius:8px}
   .app.has-results .design-sidebar{display:flex}
   .app.has-results .edit-memory-btn{position:absolute;left:0;bottom:0;height:39px;margin-top:0;font-size:18px;line-height:20px;padding:6px 8px;gap:6px}
@@ -3178,45 +3165,19 @@ function cloneSequenceSvg(source){
 }
 
 function syncVisualOutput(){
+  const source=document.querySelector('#results .seq-display svg');
   const output=document.getElementById('visual-output');
   if(!output)return;
   if(!document.getElementById('app')?.classList.contains('has-visual-result')){
     output.innerHTML='';
     return;
   }
-  // Prefer the expressive-rendered sequence so source/sliders update the postcard.
-  const expressiveSvg=document.querySelector('#results .seq-display svg');
-  if(expressiveSvg){
-    output.replaceChildren(cloneSequenceSvg(expressiveSvg));
-    return;
-  }
-  // Fallback when no sequence SVG exists yet: individual catalog pictograms.
-  const thumbs=[...document.querySelectorAll('#pictogram-strip img.panel-pictogram, #pictogram-strip svg')];
-  const resultSvgs=[...document.querySelectorAll('#results .cat-svg-wrap svg')].slice(0,10);
-  const sources=thumbs.length?thumbs:resultSvgs;
-  if(sources.length){
-    const row=document.createElement('div');
-    row.className='visual-seq-row';
-    sources.forEach(node=>{
-      if(node.tagName==='IMG'){
-        const image=document.createElement('img');
-        image.src=node.src;
-        image.alt='';
-        image.draggable=false;
-        row.appendChild(image);
-      }else{
-        const image=document.createElement('img');
-        image.alt='';
-        image.draggable=false;
-        const markup=new XMLSerializer().serializeToString(node);
-        image.src=`data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`;
-        row.appendChild(image);
-      }
-    });
-    output.replaceChildren(row);
-    return;
-  }
-  output.innerHTML='';
+  if(source){
+    const memory=document.createElement('p');
+    memory.className='visual-memory-text';
+    memory.textContent=currentResult?.coreNarrative||document.getElementById('memory-input')?.value.trim()||'';
+    output.replaceChildren(cloneSequenceSvg(source),memory);
+  }else output.innerHTML='';
 }
 
 function syncPictogramStrip(){
