@@ -864,6 +864,166 @@
       },
       "searchQuery": "wood",
       "updatedAt": "2026-07-21T21:35:12.206Z"
+    },
+    "helping": {
+      "hash": "ico_1rdxVr6NUEo57C7P",
+      "iconName": "Wheelchair Helper",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "helping",
+      "updatedAt": "2026-07-21T21:45:31.057Z"
+    },
+    "showing": {
+      "hash": "ico_mRu4pQJ4vx5s2aEdzpdzp3vI",
+      "iconName": "Layers Show",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "showing",
+      "updatedAt": "2026-07-21T21:45:40.980Z"
+    },
+    "answers": {
+      "hash": "ico_QQybWYQmmj4flAqi",
+      "iconName": "Counseling 3",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "answers",
+      "updatedAt": "2026-07-21T21:45:51.418Z"
+    },
+    "return": {
+      "hash": "ico_mRu4pQJ4vMH72aEJtt9UL3W1",
+      "iconName": "Keyboard Arrow Return",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "return",
+      "updatedAt": "2026-07-21T21:55:20.293Z"
+    },
+    "dormitory": {
+      "hash": "ico_mRu4pQJ4vSjWeLjK1iwvSWoU",
+      "iconName": "Hotel Bunk Bed",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "dormitory",
+      "updatedAt": "2026-07-21T21:55:30.339Z"
+    },
+    "music": {
+      "hash": "ico_mRu4pQJ4v8hW2aENc3BPu3Lk",
+      "iconName": "Music Note 2",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "music",
+      "updatedAt": "2026-07-21T21:55:41.608Z"
+    },
+    "rug": {
+      "hash": "ico_mRu4pQJ4vdbGeLjjHW2aEYgx",
+      "iconName": "American Football Ball",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "rug",
+      "updatedAt": "2026-07-21T22:03:53.162Z"
+    },
+    "fall asleep": {
+      "hash": "ico_mRu4pQJ4vL5ueLjJ4v08UIv2",
+      "iconName": "Diagram Fall Down",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "fall asleep",
+      "updatedAt": "2026-07-21T22:04:05.111Z"
     }
   }
 }
