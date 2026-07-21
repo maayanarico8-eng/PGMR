@@ -445,6 +445,16 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .input-footer{width:100%;height:calc(39 * var(--figma-unit));display:flex;justify-content:flex-start;align-items:center;margin:0}
 .app:not(.has-results) .input-footer{justify-content:center;margin:0}
+.memory-loader{
+  display:none;width:100%;justify-content:center;align-items:center;
+  margin-top:calc(16 * var(--figma-unit));min-height:192px
+}
+.memory-loader:not([hidden]){display:flex}
+.app.is-memory-loading .memory-loader{display:flex}
+.app.is-memory-loading .input-footer-wrap{display:block;visibility:visible}
+.memory-loader-frame{
+  width:192px;height:192px;border:0;display:block;background:transparent;pointer-events:none
+}
 .word-count{display:none}
 .analyze-btn,.generate-vrp-btn,.create-visual-btn{
   width:calc(237 * var(--figma-unit));height:calc(39 * var(--figma-unit));min-width:0;justify-content:center;
@@ -1315,6 +1325,9 @@ textarea#memory-input[aria-invalid="true"]:hover{
             <button class="analyze-btn" id="analyze-btn" disabled>עיבוד זיכרון</button>
           </div>
           <p class="memory-error-msg" id="memory-error-msg" hidden>על מנת להמשיך לרישום זיכרון יש לוודא כי הזיכרון אינו חורג מ-20 מילים</p>
+          <div id="memory-loader" class="memory-loader" hidden>
+            <iframe class="memory-loader-frame" title="טוען" src=""></iframe>
+          </div>
         </div>
         <button type="button" class="edit-memory-btn" id="edit-memory-btn">
           <span>עריכת הזיכרון</span>
@@ -2614,6 +2627,27 @@ function analyzeBtnLabel(){
   return 'עיבוד זיכרון';
 }
 
+const MEMORY_LOADER_SRC='/memory-processor/assets/pictogram-loader.html';
+
+function showMemoryLoader(){
+  const host=document.getElementById('memory-loader');
+  const frame=host?.querySelector('.memory-loader-frame');
+  if(!host||!frame)return;
+  document.getElementById('app')?.classList.add('is-memory-loading');
+  host.hidden=false;
+  // Restart so the strip animation always begins fresh.
+  frame.src='';
+  frame.src=MEMORY_LOADER_SRC;
+}
+
+function hideMemoryLoader(){
+  const host=document.getElementById('memory-loader');
+  const frame=host?.querySelector('.memory-loader-frame');
+  document.getElementById('app')?.classList.remove('is-memory-loading');
+  if(host)host.hidden=true;
+  if(frame)frame.src='';
+}
+
 function isEditingMemory(){return !!document.getElementById('app')?.classList.contains('is-editing-memory');}
 
 /** Memory text when edit mode started — restored if the user closes without saving. */
@@ -2717,7 +2751,8 @@ async function analyze(){
   const text=typedText||MOCK_MEMORY;
   if(!text)return;
   const btn=document.getElementById('analyze-btn');
-  btn.disabled=true;btn.textContent='מעבד זיכרון…';
+  btn.disabled=true;btn.textContent=analyzeBtnLabel();
+  showMemoryLoader();
   document.getElementById('error-card').hidden=true;
   document.getElementById('results').innerHTML='';
   document.getElementById('visual-output').innerHTML='';
@@ -2803,6 +2838,7 @@ async function analyze(){
     el.textContent=e.message;
     el.hidden=false;
   }finally{
+    hideMemoryLoader();
     btn.disabled=false;btn.innerHTML=analyzeBtnLabel();updateWordCount();syncDesignUI();
   }
 }
@@ -3433,7 +3469,8 @@ async function createDesignedVisual(){
   }
   const old=btn.textContent;
   const chosenParams=Object.assign({},expressiveParams);
-  btn.disabled=true;btn.textContent='רושם זיכרון…';
+  btn.disabled=true;btn.textContent=old;
+  showMemoryLoader();
   try{
     if(processorMode==='anthropic'&&currentResult){
       await previewFullApiPictograms();
@@ -3449,6 +3486,7 @@ async function createDesignedVisual(){
     app?.classList.add('has-visual-result');
     syncDesignUI();
   }finally{
+    hideMemoryLoader();
     btn.disabled=false;
     btn.textContent=app?.classList.contains('has-visual-result')?'הדפסת זיכרון':old;
   }
