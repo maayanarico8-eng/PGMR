@@ -342,19 +342,28 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
   display:flex;flex-direction:column;align-items:flex-end;direction:rtl
 }
 .entry-heading{
-  width:100%;height:calc(32 * var(--figma-unit));margin:0 0 calc(4 * var(--figma-unit));
+  width:100%;height:calc(32 * var(--figma-unit));margin:0 0 calc(24 * var(--figma-unit));
   font-family:var(--font-display);font-size:calc(27 * var(--figma-unit));font-weight:700;
   line-height:calc(28 * var(--figma-unit));text-align:right
 }
 .entry-count{
-  display:block;width:100%;min-height:calc(18 * var(--figma-unit));margin-bottom:calc(16 * var(--figma-unit));
+  position:absolute;bottom:calc(14 * var(--figma-unit));right:calc(20 * var(--figma-unit));
   color:var(--design-muted);font-family:var(--font-body);font-size:calc(14 * var(--figma-unit));
-  font-weight:400;line-height:calc(18 * var(--figma-unit));text-align:right;white-space:nowrap
+  font-weight:400;line-height:calc(18 * var(--figma-unit));text-align:right;
+  pointer-events:none;visibility:hidden;background:var(--design-blue-soft)
 }
-.entry-count.is-at-limit{color:var(--design-error);white-space:normal}
-.memory-input-wrap{position:relative;width:100%;height:calc(79 * var(--figma-unit));margin-bottom:calc(16 * var(--figma-unit))}
+.entry-count.is-at-limit{color:var(--design-error)}
+.memory-input-wrap:focus-within .entry-count,
+.memory-input-wrap.has-content .entry-count{visibility:visible}
+.memory-error-msg{
+  display:none;width:100%;margin-top:calc(8 * var(--figma-unit));
+  color:var(--design-error);font-family:var(--font-body);font-size:calc(14 * var(--figma-unit));
+  font-weight:400;line-height:calc(18 * var(--figma-unit));text-align:right
+}
+.memory-error-msg:not([hidden]){display:block}
+.memory-input-wrap{position:relative;width:100%;height:calc(90 * var(--figma-unit));margin-bottom:calc(24 * var(--figma-unit))}
 textarea#memory-input{
-  width:100%;height:100%;min-height:0;max-height:none;padding:calc(16 * var(--figma-unit)) calc(20 * var(--figma-unit));
+  width:100%;height:100%;min-height:0;max-height:none;padding:calc(16 * var(--figma-unit)) calc(20 * var(--figma-unit)) calc(36 * var(--figma-unit));
   resize:none;border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));background:var(--design-blue-soft);
   color:#000;font-family:var(--font-body);font-size:calc(19 * var(--figma-unit));font-weight:400;
   line-height:calc(20 * var(--figma-unit));text-align:right;overflow:hidden
@@ -705,10 +714,11 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .workspace{display:flex;flex-direction:column;min-height:auto}
   .memory-main{width:100%;height:auto}
   .memory-entry{width:100%;height:auto}
-  .entry-heading,.app.has-results .entry-heading{height:auto;font-size:24px;line-height:28px;margin-bottom:4px}
-  .entry-count,.app.has-results .entry-count{min-height:18px;font-size:14px;line-height:18px;margin-bottom:16px}
-  .memory-input-wrap{height:79px;margin-bottom:16px}
-  textarea#memory-input{font-size:18px;line-height:22px;padding:16px 20px;border-radius:8px}
+  .entry-heading,.app.has-results .entry-heading{height:auto;font-size:24px;line-height:28px;margin-bottom:24px}
+  .entry-count,.app.has-results .entry-count{bottom:14px;right:20px;font-size:14px;line-height:18px}
+  .memory-input-wrap{height:90px;margin-bottom:24px}
+  textarea#memory-input{font-size:18px;line-height:22px;padding:16px 20px 36px;border-radius:8px}
+  .memory-error-msg{margin-top:8px;font-size:14px;line-height:18px}
   .input-footer{height:39px}
   .analyze-btn,.generate-vrp-btn{width:237px;height:39px;font-size:18px;line-height:20px;border-radius:8px;padding:9px 20px}
   .memory-stage,.app.has-results .memory-stage{width:100%;height:360px;min-height:360px;margin-top:16px;border-radius:8px;padding:16px}
@@ -825,13 +835,14 @@ textarea#memory-input[aria-invalid="true"]:hover{
       <div class="input-section memory-entry" id="input-section">
         <button type="button" class="edit-memory-btn" id="edit-memory-btn"><span>עריכת הזיכרון</span><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4.16667 15.8333H5.35417L13.5 7.6875L12.3125 6.5L4.16667 14.6458V15.8333ZM2.5 17.5V13.9583L13.5 2.97917C13.6667 2.82639 13.8507 2.70833 14.0521 2.625C14.2535 2.54167 14.4653 2.5 14.6875 2.5C14.9097 2.5 15.125 2.54167 15.3333 2.625C15.5417 2.70833 15.7222 2.83333 15.875 3L17.0208 4.16667C17.1875 4.31944 17.309 4.5 17.3854 4.70833C17.4618 4.91667 17.5 5.125 17.5 5.33333C17.5 5.55556 17.4618 5.76736 17.3854 5.96875C17.309 6.17014 17.1875 6.35417 17.0208 6.52083L6.04167 17.5H2.5ZM12.8958 7.10417L12.3125 6.5L13.5 7.6875L12.8958 7.10417Z" fill="currentColor"/></svg></button>
         <h1 class="entry-heading" id="entry-heading">איזה זיכרון היית רוצה לשמר?</h1>
-        <span class="entry-count" id="entry-count">0/20 מילים</span>
         <div class="memory-input-wrap">
           <textarea id="memory-input" dir="rtl" rows="2" maxlength="500"
             data-placeholder-default="הכניסו זיכרון עד 20 מילים"
-            data-placeholder-focus=""
+            data-placeholder-focus="יש לכתוב זיכרון עד 20 מילים"
             placeholder="הכניסו זיכרון עד 20 מילים"></textarea>
+          <span class="entry-count" id="entry-count">0/20 מילים</span>
         </div>
+        <p class="memory-error-msg" id="memory-error-msg" hidden>על מנת להמשיך ליצירת גלויה יש לוודא כי הזיכרון אינו חורג מ-20 מילים</p>
         <div class="input-footer">
           <span class="word-count" id="word-count"></span>
           <button class="analyze-btn" id="analyze-btn" disabled>חילוץ מילים מייצגות</button>
@@ -2998,7 +3009,7 @@ function bindDesignedInterface(){
 CAT.init();
 
 const MAX_MEMORY_WORDS=20;
-const MEMORY_WORD_LIMIT_MSG='20/20 מילים - על מנת להמשיך הלאה יש לוודא כי הזיכרון אינו חורג מ-20 מילים';
+const MEMORY_WORD_LIMIT_MSG='20/20 מילים';
 /** Set when the user tries to start a 21st word (space/paste over the cap). Cleared when under 20. */
 let memoryWordLimitError=false;
 
@@ -3053,6 +3064,10 @@ function updateWordCount(){
   }
   document.getElementById('memory-input')?.setAttribute('aria-invalid',showError?'true':'false');
   wcEl.style.color=showError?'#9B3010':'';
+  const errorMsg=document.getElementById('memory-error-msg');
+  if(errorMsg){errorMsg.hidden=!showError;}
+  const wrap=document.getElementById('memory-input')?.closest('.memory-input-wrap');
+  if(wrap){wrap.classList.toggle('has-content',!!text);}
   const analyzeBtn=document.getElementById('analyze-btn');
   // 20 words is allowed; only block submit when somehow over (e.g. paste race).
   analyzeBtn.disabled=!text||overLimit;
