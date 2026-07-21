@@ -452,6 +452,12 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .memory-loader:not([hidden]){display:flex}
 .app.is-memory-loading .memory-loader{display:flex}
 .app.is-memory-loading .input-footer-wrap{display:block;visibility:visible}
+/* Processing lock: block all UI interaction while RW / pictogram stages run (no dimming) */
+.app.is-memory-loading .site-header,
+.app.is-memory-loading .workspace,
+.app.is-memory-loading .utility-drawer{
+  pointer-events:none
+}
 .memory-loader-frame{
   width:192px;height:192px;border:0;display:block;background:transparent;pointer-events:none
 }
@@ -618,25 +624,26 @@ textarea#memory-input[aria-invalid="true"]:hover{
   min-height:0;max-height:none;overflow:hidden;position:relative
 }
 .app.has-results .design-sidebar{display:flex;flex-direction:column}
-/* Figma 1087:103133 — p24, content ≤320 + gap 16 + scrollbar 7 (border-box safe). */
+/* Equal 24px L/R padding always. Scrollbar overlays the right pad — never reserves gutter or shrinks padding. */
 .sidebar-body{
-  flex:1;min-height:0;box-sizing:border-box;overflow:hidden;direction:ltr;
-  display:flex;flex-direction:row;justify-content:flex-end;align-items:stretch;
-  gap:0;
+  flex:1;min-height:0;box-sizing:border-box;overflow:hidden;position:relative;
   padding:calc(24 * var(--figma-unit));
   padding-bottom:calc(111 * var(--figma-unit))
 }
-.sidebar-body.has-scrollbar{gap:calc(16 * var(--figma-unit))}
 .sidebar-content{
-  flex:1 1 auto;width:auto;max-width:calc(320 * var(--figma-unit));min-width:0;height:100%;
+  width:100%;max-width:none;min-width:0;height:100%;
   overflow-x:hidden;overflow-y:auto;scrollbar-width:none;box-sizing:border-box;
   padding:0;direction:ltr
 }
 .sidebar-content::-webkit-scrollbar{width:0;height:0}
+/* 7px track centered in the constant 24px right padding: inset (24-7)/2 = 8.5 */
 .sidebar-scroll-indicator{
-  position:relative;z-index:3;flex:0 0 calc(7 * var(--figma-unit));
-  width:calc(7 * var(--figma-unit));align-self:stretch;
-  display:flex;justify-content:center;pointer-events:none
+  position:absolute;z-index:3;
+  top:calc(24 * var(--figma-unit));
+  bottom:calc(111 * var(--figma-unit));
+  right:calc(8.5 * var(--figma-unit));
+  width:calc(7 * var(--figma-unit));
+  display:block;pointer-events:none
 }
 .sidebar-scroll-indicator[hidden]{display:none!important}
 .sidebar-scroll-indicator span{
@@ -667,9 +674,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .app.has-visual-result .side-copy,
 .app.has-visual-result .narrator-gender-picker,
 .app.has-visual-result .pictogram-strip{display:none!important}
-.app.has-visual-result .rep-chips{
-  gap:calc(12 * var(--figma-unit)) calc(10 * var(--figma-unit))
-}
+/* Bracketed words reuse the same .rep-chips 320px wrap column — only the chip chrome changes. */
 .app.has-visual-result .rep-chip{
   border:0;background:transparent;padding:0;border-radius:0;cursor:default;gap:0;
   font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit))
@@ -742,17 +747,25 @@ textarea#memory-input[aria-invalid="true"]:hover{
   margin:0;flex:0 0 auto;font-family:var(--font-mono);font-size:calc(13 * var(--figma-unit));font-weight:400;
   line-height:calc(18 * var(--figma-unit));color:var(--design-muted);direction:ltr;white-space:nowrap;text-align:left
 }
+/* Shared wrap column for editable chips AND post-extraction bracketed words.
+   Width = full area between the constant 24px side paddings (not a nested 320 that
+   fights the heading row and causes early wraps). Gap: 10px H / 12px V. */
 .rep-chips{
-  display:flex;justify-content:flex-start;align-content:flex-start;
-  gap:calc(12 * var(--figma-unit)) calc(10 * var(--figma-unit));
-  flex-wrap:wrap;direction:rtl;width:100%
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  display:flex;flex-wrap:wrap;
+  justify-content:flex-start;align-content:flex-start;align-items:flex-start;
+  direction:rtl;
+  gap:calc(12 * var(--figma-unit)) calc(10 * var(--figma-unit))
 }
 .rep-chip{
+  box-sizing:border-box;flex:0 0 auto;
   display:inline-flex;align-items:center;gap:calc(6 * var(--figma-unit));direction:ltr;
   padding:calc(4 * var(--figma-unit)) calc(8 * var(--figma-unit));
   border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));background:#fff;
   font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));font-weight:400;line-height:calc(20 * var(--figma-unit));
-  color:#000;cursor:grab;user-select:none
+  color:#000;cursor:grab;user-select:none;white-space:nowrap
 }
 .rep-chip:hover{border-color:var(--design-muted)}
 .rep-chip:has([data-remove-word]:hover){
@@ -762,7 +775,8 @@ textarea#memory-input[aria-invalid="true"]:hover{
   color:var(--design-muted)
 }
 .rep-chip.is-dragging{color:var(--design-muted);border-color:var(--design-muted)}
-.rep-chip.is-dragging button{color:var(--design-muted)}
+/* Source stays full layout (X visible); only the drag preview clone drops the X. */
+.rep-chip.is-dragging button{color:inherit;pointer-events:none}
 .rep-chip button{
   width:calc(9.75 * var(--figma-unit));height:calc(9.75 * var(--figma-unit));
   border:0;background:currentColor;cursor:pointer;padding:0;color:#000;
@@ -776,7 +790,8 @@ textarea#memory-input[aria-invalid="true"]:hover{
   gap:calc(12 * var(--figma-unit));margin-top:0;direction:rtl;width:100%
 }
 .side-words-block{
-  width:100%;display:flex;flex-direction:column;align-items:flex-end;gap:calc(12 * var(--figma-unit))
+  width:100%;display:flex;flex-direction:column;align-items:stretch;gap:calc(12 * var(--figma-unit));
+  direction:rtl
 }
 .add-word-btn{
   display:flex;align-items:center;gap:calc(8 * var(--figma-unit));direction:ltr;
@@ -908,7 +923,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .mediated-relation label:has(input:checked) .relation-box{
   background-image:url("/memory-processor/assets/icons/checkbox-checked.svg")
 }
-.range-row{width:calc(320 * var(--figma-unit));margin:0}
+.range-row{width:100%;margin:0}
 .range-row label{
   display:block;margin-bottom:calc(16 * var(--figma-unit));font-family:var(--font-body);
   font-size:calc(22 * var(--figma-unit));font-weight:500;line-height:calc(28 * var(--figma-unit));text-align:right
@@ -1137,11 +1152,14 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .app.has-results .edit-memory-btn{position:absolute;left:0;bottom:0;height:39px;margin-top:0;font-size:18px;line-height:20px;padding:6px 8px;gap:6px}
   .app.has-results .edit-memory-btn svg{width:20px;height:20px}
   .app.has-results .input-footer-wrap{min-height:39px}
-  .sidebar-body{padding:24px;padding-bottom:111px;gap:0}
-  .sidebar-body.has-scrollbar{gap:16px}
-  .sidebar-content{width:auto;max-width:320px;padding:0}
-  .sidebar-scroll-indicator{width:7px;flex:0 0 7px;position:relative;top:auto;right:auto;bottom:auto;display:flex;justify-content:center}
+  .sidebar-body{padding:24px;padding-bottom:111px;position:relative}
+  .sidebar-content{width:100%;max-width:none;padding:0}
+  .sidebar-scroll-indicator{
+    position:absolute;top:24px;bottom:111px;right:8.5px;width:7px;display:block
+  }
   .sidebar-scroll-indicator span{height:40%;border-radius:5px;left:50%;transform:translateX(-50%)}
+  .rep-chips{width:100%;max-width:100%;gap:12px 10px}
+  .rep-chip{flex:0 0 auto;white-space:nowrap}
   .app.has-visual-result .visual-settings:not(.pictogram-section){width:100%;max-width:100%}
   .side-section{padding-bottom:32px;margin-bottom:32px}
   .app.has-visual-result .pictogram-section{padding:0;margin-bottom:32px;border:0}
@@ -1167,7 +1185,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .mediated-relation{gap:16px;margin-top:10px;font-size:15px;line-height:20px}
   .relation-box{width:16px;height:16px}
   .range-row label{margin-bottom:16px;font-size:22px;line-height:28px}
-  .range-row{width:min(320px,100%)}
+  .range-row{width:100%}
   .range-control input[type=range]{height:20px}
   .range-control input[type=range]::-webkit-slider-runnable-track{height:11.511px;border-radius:5.755px}
   .range-control input[type=range]::-webkit-slider-thumb{width:19.184px;height:20px;margin-top:-4.245px}
@@ -2629,11 +2647,30 @@ function analyzeBtnLabel(){
 
 const MEMORY_LOADER_SRC='/memory-processor/assets/pictogram-loader.html';
 
+function setProcessingLock(locked){
+  const app=document.getElementById('app');
+  if(app){
+    if(locked)app.setAttribute('aria-busy','true');
+    else app.removeAttribute('aria-busy');
+  }
+  // inert blocks click + keyboard; pointer-events CSS is a belt for older engines.
+  for(const el of [
+    document.querySelector('.site-header'),
+    document.querySelector('.workspace'),
+    document.getElementById('utility-drawer'),
+  ]){
+    if(!el)continue;
+    if(locked)el.setAttribute('inert','');
+    else el.removeAttribute('inert');
+  }
+}
+
 function showMemoryLoader(){
   const host=document.getElementById('memory-loader');
   const frame=host?.querySelector('.memory-loader-frame');
   if(!host||!frame)return;
   document.getElementById('app')?.classList.add('is-memory-loading');
+  setProcessingLock(true);
   host.hidden=false;
   // Restart so the strip animation always begins fresh.
   frame.src='';
@@ -2644,6 +2681,7 @@ function hideMemoryLoader(){
   const host=document.getElementById('memory-loader');
   const frame=host?.querySelector('.memory-loader-frame');
   document.getElementById('app')?.classList.remove('is-memory-loading');
+  setProcessingLock(false);
   if(host)host.hidden=true;
   if(frame)frame.src='';
 }
@@ -3757,28 +3795,21 @@ function bindDesignedInterface(){
     const radius=getComputedStyle(chip).borderRadius||'8px';
     const muted=getComputedStyle(document.documentElement).getPropertyValue('--design-muted').trim()||'#ababab';
     const clone=chip.cloneNode(true);
-    // Figma 999:85126 Drag — text, border, and X are #ABABAB on white.
-    clone.classList.add('is-dragging');
+    // Drag preview: word-only chip at natural narrower width (no X, no empty side space).
+    clone.classList.remove('is-dragging');
     clone.removeAttribute('data-word-index');
-    clone.querySelectorAll('button').forEach(btn=>{
-      btn.removeAttribute('data-remove-word');
-      btn.tabIndex=-1;
-      btn.setAttribute('aria-hidden','true');
-      btn.style.color=muted;
-      btn.style.background='transparent';
-      btn.style.webkitMask='none';
-      btn.style.mask='none';
-    });
+    clone.querySelectorAll('button').forEach(btn=>btn.remove());
     clone.style.cssText=[
       'position:absolute',
       'top:-9999px',
       'left:0',
       'margin:0',
       'pointer-events:none',
-      // Match .rep-chip (ltr) so the close icon stays on the word’s right while dragging.
       'direction:ltr',
       'display:inline-flex',
       'align-items:center',
+      'width:auto',
+      'flex:none',
       `color:${muted}`,
       'background:#fff',
       `border:1px solid ${muted}`,
@@ -3787,14 +3818,11 @@ function bindDesignedInterface(){
       'box-shadow:none',
       'cursor:grabbing',
     ].join(';');
-    clone.querySelectorAll('img').forEach(img=>{
-      img.src='/memory-processor/assets/icons/remove-word-muted-figma.svg';
-      img.style.opacity='1';
-      img.style.filter='none';
-      img.setAttribute('draggable','false');
-    });
     document.body.appendChild(clone);
-    event.dataTransfer.setDragImage(clone,event.clientX-rect.left,event.clientY-rect.top);
+    const previewWidth=clone.getBoundingClientRect().width;
+    const offsetX=Math.min(Math.max(0,event.clientX-rect.left),Math.max(0,previewWidth-1));
+    const offsetY=Math.min(Math.max(0,event.clientY-rect.top),Math.max(0,clone.getBoundingClientRect().height-1));
+    event.dataTransfer.setDragImage(clone,offsetX,offsetY);
     requestAnimationFrame(()=>clone.remove());
   }
   function commitRepChipOrderFromDom(){
@@ -3810,13 +3838,54 @@ function bindDesignedInterface(){
   function moveDraggingChip(event){
     const dragging=repChips.querySelector('.rep-chip.is-dragging');
     if(!dragging)return;
-    const target=event.target.closest('.rep-chip');
-    if(!target||target===dragging)return;
-    const rect=target.getBoundingClientRect();
-    const midX=rect.left+rect.width/2;
-    // RTL chips: right half → earlier in DOM, left half → later in DOM
-    if(event.clientX>=midX)repChips.insertBefore(dragging,target);
-    else repChips.insertBefore(dragging,target.nextSibling);
+    const x=event.clientX;
+    const y=event.clientY;
+    const others=[...repChips.querySelectorAll('.rep-chip')].filter(chip=>chip!==dragging);
+    if(!others.length){
+      if(dragging.parentElement===repChips)repChips.appendChild(dragging);
+      return;
+    }
+
+    // Pick the row band under the pointer (works over empty trailing space, not only chip hit-targets).
+    const measured=others.map(chip=>{
+      const rect=chip.getBoundingClientRect();
+      return {chip,rect,top:rect.top,midY:rect.top+rect.height/2,midX:rect.left+rect.width/2};
+    });
+    let rowTop=measured[0].top;
+    let bestRowDist=Infinity;
+    for(const item of measured){
+      const dist=Math.abs(y-item.midY);
+      if(dist<bestRowDist){
+        bestRowDist=dist;
+        rowTop=item.top;
+      }
+    }
+    const rowItems=measured.filter(item=>Math.abs(item.top-rowTop)<8);
+    // DOM order within the row (RTL flex: earlier = visually righter).
+    const rowDom=others.filter(chip=>rowItems.some(item=>item.chip===chip));
+
+    let placeBefore=null;
+    for(const chip of rowDom){
+      const item=rowItems.find(entry=>entry.chip===chip);
+      if(!item)continue;
+      // Pointer on/right of chip center → insert before it (move toward the right / earlier).
+      if(x>=item.midX){
+        placeBefore=chip;
+        break;
+      }
+    }
+
+    const next=placeBefore||(rowDom.length?rowDom[rowDom.length-1].nextElementSibling:null);
+    if(placeBefore){
+      if(dragging.nextElementSibling!==placeBefore)repChips.insertBefore(dragging,placeBefore);
+    }else if(rowDom.length){
+      const last=rowDom[rowDom.length-1];
+      if(dragging.previousElementSibling!==last)repChips.insertBefore(dragging,last.nextElementSibling);
+    }else if(next){
+      if(dragging.nextElementSibling!==next)repChips.insertBefore(dragging,next);
+    }else{
+      repChips.appendChild(dragging);
+    }
   }
   repChips?.addEventListener('dragstart',event=>{
     if(event.target.closest('[data-remove-word]')){event.preventDefault();return;}
