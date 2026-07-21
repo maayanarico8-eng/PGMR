@@ -298,6 +298,7 @@ textarea:focus{border-color:var(--b1)}
 /* ── Maayan web interface ─────────────────────────────────────────────── */
 @font-face{font-family:"PGMR Masada";src:url("/memory-processor/assets/fonts/Masada-Bold.otf") format("opentype");font-style:normal;font-weight:700;font-display:swap}
 @font-face{font-family:"PGMR Narkiss Block";src:url("/memory-processor/assets/fonts/NarkissBlock-Regular.otf") format("opentype");font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:"PGMR Narkiss Block";src:url("/memory-processor/assets/fonts/NarkissBlock-Medium.otf") format("opentype");font-style:normal;font-weight:500;font-display:swap}
 @font-face{font-family:"PGMR Narkiss Block Mono";src:url("/memory-processor/assets/fonts/NarkissBlockMono-Regular-TRIAL.otf") format("opentype");font-style:normal;font-weight:400;font-display:swap}
 @font-face{font-family:"PGMR Narkiss Block Mono";src:url("/memory-processor/assets/fonts/NarkissBlockMono-Bold-TRIAL.otf") format("opentype");font-style:normal;font-weight:700;font-display:swap}
 :root{
@@ -337,13 +338,31 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .app:not(.has-results) .workspace{height:auto;min-height:0}
 .app:not(.has-results) .memory-main{height:auto}
 .memory-main{width:calc(1342 * var(--figma-unit));height:calc(898 * var(--figma-unit));min-width:0;display:flex;flex-direction:column}
+/* Empty state — Figma frame 941:14353: vertically centered chat */
+.app:not(.has-results) .memory-main{
+  align-items:center;justify-content:center
+}
+.app:not(.has-results) .memory-stage,
+.app:not(.has-results) .error-card{display:none}
+.app:not(.has-results) .memory-entry{
+  width:calc(926 * var(--figma-unit));min-height:0;margin:0;
+  align-items:center;gap:calc(24 * var(--figma-unit))
+}
+.app:not(.has-results) .entry-heading{
+  height:auto;margin:0;text-align:center;font-family:var(--font-body);font-weight:500
+}
+.app:not(.has-results) .memory-input-wrap{height:calc(90 * var(--figma-unit));margin:0}
+.app:not(.has-results) textarea#memory-input{
+  font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit))
+}
+.app:not(.has-results) .input-footer{justify-content:center;margin:0}
 .memory-entry{
   width:calc(926 * var(--figma-unit));min-height:calc(204 * var(--figma-unit));margin:0 0 0 auto;
   display:flex;flex-direction:column;align-items:flex-end;direction:rtl
 }
 .entry-heading{
   width:100%;height:calc(32 * var(--figma-unit));margin:0 0 calc(24 * var(--figma-unit));
-  font-family:var(--font-display);font-size:calc(27 * var(--figma-unit));font-weight:700;
+  font-family:var(--font-body);font-size:calc(27 * var(--figma-unit));font-weight:500;
   line-height:calc(28 * var(--figma-unit));text-align:right
 }
 .entry-count{
@@ -365,7 +384,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 textarea#memory-input{
   width:100%;height:100%;min-height:0;max-height:none;padding:calc(16 * var(--figma-unit)) calc(20 * var(--figma-unit)) calc(36 * var(--figma-unit));
   resize:none;border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));background:var(--design-blue-soft);
-  color:#000;font-family:var(--font-body);font-size:calc(19 * var(--figma-unit));font-weight:400;
+  color:#000;font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));font-weight:400;
   line-height:calc(20 * var(--figma-unit));text-align:right;overflow:hidden
 }
 textarea#memory-input::placeholder{color:var(--design-muted);opacity:1}
@@ -716,8 +735,12 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .memory-entry{width:100%;height:auto}
   .entry-heading,.app.has-results .entry-heading{height:auto;font-size:24px;line-height:28px;margin-bottom:24px}
   .entry-count,.app.has-results .entry-count{bottom:14px;right:20px;font-size:14px;line-height:18px}
+  .app:not(.has-results) .memory-main{min-height:70vh;align-items:center;justify-content:center}
+  .app:not(.has-results) .memory-entry{width:100%;gap:24px}
+  .app:not(.has-results) .entry-heading{text-align:center}
+  .app:not(.has-results) .memory-input-wrap{height:90px;margin:0}
   .memory-input-wrap{height:90px;margin-bottom:24px}
-  textarea#memory-input{font-size:18px;line-height:22px;padding:16px 20px 36px;border-radius:8px}
+  textarea#memory-input{font-size:15px;line-height:20px;padding:16px 20px 36px;border-radius:8px}
   .memory-error-msg{margin-top:8px;font-size:14px;line-height:18px}
   .input-footer{height:39px}
   .analyze-btn,.generate-vrp-btn{width:237px;height:39px;font-size:18px;line-height:20px;border-radius:8px;padding:9px 20px}
@@ -837,9 +860,9 @@ textarea#memory-input[aria-invalid="true"]:hover{
         <h1 class="entry-heading" id="entry-heading">איזה זיכרון היית רוצה לשמר?</h1>
         <div class="memory-input-wrap">
           <textarea id="memory-input" dir="rtl" rows="2" maxlength="500"
-            data-placeholder-default="הכניסו זיכרון עד 20 מילים"
+            data-placeholder-default="סבא מאוד אהב לטייל והיה לו חשוב שנכיר מקומות בארץ ובעולם."
             data-placeholder-focus="יש לכתוב זיכרון עד 20 מילים"
-            placeholder="הכניסו זיכרון עד 20 מילים"></textarea>
+            placeholder="סבא מאוד אהב לטייל והיה לו חשוב שנכיר מקומות בארץ ובעולם."></textarea>
           <span class="entry-count" id="entry-count">0/20 מילים</span>
         </div>
         <p class="memory-error-msg" id="memory-error-msg" hidden>על מנת להמשיך ליצירת גלויה יש לוודא כי הזיכרון אינו חורג מ-20 מילים</p>
