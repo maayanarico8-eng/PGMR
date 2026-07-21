@@ -3184,7 +3184,13 @@ function syncVisualOutput(){
     output.innerHTML='';
     return;
   }
-  // Prefer individual pictograms from the catalog strip / results (Figma 1006:14426).
+  // Prefer the expressive-rendered sequence so source/sliders update the postcard.
+  const expressiveSvg=document.querySelector('#results .seq-display svg');
+  if(expressiveSvg){
+    output.replaceChildren(cloneSequenceSvg(expressiveSvg));
+    return;
+  }
+  // Fallback when no sequence SVG exists yet: individual catalog pictograms.
   const thumbs=[...document.querySelectorAll('#pictogram-strip img.panel-pictogram, #pictogram-strip svg')];
   const resultSvgs=[...document.querySelectorAll('#results .cat-svg-wrap svg')].slice(0,10);
   const sources=thumbs.length?thumbs:resultSvgs;
@@ -3210,9 +3216,7 @@ function syncVisualOutput(){
     output.replaceChildren(row);
     return;
   }
-  const source=document.querySelector('#results .seq-display svg');
-  if(source)output.replaceChildren(cloneSequenceSvg(source));
-  else output.innerHTML='';
+  output.innerHTML='';
 }
 
 function syncPictogramStrip(){
