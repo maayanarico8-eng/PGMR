@@ -983,8 +983,24 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .sidebar-action{
   position:absolute;z-index:2;left:-1px;right:-1px;bottom:-1px;height:calc(87 * var(--figma-unit));
   margin:0;border:1px solid var(--design-line);border-radius:0 0 calc(8 * var(--figma-unit)) calc(8 * var(--figma-unit));
-  padding:calc(24 * var(--figma-unit));display:flex;align-items:flex-end;justify-content:center;background:#fff
+  padding:calc(24 * var(--figma-unit));display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:calc(8 * var(--figma-unit));background:#fff
 }
+.app.has-visual-result .sidebar-action{
+  height:calc(120 * var(--figma-unit));padding:calc(16 * var(--figma-unit)) calc(24 * var(--figma-unit))
+}
+.app.has-visual-result .sidebar-body{padding-bottom:calc(144 * var(--figma-unit))}
+.app.has-visual-result .sidebar-scroll-indicator{bottom:calc(144 * var(--figma-unit))}
+.export-svg-btn{
+  display:none;box-sizing:border-box;align-items:center;justify-content:center;
+  margin:0;padding:0;border:0;background:transparent;cursor:pointer;
+  color:var(--design-blue-link);font-family:var(--font-mono);
+  font-size:calc(14 * var(--figma-unit));font-weight:400;line-height:calc(18 * var(--figma-unit));
+  text-decoration:underline;text-underline-offset:2px
+}
+.export-svg-btn:hover{color:var(--design-blue-deep)}
+.export-svg-btn:focus-visible{outline:2px solid var(--design-blue);outline-offset:2px;border-radius:4px}
+.app.has-visual-result .export-svg-btn{display:inline-flex}
 
 .utility-drawer{
   position:fixed;z-index:20;inset:64px auto 20px 20px;width:min(460px,calc(100vw - 40px));overflow:auto;
@@ -1166,6 +1182,8 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .app.has-results .edit-memory-btn svg{width:20px;height:20px}
   .app.has-results .input-footer-wrap{min-height:39px}
   .sidebar-body{padding:24px;padding-bottom:111px;position:relative}
+  .app.has-visual-result .sidebar-body{padding-bottom:144px}
+  .app.has-visual-result .sidebar-scroll-indicator{bottom:144px}
   .sidebar-content{width:100%;max-width:none;padding:0}
   .sidebar-scroll-indicator{
     position:absolute;top:24px;bottom:111px;right:8.5px;width:7px;display:block
@@ -1205,7 +1223,9 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .range-control input[type=range]::-moz-range-track{height:11.511px;border-radius:5.755px}
   .range-control input[type=range]::-moz-range-thumb{width:19.184px;height:20px}
   .range-ends{margin-top:8px;font-size:14px;line-height:17px}
-  .sidebar-action{height:87px;padding:24px;border-radius:0 0 8px 8px}
+  .sidebar-action{height:87px;padding:24px;border-radius:0 0 8px 8px;flex-direction:column;gap:8px;justify-content:center}
+  .app.has-visual-result .sidebar-action{height:120px;padding:16px 24px}
+  .export-svg-btn{font-size:14px;line-height:18px}
   .create-visual-btn{width:237px;height:39px;padding:0 24px;border-radius:8px;font-size:19px;line-height:20px;display:inline-flex;align-items:center;justify-content:center;text-align:center}
 }
 
@@ -1459,6 +1479,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
       </div>
       <div class="sidebar-action">
         <button type="button" class="create-visual-btn" id="create-visual-btn">רישום זיכרון</button>
+        <button type="button" class="export-svg-btn" id="export-svg-btn">ייצוא SVG</button>
       </div>
     </aside>
   </main>
@@ -3544,6 +3565,35 @@ async function createDesignedVisual(){
   }
 }
 
+function sequenceExportFilename(){
+  const title=(document.getElementById('entry-heading')?.textContent||'').trim();
+  const safe=title.replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,' ').trim().slice(0,80);
+  return `${safe||'pictogram-sequence'}.svg`;
+}
+
+function downloadSequenceSvg(){
+  const source=document.querySelector('#visual-output > svg')
+    || document.querySelector('#results .seq-display svg');
+  if(!source)return;
+  const clone=source.cloneNode(true);
+  if(!clone.getAttribute('xmlns'))clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  if(!clone.getAttribute('xmlns:xlink')){
+    const usesXlink=[...clone.querySelectorAll('*')].some(el=>[...el.attributes].some(attr=>attr.name.startsWith('xlink:')));
+    if(usesXlink)clone.setAttribute('xmlns:xlink','http://www.w3.org/1999/xlink');
+  }
+  const serialized=new XMLSerializer().serializeToString(clone);
+  const markup=serialized.startsWith('<?xml')?serialized:`<?xml version="1.0" encoding="UTF-8"?>\n${serialized}`;
+  const blob=new Blob([markup],{type:'image/svg+xml;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  link.href=url;
+  link.download=sequenceExportFilename();
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 function pct(n){return n==null?'—':`${n}%`;}
 
 let archiveShuffleDeck=[];
@@ -3732,6 +3782,7 @@ function bindDesignedInterface(){
   document.getElementById('edit-memory-btn')?.addEventListener('click',enterEditMemory);
   document.getElementById('cancel-edit-btn')?.addEventListener('click',cancelEditMemory);
   document.getElementById('create-visual-btn')?.addEventListener('click',createDesignedVisual);
+  document.getElementById('export-svg-btn')?.addEventListener('click',downloadSequenceSvg);
   window.addEventListener('beforeprint',fitPostcardForPrint);
   window.addEventListener('afterprint',clearPostcardPrintFit);
   const sidebarContent=document.querySelector('.sidebar-content');

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg id="Layer_2" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 48 48"><g transform="translate(-1.3608,6.7758) scale(1.056701)" stroke-width="0.946341">
+<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><g  transform="translate(0.0000,0.0000) scale(1.000000)"><g transform="translate(0.0000,0.0000)"><g transform="translate(-0.5494,-0.5494) scale(1.012346)">
   <!-- Generator: Adobe Illustrator 30.3.0, SVG Export Plug-In . SVG Version: 2.1.3 Build 182)  -->
   <defs>
     <style>
@@ -11,7 +10,5 @@
       }
     </style>
   </defs>
-  <path class="st0" d="M4.64,22.72v-10.38s38.73.08,38.73.08v10.38h.01c0,7.1-5.75,12.85-12.85,12.85l-13.04-.08c-7.1,0-12.85-5.75-12.85-12.85"/>
-  <path class="st0" d="M56.99,44.94"/>
-  <path class="st0" d="M21.19,44.86"/>
-</g></svg>
+  <path class="st0" d="M31.93,25.73l12.51.05v4.9h.01c0,7.62-6.17,13.79-13.79,13.79h0s-12.86,0-12.86,0h.05c-7.76-.12-13.79-6.17-13.79-13.79h.01s0-4.9,0-4.9l27.87-.05h0Z"/>
+</g></g></g></svg>
