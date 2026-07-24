@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>מחולל זיכרונות</title>
+<title>רשם זיכרונות</title>
+<link rel="preload" href="/memory-processor/assets/fonts/NarkissBlockMono-Regular-TRIAL.otf" as="font" type="font/otf" crossorigin>
+<link rel="preload" href="/memory-processor/assets/fonts/NarkissBlockMono-Bold-TRIAL.otf" as="font" type="font/otf" crossorigin>
+<link rel="preload" href="/memory-processor/assets/fonts/NarkissBlock-Regular.otf" as="font" type="font/otf" crossorigin>
+<link rel="preload" href="/memory-processor/assets/fonts/NarkissBlock-Medium.otf" as="font" type="font/otf" crossorigin>
 <style>
 
 :root{--bg:#fff;--bg2:#f8f7f5;--bg3:#f1efe8;--t1:#1a1918;--t2:#4a4845;--t3:#888780;--b1:rgba(26,25,24,.40);--b2:rgba(26,25,24,.22);--b3:rgba(26,25,24,.11);--err-bg:#fef2f2;--err-t:#991b1b;--err-b:#fecaca;--r:8px;--f:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif}
@@ -296,13 +300,14 @@ textarea:focus{border-color:var(--b1)}
 .bank-list-meta{font-size:10px;color:var(--t3);margin-top:2px}
 
 /* ── Maayan web interface ─────────────────────────────────────────────── */
-@font-face{font-family:"PGMR Masada";src:url("/memory-processor/assets/fonts/Masada-Medium.otf") format("opentype");font-style:normal;font-weight:500;font-display:swap}
-@font-face{font-family:"PGMR Masada";src:url("/memory-processor/assets/fonts/Masada-Demi.otf") format("opentype");font-style:normal;font-weight:600;font-display:swap}
-@font-face{font-family:"PGMR Masada";src:url("/memory-processor/assets/fonts/Masada-Bold.otf") format("opentype");font-style:normal;font-weight:700;font-display:swap}
-@font-face{font-family:"PGMR Narkiss Block";src:url("/memory-processor/assets/fonts/NarkissBlock-Regular.otf") format("opentype");font-style:normal;font-weight:400;font-display:swap}
-@font-face{font-family:"PGMR Narkiss Block";src:url("/memory-processor/assets/fonts/NarkissBlock-Medium.otf") format("opentype");font-style:normal;font-weight:500;font-display:swap}
-@font-face{font-family:"PGMR Narkiss Block Mono";src:url("/memory-processor/assets/fonts/NarkissBlockMono-Regular-TRIAL.otf") format("opentype");font-style:normal;font-weight:400;font-display:swap}
-@font-face{font-family:"PGMR Narkiss Block Mono";src:url("/memory-processor/assets/fonts/NarkissBlockMono-Bold-TRIAL.otf") format("opentype");font-style:normal;font-weight:700;font-display:swap}
+@font-face{font-family:"PGMR Masada";src:url("/memory-processor/assets/fonts/Masada-Book.otf") format("opentype");font-style:normal;font-weight:400;font-display:block}
+@font-face{font-family:"PGMR Masada";src:url("/memory-processor/assets/fonts/Masada-Medium.otf") format("opentype");font-style:normal;font-weight:500;font-display:block}
+@font-face{font-family:"PGMR Masada";src:url("/memory-processor/assets/fonts/Masada-Demi.otf") format("opentype");font-style:normal;font-weight:600;font-display:block}
+@font-face{font-family:"PGMR Masada";src:url("/memory-processor/assets/fonts/Masada-Bold.otf") format("opentype");font-style:normal;font-weight:700;font-display:block}
+@font-face{font-family:"PGMR Narkiss Block";src:url("/memory-processor/assets/fonts/NarkissBlock-Regular.otf") format("opentype");font-style:normal;font-weight:400;font-display:block}
+@font-face{font-family:"PGMR Narkiss Block";src:url("/memory-processor/assets/fonts/NarkissBlock-Medium.otf") format("opentype");font-style:normal;font-weight:500;font-display:block}
+@font-face{font-family:"PGMR Narkiss Block Mono";src:url("/memory-processor/assets/fonts/NarkissBlockMono-Regular-TRIAL.otf") format("opentype");font-style:normal;font-weight:400;font-display:block}
+@font-face{font-family:"PGMR Narkiss Block Mono";src:url("/memory-processor/assets/fonts/NarkissBlockMono-Bold-TRIAL.otf") format("opentype");font-style:normal;font-weight:700;font-display:block}
 :root{
   --figma-unit:min(.0520833333vw,1px);
   --design-blue:#0676fe;
@@ -327,39 +332,68 @@ button,input,textarea{font:inherit}
 button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--design-blue);outline-offset:2px}
 .app{width:100%;max-width:1920px;min-height:100vh;margin:0 auto;padding:0 calc(83 * var(--figma-unit)) calc(63 * var(--figma-unit));background:#fcfcfc}
 .site-header{
+  /* Figma 1184:50355 / 1216:55204 — nav at y 54.47; workspace/panel at y 119 → 45.5px gap */
   height:calc(119 * var(--figma-unit));padding-top:calc(54.46875 * var(--figma-unit));
+  box-sizing:border-box;
   display:flex;align-items:flex-start;justify-content:space-between;direction:ltr;gap:calc(24 * var(--figma-unit))
 }
 .site-header-left{
-  display:flex;align-items:flex-start;gap:calc(16 * var(--figma-unit));min-width:0
+  display:flex;align-items:flex-start;gap:calc(16 * var(--figma-unit));min-width:0;flex:0 1 auto
 }
 .site-tagline{
-  display:none;margin:0;color:#000;white-space:nowrap;font-family:var(--font-display);font-weight:600;
+  display:block;margin:0;color:#000;white-space:nowrap;font-family:var(--font-display);font-weight:400;
   font-size:calc(21 * var(--figma-unit));line-height:calc(19 * var(--figma-unit));text-align:right
 }
-.app.is-archive .site-tagline{display:block}
-.utility-toggle{
-  border:0;background:none;padding:0;cursor:pointer;color:#000;white-space:nowrap;font-family:var(--font-mono);
-  font-size:calc(14 * var(--figma-unit));font-weight:400;line-height:calc(19 * var(--figma-unit));opacity:.55
-}
-.utility-toggle:hover{opacity:1}
-/* כלים only on מחולל זיכרונות — hidden on ארכיון (list + detail) */
-.app.is-archive .utility-toggle{display:none}
 .site-nav{
-  display:flex;align-items:flex-start;justify-content:flex-end;gap:calc(46 * var(--figma-unit));flex-shrink:0
+  display:flex;align-items:flex-start;justify-content:flex-end;gap:calc(46 * var(--figma-unit));
+  flex:1 1 auto;min-width:0
 }
 .site-nav-link{
   border:0;background:none;padding:0;cursor:pointer;color:#000;text-decoration:none;white-space:nowrap;
   font-family:var(--font-mono);font-size:calc(18 * var(--figma-unit));font-weight:400;line-height:calc(19 * var(--figma-unit))
 }
 .site-nav-link.is-active{font-family:var(--font-mono-bold);font-weight:700}
+.app.is-view-transitioning .site-nav-link,
+.app.is-memory-loading .site-nav-link{pointer-events:none;cursor:default}
+.view-viewport{
+  /* Figma 1184:50366 — starts at y 119, flush under the 119px header.
+     Opacity fade is for loading only; tab changes use translateX swipe. */
+  width:100%;overflow:hidden;height:calc(898 * var(--figma-unit));margin:0;padding:0;
+  opacity:1;transition:opacity 350ms ease
+}
+.app.is-archive:not(.is-archive-detail) .view-viewport{
+  height:calc(100vh - 119 * var(--figma-unit))
+}
+.app.is-archive-detail .view-viewport{height:100vh}
+/* Loading: page gone as one unit — only top bar + loader remain */
+.app.is-memory-loading .view-viewport{
+  opacity:0;pointer-events:none
+}
+.app.is-memory-loading.is-page-concealed .view-viewport{
+  visibility:hidden
+}
+.view-track{
+  /* Tab swipe: 2 panels side-by-side, slide via translateX — 400ms ease-in-out, no fade */
+  display:flex;width:200%;height:100%;
+  transform:translateX(0);
+  transition:transform var(--view-transition-ms,400ms) ease-in-out;
+  will-change:transform
+}
+.app.is-archive .view-track{transform:translateX(-50%)}
+.view-panel{
+  box-sizing:border-box;flex:0 0 50%;width:50%;min-width:0;height:100%;overflow:hidden
+}
+.view-panel-generator{overflow:visible}
+.app.is-view-transitioning .view-panel-generator,
+.app.is-memory-loading .view-panel-generator{overflow:hidden}
 .workspace{
-  display:grid;grid-template-columns:minmax(0,calc(1342 * var(--figma-unit))) calc(391 * var(--figma-unit));
-  gap:calc(20 * var(--figma-unit));height:calc(898 * var(--figma-unit));min-height:0
+  /* Figma 1184:50366 — 1322 + 40 gap + 391 = 1753 within 83px page insets */
+  display:grid;grid-template-columns:minmax(0,calc(1322 * var(--figma-unit))) calc(391 * var(--figma-unit));
+  gap:calc(40 * var(--figma-unit));height:calc(898 * var(--figma-unit));min-height:0
 }
 .app:not(.has-results) .workspace{height:calc(898 * var(--figma-unit));min-height:0}
 .app:not(.has-results) .memory-main{height:calc(847 * var(--figma-unit))}
-.memory-main{width:calc(1342 * var(--figma-unit));height:calc(898 * var(--figma-unit));min-width:0;display:flex;flex-direction:column}
+.memory-main{width:calc(1322 * var(--figma-unit));height:calc(898 * var(--figma-unit));min-width:0;display:flex;flex-direction:column}
 /* Empty state — Figma frame 941:14353: chat centered in Memory area */
 .app:not(.has-results) .memory-main{
   align-items:center;justify-content:center
@@ -426,7 +460,7 @@ textarea#memory-input{
   width:100%;height:100%;min-height:0;max-height:none;padding:calc(16 * var(--figma-unit)) calc(20 * var(--figma-unit)) calc(36 * var(--figma-unit));
   resize:none;border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));background:var(--design-blue-soft);
   color:#000;font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));font-weight:400;
-  line-height:calc(20 * var(--figma-unit));text-align:right;overflow:hidden
+  line-height:calc(20 * var(--figma-unit));text-align:right;direction:rtl;overflow:hidden
 }
 textarea#memory-input::placeholder{color:var(--design-muted);opacity:1}
 textarea#memory-input:hover:not(:focus):not(:focus-visible):not([aria-invalid="true"]){border-color:var(--design-muted)}
@@ -446,18 +480,41 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .input-footer{width:100%;height:calc(39 * var(--figma-unit));display:flex;justify-content:flex-start;align-items:center;margin:0}
 .app:not(.has-results) .input-footer{justify-content:center;margin:0}
 .memory-loader{
-  display:none;width:100%;justify-content:center;align-items:center;
-  margin-top:calc(16 * var(--figma-unit));min-height:192px
+  /* Cover below the 119px header — top bar always stays; page is fully concealed */
+  display:none;position:fixed;z-index:40;
+  top:calc(119 * var(--figma-unit));left:0;right:0;bottom:0;
+  align-items:center;justify-content:center;
+  background:#fcfcfc;opacity:0;pointer-events:none;
+  transition:opacity 350ms ease
 }
 .memory-loader:not([hidden]){display:flex}
-.app.is-memory-loading .memory-loader{display:flex}
-.app.is-memory-loading .input-footer-wrap{display:block;visibility:visible}
-/* Processing lock: block all UI interaction while RW / pictogram stages run (no dimming) */
-.app.is-memory-loading .site-header,
-.app.is-memory-loading .workspace,
-.app.is-memory-loading .utility-drawer{
-  pointer-events:none
+.app.is-memory-loading .memory-loader{display:flex;pointer-events:auto}
+.memory-loader.is-visible{opacity:1}
+.memory-loader-inner{
+  /* Figma 1192:53717 / 1192:53716 — centered 183px group, 40 gap */
+  box-sizing:border-box;width:calc(183 * var(--figma-unit));
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:calc(40 * var(--figma-unit))
 }
+.memory-loader-anim{
+  width:192px;height:192px;
+  display:block;flex:none;overflow:visible;line-height:0
+}
+.memory-loader-status{
+  /* Figma: Narkiss Block Mono Regular 18 / 20, centered */
+  margin:0;min-height:calc(20 * var(--figma-unit));width:100%;
+  color:#000;text-align:center;direction:rtl;white-space:nowrap;
+  font-family:var(--font-mono);font-size:calc(18 * var(--figma-unit));font-weight:400;
+  line-height:calc(20 * var(--figma-unit));opacity:1;transition:opacity 350ms ease
+}
+.memory-loader-status .memory-loader-label,
+.memory-loader-status .memory-loader-dots{line-height:calc(20 * var(--figma-unit))}
+.memory-loader-status .memory-loader-gap{
+  /* Figma tracking-[-4.8px] on the space before ... */
+  letter-spacing:calc(-4.8 * var(--figma-unit))
+}
+.memory-loader-status.is-fading{opacity:0}
+.app.is-memory-loading .edit-memory-btn{display:none!important}
 .memory-loader-frame{
   width:192px;height:192px;border:0;display:block;background:transparent;pointer-events:none
 }
@@ -522,34 +579,42 @@ textarea#memory-input[aria-invalid="true"]:hover{
   height:calc(39 * var(--figma-unit));box-sizing:border-box
 }
 .app.has-results .memory-stage{display:none}
-/* Keep left-frame text right-aligned; pin canvas bottom to the sidebar bottom without changing canvas size. */
+/* Visual result left column — Figma 1184:50367 (intro + canvas, 1322×898) */
 .app.has-results.has-visual-result .memory-main{
-  align-items:flex-end;justify-content:flex-start;
-  height:calc(898 * var(--figma-unit))
+  align-items:stretch;justify-content:flex-start;gap:0;
+  height:calc(898 * var(--figma-unit));min-height:calc(898 * var(--figma-unit))
 }
-.app.has-results.has-visual-result .memory-entry{
-  flex:0 0 auto;width:calc(926 * var(--figma-unit));gap:calc(24 * var(--figma-unit));
-  align-items:stretch;margin:0
-}
-.app.has-results.has-visual-result .entry-heading-row{
-  justify-content:flex-end;width:100%
-}
-.app.has-results.has-visual-result .entry-heading,
-.app.has-results.has-visual-result .entry-heading-row .entry-heading{
-  width:100%;text-align:right;direction:rtl
-}
-.app.has-results.has-visual-result .memory-input-wrap{width:100%}
-.app.has-results.has-visual-result textarea#memory-input{
-  text-align:right;direction:rtl
-}
+.app.has-results.has-visual-result .memory-entry{display:none}
 .app.has-results.has-visual-result .edit-memory-btn{display:none}
 .app.has-results.has-visual-result .input-footer-wrap{display:none}
+.postcard-block{
+  display:none;flex:0 0 auto;width:100%;flex-direction:column;align-items:flex-end;
+  gap:calc(56 * var(--figma-unit));margin-top:0
+}
+.app.has-results.has-visual-result .postcard-block{
+  /* Figma 1184:50378 — fill column, pin intro+canvas to bottom, 56px gap */
+  display:flex;flex:1 1 auto;min-height:0;height:100%;
+  justify-content:flex-end;align-items:flex-end
+}
+.postcard-intro{
+  /* Figma 1199:53728 — title + body, gap 16 */
+  box-sizing:border-box;flex:0 0 auto;
+  width:calc(894.759 * var(--figma-unit));max-width:100%;height:auto;
+  display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;
+  gap:calc(16 * var(--figma-unit));
+  color:#000;text-align:right;direction:rtl
+}
 .postcard-heading{
-  display:none;width:calc(1111 * var(--figma-unit));max-width:100%;margin:0;
+  width:100%;margin:0;
   font-family:var(--font-body);font-size:calc(27 * var(--figma-unit));font-weight:500;
   line-height:calc(28 * var(--figma-unit));color:#000;text-align:right;direction:rtl
 }
-.app.has-results.has-visual-result .postcard-heading{display:block}
+.postcard-intro-copy{
+  width:100%;margin:0;
+  font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));font-weight:400;
+  line-height:calc(24 * var(--figma-unit));color:#000;text-align:right;direction:rtl
+}
+.postcard-intro-copy p{margin:0;line-height:calc(24 * var(--figma-unit))}
 .app.has-results:not(.is-editing-memory) textarea#memory-input{
   cursor:default;border-color:var(--design-line)
 }
@@ -605,28 +670,59 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .app:not(.has-results) .memory-stage{display:none}
 .memory-stage{
-  width:100%;height:calc(678 * var(--figma-unit));min-height:0;flex:none;margin-top:calc(16 * var(--figma-unit));
-  border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));
-  display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff;padding:0
+  /* Figma 1184:50380 — canvas 1322×643, border #4f2705, radius 8 */
+  width:100%;height:calc(643 * var(--figma-unit));min-height:calc(643 * var(--figma-unit));
+  max-height:calc(643 * var(--figma-unit));flex:0 0 auto;margin-top:0;
+  border:1px solid #4f2705;border-radius:calc(8 * var(--figma-unit));
+  display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff;padding:0;
+  box-sizing:border-box
 }
 .app.has-results.has-visual-result .memory-stage{
-  /* Previous canvas size (full column width × 678); margin-top:auto pins bottom to the sidebar. */
-  display:flex;width:100%;height:calc(678 * var(--figma-unit));margin-top:auto
+  display:flex;width:100%;height:calc(643 * var(--figma-unit));
+  min-height:calc(643 * var(--figma-unit));max-height:calc(643 * var(--figma-unit));margin-top:0
 }
 .visual-output{width:100%;height:100%;min-height:100%;display:flex;align-items:center;justify-content:center}
 .visual-output:empty::after{content:"";display:block}
 .visual-output svg{display:block;width:min(100%,856px);height:auto;max-height:360px}
-/* Match commit 94bfe2b: expressive sequence SVG + memory text, full pictogram scale */
-.app.has-visual-result .visual-output{position:relative;display:block}
+/* Canvas layout — Figma 1184:50380 / 1227:55236 */
+.app.has-visual-result .visual-output{position:relative;display:block;width:100%;height:100%}
 .app.has-visual-result .visual-output>svg{
-  position:absolute;left:calc(212 * var(--figma-unit));top:calc(163 * var(--figma-unit));
-  width:calc(966 * var(--figma-unit));height:auto;max-height:none
+  /* Frame 1184:50388 — 500×195 at canvas (63.5+699, 62+248) */
+  position:absolute;left:calc(762.5 * var(--figma-unit));top:calc(310 * var(--figma-unit));
+  width:calc(500 * var(--figma-unit));height:calc(195 * var(--figma-unit));
+  max-width:none;max-height:none
+}
+.canvas-meta{
+  /* Frame 1227:55236 content — top 62, inset 63.5, width 1199 */
+  position:absolute;z-index:1;box-sizing:border-box;
+  top:calc(62 * var(--figma-unit));
+  left:calc(63.5 * var(--figma-unit));
+  width:calc(1199 * var(--figma-unit));
+  display:flex;align-items:flex-start;justify-content:space-between;
+  pointer-events:none;direction:ltr
+}
+.canvas-archive-id{
+  flex:0 0 auto;margin:0;direction:ltr;text-align:left;color:#000;white-space:nowrap;
+  font-family:var(--font-display);font-size:calc(21 * var(--figma-unit));font-weight:600;
+  line-height:calc(19 * var(--figma-unit))
+}
+.canvas-meta-main{
+  /* Frame 1227:55231 — 913 wide: memory 537 + name 376 */
+  box-sizing:border-box;flex:0 0 auto;width:calc(913 * var(--figma-unit));
+  display:flex;align-items:flex-start;justify-content:space-between;direction:ltr
 }
 .visual-memory-text{
-  position:absolute;top:calc(536.55 * var(--figma-unit));right:calc(164.8 * var(--figma-unit));
-  width:calc(405 * var(--figma-unit));margin:0;direction:rtl;text-align:right;color:#000;
-  font-family:var(--font-display);font-size:calc(22 * var(--figma-unit));font-weight:700;
-  line-height:calc(25 * var(--figma-unit))
+  box-sizing:border-box;flex:0 0 auto;width:calc(537 * var(--figma-unit));max-width:calc(537 * var(--figma-unit));
+  margin:0;direction:rtl;text-align:right;color:#000;white-space:normal;
+  font-family:var(--font-display);font-size:calc(21 * var(--figma-unit));font-weight:600;
+  line-height:calc(19 * var(--figma-unit))
+}
+.canvas-keywords{
+  box-sizing:border-box;flex:0 0 auto;width:calc(376 * var(--figma-unit));max-width:calc(376 * var(--figma-unit));
+  margin:0;direction:rtl;text-align:right;color:#000;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+  font-family:var(--font-display);font-size:calc(21 * var(--figma-unit));font-weight:600;
+  line-height:calc(19 * var(--figma-unit))
 }
 .error-card{direction:rtl;margin:8px 0;color:#d42b2b;border-color:#f4a9a9;background:#fff7f7;font-size:11px}
 
@@ -983,54 +1079,26 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .sidebar-action{
   position:absolute;z-index:2;left:-1px;right:-1px;bottom:-1px;height:calc(87 * var(--figma-unit));
   margin:0;border:1px solid var(--design-line);border-radius:0 0 calc(8 * var(--figma-unit)) calc(8 * var(--figma-unit));
-  padding:calc(24 * var(--figma-unit));display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:calc(8 * var(--figma-unit));background:#fff
+  padding:calc(24 * var(--figma-unit));display:flex;align-items:flex-end;justify-content:center;background:#fff
 }
-.app.has-visual-result .sidebar-action{
-  height:calc(120 * var(--figma-unit));padding:calc(16 * var(--figma-unit)) calc(24 * var(--figma-unit))
-}
-.app.has-visual-result .sidebar-body{padding-bottom:calc(144 * var(--figma-unit))}
-.app.has-visual-result .sidebar-scroll-indicator{bottom:calc(144 * var(--figma-unit))}
-.export-svg-btn{
-  display:none;box-sizing:border-box;align-items:center;justify-content:center;
-  margin:0;padding:0;border:0;background:transparent;cursor:pointer;
-  color:var(--design-blue-link);font-family:var(--font-mono);
-  font-size:calc(14 * var(--figma-unit));font-weight:400;line-height:calc(18 * var(--figma-unit));
-  text-decoration:underline;text-underline-offset:2px
-}
-.export-svg-btn:hover{color:var(--design-blue-deep)}
-.export-svg-btn:focus-visible{outline:2px solid var(--design-blue);outline-offset:2px;border-radius:4px}
-.app.has-visual-result .export-svg-btn{display:inline-flex}
 
-.utility-drawer{
-  position:fixed;z-index:20;inset:64px auto 20px 20px;width:min(460px,calc(100vw - 40px));overflow:auto;
-  border:1px solid #d8d8d8;border-radius:8px;background:#fff;box-shadow:0 16px 60px rgba(0,0,0,.15);padding:18px
-}
-.utility-drawer[hidden]{display:none}
-.utility-drawer-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.utility-drawer-title{font-size:15px;font-weight:700}
-.utility-close{border:0;background:none;font-size:20px;cursor:pointer}
-.utility-drawer .bank-upload,.utility-drawer .settings-panel{margin-bottom:14px}
 .processor-details{margin-top:14px;border-top:1px solid var(--b3);padding-top:14px}
 .processor-details summary{cursor:pointer;font-size:11px;color:var(--t3)}
 .processor-details #results{margin-top:20px}
 
 /* ── Archive view ─────────────────────────────────────────────────────── */
-.app.is-archive .workspace{display:none}
 .app.is-archive{padding-bottom:0;min-height:100vh}
-.archive-shell{display:none;position:relative;width:100%}
-.app.is-archive .archive-shell{
-  display:block;
-  min-height:calc(100vh - 119 * var(--figma-unit));
-  height:calc(100vh - 119 * var(--figma-unit))
+.archive-shell{
+  position:relative;width:100%;height:100%;min-height:100%
 }
 .app.is-archive-detail{padding:0}
 .app.is-archive-detail .site-header{display:none}
 .app.is-archive-detail .archive-shell{
-  height:100vh;min-height:100vh;display:flex;align-items:center;justify-content:center
+  height:100%;min-height:100%;display:flex;align-items:center;justify-content:center
 }
 .app.is-archive-detail .archive-list-view{display:none}
-.app.is-archive:not(.is-archive-detail) .archive-detail-view{display:none}
+.archive-detail-view{display:none}
+.app.is-archive-detail .archive-detail-view{display:block}
 .archive-memory-list{
   display:flex;flex-direction:column;align-items:flex-end;width:calc(1342 * var(--figma-unit));
   height:100%;overflow-x:hidden;overflow-y:auto;margin:0;
@@ -1139,11 +1207,14 @@ textarea#memory-input[aria-invalid="true"]:hover{
 @media(max-width:760px){
   .app{padding:0 16px 20px}
   .site-header{height:72px;padding-top:26px;gap:16px}
+  .memory-loader{top:72px}
   .site-tagline{font-size:14px;line-height:16px;white-space:normal}
   .site-nav{gap:20px}
-  .site-nav-link,.utility-toggle{font-size:16px;line-height:18px}
+  .site-nav-link{font-size:16px;line-height:18px}
   .archive-memory-list{width:100%;height:100%}
-  .app.is-archive .archive-shell{height:calc(100vh - 72px);min-height:calc(100vh - 72px)}
+  .view-viewport{height:auto;min-height:0}
+  .app.is-archive .view-viewport{height:calc(100vh - 72px)}
+  .app.is-archive .archive-shell{height:100%;min-height:100%}
   .archive-memory-row{font-size:28px;line-height:44px;gap:16px}
   .archive-row-index{font-size:28px;line-height:44px}
   .archive-hover-preview.is-visible{position:static;display:flex;flex-direction:column;align-items:flex-end;gap:16px;margin-top:24px;left:auto;right:auto;top:auto;bottom:auto}
@@ -1171,19 +1242,25 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .memory-error-msg{top:calc(100% + 31px);font-size:14px;line-height:18px;text-align:center}
   .input-footer{height:39px}
   .analyze-btn,.generate-vrp-btn{width:237px;height:39px;padding:0 20px;font-size:18px;line-height:20px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;text-align:center}
-  .memory-stage,.app.has-results.has-visual-result .memory-stage{width:100%;height:360px;min-height:360px;margin-top:16px;border-radius:8px;padding:16px;display:flex}
+  .memory-stage,.app.has-results.has-visual-result .memory-stage{width:100%;height:360px;min-height:360px;margin-top:0;border-radius:8px;padding:0;display:flex}
   .app.has-results:not(.has-visual-result) .memory-stage{display:none}
   .app.has-visual-result .memory-stage{padding:0}
-  .app.has-visual-result .visual-output>svg{left:11%;top:20%;width:72%}
-  .visual-memory-text{top:auto;right:12%;bottom:10%;width:42%;font-size:18px;line-height:22px}
+  .app.has-results.has-visual-result .postcard-block{gap:32px;justify-content:flex-start}
+  .postcard-intro{width:100%;height:auto;gap:16px;justify-content:flex-start}
+  .postcard-heading{font-size:24px;line-height:28px}
+  .postcard-intro-copy{font-size:14px;line-height:22px}
+  .postcard-intro-copy p{line-height:22px}
+  .app.has-visual-result .visual-output>svg{left:auto;right:4%;top:42%;width:58%;height:auto;max-height:120px}
+  .canvas-meta{top:24px;left:16px;right:16px;width:auto;gap:8px;flex-wrap:wrap}
+  .canvas-meta-main{width:100%;max-width:100%;flex:1 1 auto;gap:8px}
+  .canvas-archive-id,.visual-memory-text,.canvas-keywords{font-size:14px;line-height:16px}
+  .visual-memory-text,.canvas-keywords{width:auto;max-width:100%;flex:1 1 auto}
   .design-sidebar,.app.has-results .design-sidebar{width:100%;height:auto;min-height:620px;max-height:none;border-radius:8px}
   .app.has-results .design-sidebar{display:flex}
   .app.has-results .edit-memory-btn{position:absolute;left:0;bottom:0;height:39px;margin-top:0;font-size:18px;line-height:20px;padding:6px 8px;gap:6px}
   .app.has-results .edit-memory-btn svg{width:20px;height:20px}
   .app.has-results .input-footer-wrap{min-height:39px}
   .sidebar-body{padding:24px;padding-bottom:111px;position:relative}
-  .app.has-visual-result .sidebar-body{padding-bottom:144px}
-  .app.has-visual-result .sidebar-scroll-indicator{bottom:144px}
   .sidebar-content{width:100%;max-width:none;padding:0}
   .sidebar-scroll-indicator{
     position:absolute;top:24px;bottom:111px;right:8.5px;width:7px;display:block
@@ -1223,9 +1300,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .range-control input[type=range]::-moz-range-track{height:11.511px;border-radius:5.755px}
   .range-control input[type=range]::-moz-range-thumb{width:19.184px;height:20px}
   .range-ends{margin-top:8px;font-size:14px;line-height:17px}
-  .sidebar-action{height:87px;padding:24px;border-radius:0 0 8px 8px;flex-direction:column;gap:8px;justify-content:center}
-  .app.has-visual-result .sidebar-action{height:120px;padding:16px 24px}
-  .export-svg-btn{font-size:14px;line-height:18px}
+  .sidebar-action{height:87px;padding:24px;border-radius:0 0 8px 8px}
   .create-visual-btn{width:237px;height:39px;padding:0 24px;border-radius:8px;font-size:19px;line-height:20px;display:inline-flex;align-items:center;justify-content:center;text-align:center}
 }
 
@@ -1239,10 +1314,12 @@ textarea#memory-input[aria-invalid="true"]:hover{
     print-color-adjust:exact;-webkit-print-color-adjust:exact
   }
   .site-header,
-  .utility-drawer,
   .design-sidebar,
   .archive-shell,
+  .view-panel-archive,
+  .memory-loader,
   .postcard-heading,
+  .postcard-intro,
   .memory-entry,
   .error-card,
   .edit-memory-btn,
@@ -1252,16 +1329,22 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .memory-error-msg{display:none!important}
   .app,
   .workspace,
-  .memory-main{
+  .memory-main,
+  .view-viewport,
+  .view-track,
+  .view-panel-generator{
     display:block!important;max-width:none!important;min-height:0!important;width:auto!important;height:auto!important;
-    margin:0!important;padding:0!important;background:#fff!important;gap:0!important;overflow:visible!important
+    margin:0!important;padding:0!important;background:#fff!important;gap:0!important;overflow:visible!important;
+    transform:none!important;transition:none!important
   }
+  .view-track{width:100%!important}
+  .view-panel-generator{width:100%!important;flex:none!important}
   .app.has-results.has-visual-result .memory-stage,
   .memory-stage{
     position:relative!important;display:block!important;
-    width:1342px!important;max-width:none!important;height:678px!important;min-height:678px!important;
+    width:1322px!important;max-width:none!important;height:643px!important;min-height:643px!important;
     margin:0!important;padding:0!important;box-sizing:border-box!important;
-    border:1px solid var(--design-line)!important;border-radius:8px!important;background:#fff!important;
+    border:1px solid #4f2705!important;border-radius:8px!important;background:#fff!important;
     overflow:hidden!important;page-break-inside:avoid;break-inside:avoid;transform-origin:top left
   }
   .app.has-visual-result .visual-output,
@@ -1269,15 +1352,40 @@ textarea#memory-input[aria-invalid="true"]:hover{
     position:relative!important;display:block!important;width:100%!important;height:100%!important;
     min-height:100%!important;overflow:hidden!important
   }
+  .view-viewport{
+    opacity:1!important;visibility:visible!important;transition:none!important
+  }
+  .memory-loader{display:none!important}
   .app.has-visual-result .visual-output>svg,
   .visual-output>svg{
-    position:absolute!important;left:212px!important;top:163px!important;
-    width:966px!important;height:auto!important;max-width:none!important;max-height:none!important;display:block!important
+    position:absolute!important;left:762.5px!important;top:310px!important;
+    width:500px!important;height:195px!important;max-width:none!important;max-height:none!important;display:block!important
   }
+  .canvas-meta{
+    display:flex!important;position:absolute!important;z-index:1!important;box-sizing:border-box!important;
+    top:62px!important;left:63.5px!important;width:1199px!important;right:auto!important;
+    align-items:flex-start!important;justify-content:space-between!important;gap:0!important;
+    grid-template-columns:none!important
+  }
+  .canvas-meta-main{
+    display:flex!important;box-sizing:border-box!important;flex:0 0 auto!important;
+    width:913px!important;align-items:flex-start!important;justify-content:space-between!important;direction:ltr!important
+  }
+  .canvas-archive-id,
+  .visual-memory-text,
+  .canvas-keywords{
+    display:block!important;margin:0!important;color:#000!important;
+    font-family:var(--font-display)!important;font-size:21px!important;font-weight:600!important;line-height:19px!important
+  }
+  .canvas-archive-id{flex:0 0 auto!important;direction:ltr!important;text-align:left!important;white-space:nowrap!important}
   .visual-memory-text{
-    display:block!important;position:absolute!important;top:536.55px!important;right:164.8px!important;
-    width:405px!important;margin:0!important;direction:rtl!important;text-align:right!important;color:#000!important;
-    font-family:var(--font-display)!important;font-size:22px!important;font-weight:700!important;line-height:25px!important
+    position:static!important;flex:0 0 auto!important;width:537px!important;max-width:537px!important;
+    direction:rtl!important;text-align:right!important;white-space:normal!important
+  }
+  .canvas-keywords{
+    flex:0 0 auto!important;width:376px!important;max-width:376px!important;
+    direction:rtl!important;text-align:right!important;white-space:nowrap!important;
+    overflow:hidden!important;text-overflow:ellipsis!important
   }
 }
 
@@ -1287,73 +1395,29 @@ textarea#memory-input[aria-invalid="true"]:hover{
 <div class="app" id="app">
   <header class="site-header">
     <div class="site-header-left">
-      <button type="button" class="utility-toggle" id="utility-toggle" title="כלי עיבוד">כלים</button>
       <p class="site-tagline">מכופתרת משבצות אוזניים ענקיות</p>
     </div>
     <nav class="site-nav" aria-label="ניווט ראשי">
-      <button type="button" class="site-nav-link is-active" id="nav-generator">מחולל זיכרונות</button>
+      <button type="button" class="site-nav-link is-active" id="nav-generator">רשם זיכרונות</button>
       <button type="button" class="site-nav-link" id="nav-archive">ארכיון</button>
     </nav>
   </header>
 
-  <div class="utility-drawer" id="utility-drawer" hidden>
-    <div class="utility-drawer-header">
-      <span class="utility-drawer-title">כלי עיבוד וארכיון</span>
-      <button type="button" class="utility-close" id="utility-close" aria-label="סגירה">×</button>
-    </div>
+  <!-- Hidden pipeline host (sequence SVG / debug panels); no longer exposed via כלים -->
+  <div id="results" hidden></div>
 
-    <!-- Pictogram bank (view only) -->
-    <div class="bank-upload" id="bank-upload-panel">
-      <div class="bank-upload-hdr">
-        <span class="bank-upload-title">Pictogram bank</span>
-        <button type="button" class="bank-upload-refresh" id="bank-upload-refresh">Refresh</button>
+  <div id="memory-loader" class="memory-loader" hidden aria-live="polite" aria-busy="true">
+    <div class="memory-loader-inner">
+      <div class="memory-loader-anim">
+        <iframe class="memory-loader-frame" title="טוען" src=""></iframe>
       </div>
-      <div class="bank-upload-body">
-        <div class="bank-upload-section">
-          <div class="bank-upload-section-lbl" id="bank-list-label">In the bank</div>
-          <div class="bank-list" id="bank-list">
-            <div class="bank-list-empty">Loading…</div>
-          </div>
-        </div>
-      </div>
+      <p class="memory-loader-status" id="memory-loader-status"></p>
     </div>
-
-    <!-- Settings -->
-    <div class="settings-panel">
-      <button class="settings-toggle" id="settings-toggle">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--t3)">Settings</span>
-        </div>
-        <span class="chevron" id="settings-chevron">&#9662;</span>
-      </button>
-      <div id="settings-content" class="settings-content" hidden>
-        <div>
-          <label class="input-lbl">Processor Mode</label>
-          <div class="mode-toggle">
-            <button class="mode-btn" data-mode="bank-test" id="mode-bank-test">Bank test</button>
-            <button class="mode-btn" data-mode="ai-words" id="mode-ai-words">AI Words</button>
-            <button class="mode-btn" data-mode="local" id="mode-local">Local</button>
-            <button class="mode-btn" data-mode="mock" id="mode-mock">Mock</button>
-            <button class="mode-btn mode-btn-secondary" data-mode="hybrid" id="mode-hybrid" title="Local first, then minimal AI words">Hybrid</button>
-            <button class="mode-btn mode-btn-secondary active" data-mode="anthropic" id="mode-anthropic" title="PROMPT_R1 Rule 1 + Streamline pictogram preview">Full API</button>
-          </div>
-          <div style="font-size:11px;color:var(--t3);line-height:1.55" id="mode-desc">
-            Full API: PROMPT_R1 Rule 1 → Representative Words (Hebrew + English) → Streamline pictogram preview.
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div id="bank-test-picker" class="mb28">
-      <div class="input-lbl" style="margin-bottom:8px">Sample sentences <span style="font-weight:400;text-transform:none;letter-spacing:0">— click to load (Bank test mode)</span></div>
-      <div class="bank-test-chips" id="bank-test-chips"></div>
-    </div>
-    <details class="processor-details">
-      <summary>פרטי העיבוד המלאים</summary>
-      <div id="results"></div>
-    </details>
   </div>
 
+  <div class="view-viewport">
+  <div class="view-track" id="view-track">
+  <div class="view-panel view-panel-generator">
   <main class="workspace">
     <section class="memory-main">
       <div class="input-section memory-entry" id="input-section">
@@ -1365,9 +1429,9 @@ textarea#memory-input[aria-invalid="true"]:hover{
         </div>
         <div class="memory-input-wrap">
           <textarea id="memory-input" dir="rtl" rows="2" maxlength="500"
-            data-placeholder-default="סבא מאוד אהב לטייל והיה לו חשוב שנכיר מקומות בארץ ובעולם."
+            data-placeholder-default="כל שישי הייתי הולך עם סבא לשוק לקנות דגים."
             data-placeholder-focus="יש לכתוב זיכרון עד 20 מילים"
-            placeholder="סבא מאוד אהב לטייל והיה לו חשוב שנכיר מקומות בארץ ובעולם."></textarea>
+            placeholder="כל שישי הייתי הולך עם סבא לשוק לקנות דגים."></textarea>
           <span class="entry-count" id="entry-count">0/20 מילים</span>
         </div>
         <div class="input-footer-wrap">
@@ -1375,10 +1439,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
             <span class="word-count" id="word-count"></span>
             <button class="analyze-btn" id="analyze-btn" disabled>עיבוד זיכרון</button>
           </div>
-          <p class="memory-error-msg" id="memory-error-msg" hidden>על מנת להמשיך לרישום זיכרון יש לוודא כי הזיכרון אינו חורג מ-20 מילים</p>
-          <div id="memory-loader" class="memory-loader" hidden>
-            <iframe class="memory-loader-frame" title="טוען" src=""></iframe>
-          </div>
+          <p class="memory-error-msg" id="memory-error-msg" hidden>כדי להעביר את הזיכרון לרשם הזיכרונות, יש לוודא כי אורכו אינו עולה על 20 מילים.</p>
         </div>
         <button type="button" class="edit-memory-btn" id="edit-memory-btn">
           <span>עריכת הזיכרון</span>
@@ -1388,9 +1449,17 @@ textarea#memory-input[aria-invalid="true"]:hover{
         </button>
       </div>
       <div class="error-card" id="error-card" hidden></div>
-      <h2 class="postcard-heading" id="postcard-heading">הגלויה שלך</h2>
-      <div class="memory-stage" id="memory-stage">
-        <div class="visual-output" id="visual-output" aria-live="polite"></div>
+      <div class="postcard-block">
+        <div class="postcard-intro">
+          <h2 class="postcard-heading" id="postcard-heading">לכל זיכרון יש ייצוג חזותי</h2>
+          <div class="postcard-intro-copy">
+            <p>זיכרון אינו נשמר בדיוק כפי שהיה - בכל פעם שחוזרים אליו, הוא מקבל צורה מעט אחרת.</p>
+            <p>הרישום שלפניך הוא נקודת ההתחלה, אני מזמינה אותך להשתמש בפרמטרים עד שייצוג הזיכרון ירגיש מדויק עבורך.</p>
+          </div>
+        </div>
+        <div class="memory-stage" id="memory-stage">
+          <div class="visual-output" id="visual-output" aria-live="polite"></div>
+        </div>
       </div>
     </section>
 
@@ -1443,34 +1512,34 @@ textarea#memory-input[aria-invalid="true"]:hover{
 
         <section class="side-section visual-settings">
           <div class="range-row">
-            <label for="design-frequency">באיזו תדירות הזיכרון חוזר?</label>
+            <label for="design-frequency">באיזו תדירות הזיכרון עולה?</label>
             <div class="range-control">
               <span class="range-value-bubble" aria-hidden="true">0%</span>
               <input type="range" id="design-frequency" min="0" max="100" value="0" data-range-key="memoryFrequency">
             </div>
-            <div class="range-ends"><span>רחוקה</span><span>קרובה</span></div>
+            <div class="range-ends"><span>לעיתים רחוקות</span><span>לעיתים קרובות</span></div>
           </div>
         </section>
 
         <section class="side-section visual-settings">
           <div class="range-row">
-            <label for="design-clarity">עד כמה הזיכרון עדיין ברור?</label>
+            <label for="design-clarity">עד כמה פרטי הזיכרון ברורים?</label>
             <div class="range-control">
               <span class="range-value-bubble" aria-hidden="true">0%</span>
               <input type="range" id="design-clarity" min="0" max="100" value="0" data-range-key="memoryClarity">
             </div>
-            <div class="range-ends"><span>עמום</span><span>חד</span></div>
+            <div class="range-ends"><span>עמומים</span><span>חדים</span></div>
           </div>
         </section>
 
         <section class="side-section visual-settings">
           <div class="range-row">
-            <label for="design-impact">עד כמה הזיכרון השפיע עלייך?</label>
+            <label for="design-impact">עד כמה הזיכרון משמעותי עבורך?</label>
             <div class="range-control">
               <span class="range-value-bubble" aria-hidden="true">0%</span>
               <input type="range" id="design-impact" min="0" max="100" value="0" data-range-key="memoryImpact">
             </div>
-            <div class="range-ends"><span>הרבה</span><span>מעט</span></div>
+            <div class="range-ends"><span>כמעט לא</span><span>מאוד</span></div>
           </div>
         </section>
 
@@ -1479,11 +1548,12 @@ textarea#memory-input[aria-invalid="true"]:hover{
       </div>
       <div class="sidebar-action">
         <button type="button" class="create-visual-btn" id="create-visual-btn">רישום זיכרון</button>
-        <button type="button" class="export-svg-btn" id="export-svg-btn">ייצוא SVG</button>
       </div>
     </aside>
   </main>
+  </div>
 
+  <div class="view-panel view-panel-archive">
   <div class="archive-shell" id="archive-shell">
     <div class="archive-list-view" id="archive-list-view">
       <div class="archive-memory-list" id="archive-memory-list" role="list"></div>
@@ -1508,12 +1578,15 @@ textarea#memory-input[aria-invalid="true"]:hover{
 
     <div class="archive-detail-view" id="archive-detail-view">
       <img class="archive-detail-frame" id="archive-detail-frame" alt="">
-      <button type="button" class="archive-hit archive-hit-generator" id="archive-hit-generator" aria-label="מחולל זיכרונות"></button>
+      <button type="button" class="archive-hit archive-hit-generator" id="archive-hit-generator" aria-label="רשם זיכרונות"></button>
       <button type="button" class="archive-hit archive-hit-archive" id="archive-hit-archive" aria-label="ארכיון"></button>
       <div class="archive-hit archive-hit-body" id="archive-hit-body" aria-hidden="true"></div>
       <button type="button" class="archive-hit archive-hit-prev" id="archive-nav-prev" aria-label="זיכרון אקראי קודם"></button>
       <button type="button" class="archive-hit archive-hit-next" id="archive-nav-next" aria-label="זיכרון אקראי הבא"></button>
     </div>
+  </div>
+  </div>
+  </div>
   </div>
 </div>
 <script src="/memory-processor/archive/archived-memories.js"></script>
@@ -1561,15 +1634,37 @@ let cachedSequenceBuild=null; // { kind:'bank'|'vrp', slots, rtl?, vrpResult? }
 let lastExpressiveState=null;
 let expressiveParams=null;
 
-/** Pick n words at random, returned in original list order. */
+/** Pick n words at random (bag; order is applied later). */
 function sampleRandomWords(words,n){
-  const indices=words.map((_,i)=>i);
-  const count=Math.min(n,indices.length);
+  const pool=words.slice();
+  const picked=[];
+  const count=Math.min(n,pool.length);
   for(let i=0;i<count;i++){
-    const j=i+Math.floor(Math.random()*(indices.length-i));
-    const tmp=indices[i];indices[i]=indices[j];indices[j]=tmp;
+    const j=Math.floor(Math.random()*pool.length);
+    picked.push(pool.splice(j,1)[0]);
   }
-  return indices.slice(0,count).sort((a,b)=>a-b).map(i=>words[i]);
+  return picked;
+}
+
+/** Order words by first appearance in the memory text. */
+function orderWordsByMemoryAppearance(words,memoryText){
+  const text=String(memoryText||'');
+  return words
+    .map((word,index)=>({word,index,pos:text.indexOf(word)}))
+    .sort((a,b)=>{
+      if(a.pos===-1&&b.pos===-1)return a.index-b.index;
+      if(a.pos===-1)return 1;
+      if(b.pos===-1)return -1;
+      if(a.pos!==b.pos)return a.pos-b.pos;
+      return a.index-b.index;
+    })
+    .map(item=>item.word);
+}
+
+function getMemoryTextForNaming(){
+  return document.getElementById('memory-input')?.value?.trim()
+    ||currentResult?.coreNarrative
+    ||'';
 }
 
 function clearHeadingPreviewCache(){
@@ -1585,14 +1680,15 @@ function getHeadingPreviewText(){
     designHeadingPreviewWords=sampleRandomWords(words,3);
     designHeadingPreviewKey=key;
   }
-  // Re-project selection into current RW order (reorder without re-picking).
+  // Keep only words still present in the current representative list.
   const remaining=designHeadingPreviewWords.slice();
-  return words.filter(w=>{
+  const selected=words.filter(w=>{
     const idx=remaining.indexOf(w);
     if(idx===-1)return false;
     remaining.splice(idx,1);
     return true;
-  }).join(', ');
+  });
+  return orderWordsByMemoryAppearance(selected,getMemoryTextForNaming()).join(', ');
 }
 
 function resetExpressiveParams(){
@@ -1605,6 +1701,31 @@ function getNarratorGender(){
   const checked=document.querySelector('input[name="narrator-gender"]:checked');
   return checked?.value==='female'?'female':'male';
 }
+
+/** Inputs that affect Rule 1 / result identity — captured after a successful process. */
+let processedInputSnapshot=null;
+
+function captureProcessedInputSnapshot(submittedText){
+  processedInputSnapshot={
+    text:String(submittedText??'').trim(),
+    narratorGender:getNarratorGender(),
+  };
+}
+
+function processingInputsMatchStored(submittedText){
+  if(!processedInputSnapshot||!currentResult)return false;
+  const text=String(submittedText??'').trim();
+  return text===processedInputSnapshot.text
+    && getNarratorGender()===processedInputSnapshot.narratorGender;
+}
+
+function restoreResultViewWithoutReprocess(){
+  // Keep currentResult / visual / results HTML as-is; just leave edit mode.
+  exitEditMemory();
+  updateWordCount();
+  syncDesignUI();
+}
+
 let lastEngineExtractor=null;
 let currentRule3Result=null;
 let currentPipelineTrace=null;
@@ -1962,6 +2083,7 @@ async function runRule1AnthropicMinimal(text){
 }
 
 async function runRule1Pipeline(text){
+  await setMemoryLoaderStage('words');
   if(processorMode==='ai-words'){
     const pipeline=await runAiWordsPipeline(text);
     return pipeline.rule1;
@@ -2333,6 +2455,7 @@ async function previewFullApiPictograms(){
   resetExpressiveParams();
   const words=(currentResult.representativeWords||[]).map(rw=>rw.word).filter(Boolean);
   if(!words.length)return;
+  await setMemoryLoaderStage('pictograms');
   if(btn){btn.disabled=true;btn.innerHTML='<span class="vrp-dark-spinner"></span> Loading pictograms…';}
   container.innerHTML=translationLoadingHTML();
   try{
@@ -2680,6 +2803,39 @@ function analyzeBtnLabel(){
 }
 
 const MEMORY_LOADER_SRC='/memory-processor/assets/pictogram-loader.html';
+const LOADER_STATUS_FADE_MS=350;
+const PAGE_TRANSITION_MS=350;
+const LOADER_STATUS={
+  words:'מעבד זיכרון',
+  pictograms:'רושם זיכרון',
+};
+let memoryLoaderStage=null;
+let memoryLoaderStatusTimer=0;
+let memoryLoaderCycle=Promise.resolve();
+
+function waitMs(ms){
+  return new Promise(resolve=>window.setTimeout(resolve,ms));
+}
+
+function renderMemoryLoaderStatus(statusEl,label){
+  if(!statusEl)return;
+  const text=String(label||'');
+  if(!text){
+    statusEl.textContent='';
+    return;
+  }
+  statusEl.replaceChildren();
+  const labelEl=document.createElement('span');
+  labelEl.className='memory-loader-label';
+  labelEl.textContent=text;
+  const gapEl=document.createElement('span');
+  gapEl.className='memory-loader-gap';
+  gapEl.textContent=' ';
+  const dotsEl=document.createElement('span');
+  dotsEl.className='memory-loader-dots';
+  dotsEl.textContent='...';
+  statusEl.append(labelEl,gapEl,dotsEl);
+}
 
 function setProcessingLock(locked){
   const app=document.getElementById('app');
@@ -2687,37 +2843,125 @@ function setProcessingLock(locked){
     if(locked)app.setAttribute('aria-busy','true');
     else app.removeAttribute('aria-busy');
   }
-  // inert blocks click + keyboard; pointer-events CSS is a belt for older engines.
-  for(const el of [
-    document.querySelector('.site-header'),
-    document.querySelector('.workspace'),
-    document.getElementById('utility-drawer'),
-  ]){
-    if(!el)continue;
-    if(locked)el.setAttribute('inert','');
-    else el.removeAttribute('inert');
+  // Top bar stays present and never animates away; only the page wrapper is locked.
+  const viewport=document.querySelector('.view-viewport');
+  if(!viewport)return;
+  if(locked)viewport.setAttribute('inert','');
+  else viewport.removeAttribute('inert');
+}
+
+function clearMemoryLoaderStatusTimer(){
+  if(memoryLoaderStatusTimer){
+    clearTimeout(memoryLoaderStatusTimer);
+    memoryLoaderStatusTimer=0;
   }
 }
 
-function showMemoryLoader(){
+function setMemoryLoaderStage(stage){
+  const statusEl=document.getElementById('memory-loader-status');
+  const next=LOADER_STATUS[stage]||'';
+  if(!statusEl||!next)return Promise.resolve();
+  if(memoryLoaderStage===stage)return Promise.resolve();
+
+  clearMemoryLoaderStatusTimer();
+  const hadText=!!statusEl.textContent.trim();
+  memoryLoaderStage=stage;
+
+  if(!hadText){
+    renderMemoryLoaderStatus(statusEl,next);
+    statusEl.classList.remove('is-fading');
+    return Promise.resolve();
+  }
+
+  statusEl.classList.add('is-fading');
+  return new Promise(resolve=>{
+    memoryLoaderStatusTimer=window.setTimeout(()=>{
+      renderMemoryLoaderStatus(statusEl,next);
+      // Fade back in on the next frame so the opacity transition runs.
+      requestAnimationFrame(()=>{
+        statusEl.classList.remove('is-fading');
+        memoryLoaderStatusTimer=0;
+        resolve();
+      });
+    },LOADER_STATUS_FADE_MS);
+  });
+}
+
+async function enterMemoryLoader(stage='words'){
   const host=document.getElementById('memory-loader');
   const frame=host?.querySelector('.memory-loader-frame');
-  if(!host||!frame)return;
-  document.getElementById('app')?.classList.add('is-memory-loading');
+  const statusEl=document.getElementById('memory-loader-status');
+  const app=document.getElementById('app');
+  if(!host||!frame||!app)return;
+
   setProcessingLock(true);
-  host.hidden=false;
+  clearMemoryLoaderStatusTimer();
+  memoryLoaderStage=stage;
+  if(statusEl){
+    renderMemoryLoaderStatus(statusEl,LOADER_STATUS[stage]||'');
+    statusEl.classList.remove('is-fading');
+  }
   // Restart so the strip animation always begins fresh.
   frame.src='';
   frame.src=MEMORY_LOADER_SRC;
+
+  host.hidden=false;
+  host.classList.remove('is-visible');
+  // Fade the whole page out as one unit, then show only loader + top bar.
+  app.classList.add('is-memory-loading');
+  app.classList.remove('is-page-concealed');
+  await waitMs(PAGE_TRANSITION_MS);
+  app.classList.add('is-page-concealed');
+  await new Promise(resolve=>requestAnimationFrame(()=>{
+    host.classList.add('is-visible');
+    resolve();
+  }));
+  await waitMs(PAGE_TRANSITION_MS);
+}
+
+function showMemoryLoader(stage='words'){
+  memoryLoaderCycle=memoryLoaderCycle
+    .catch(()=>{})
+    .then(()=>enterMemoryLoader(stage));
+  return memoryLoaderCycle;
+}
+
+async function exitMemoryLoader(){
+  const host=document.getElementById('memory-loader');
+  const frame=host?.querySelector('.memory-loader-frame');
+  const statusEl=document.getElementById('memory-loader-status');
+  const app=document.getElementById('app');
+  if(!host){
+    app?.classList.remove('is-memory-loading','is-page-concealed');
+    setProcessingLock(false);
+    return;
+  }
+
+  // Fade loader out while page stays fully concealed — nothing peeks.
+  host.classList.remove('is-visible');
+  await waitMs(PAGE_TRANSITION_MS);
+  host.hidden=true;
+  clearMemoryLoaderStatusTimer();
+  memoryLoaderStage=null;
+  if(statusEl){
+    statusEl.textContent='';
+    statusEl.classList.remove('is-fading');
+  }
+  if(frame)frame.src='';
+
+  // Reveal page as one wrapper fade-in (still at opacity 0 until class clears).
+  app?.classList.remove('is-page-concealed');
+  if(app)void app.offsetWidth;
+  app?.classList.remove('is-memory-loading');
+  setProcessingLock(false);
+  await waitMs(PAGE_TRANSITION_MS);
 }
 
 function hideMemoryLoader(){
-  const host=document.getElementById('memory-loader');
-  const frame=host?.querySelector('.memory-loader-frame');
-  document.getElementById('app')?.classList.remove('is-memory-loading');
-  setProcessingLock(false);
-  if(host)host.hidden=true;
-  if(frame)frame.src='';
+  memoryLoaderCycle=memoryLoaderCycle
+    .catch(()=>{})
+    .then(()=>exitMemoryLoader());
+  return memoryLoaderCycle;
 }
 
 function isEditingMemory(){return !!document.getElementById('app')?.classList.contains('is-editing-memory');}
@@ -2803,7 +3047,7 @@ function cancelEditMemory(){
   const input=document.getElementById('memory-input');
   if(input&&editMemorySnapshot!=null){
     input.value=editMemorySnapshot;
-    input.dir=input.value.match(/[\u0590-\u05FF]/)?'rtl':'auto';
+    input.dir='rtl';
   }
   exitEditMemory();
   if(input)rememberMemoryValue(input.value);
@@ -2822,15 +3066,24 @@ async function analyze(){
   const typedText=raw.trim();
   const text=typedText||MOCK_MEMORY;
   if(!text)return;
+
+  // Update on existing memory with identical inputs → keep result, no loader / pipeline.
+  if(isEditingMemory()&&processingInputsMatchStored(typedText)){
+    restoreResultViewWithoutReprocess();
+    return;
+  }
+
   const btn=document.getElementById('analyze-btn');
   btn.disabled=true;btn.textContent=analyzeBtnLabel();
-  showMemoryLoader();
+  showMemoryLoader('words');
   document.getElementById('error-card').hidden=true;
   document.getElementById('results').innerHTML='';
   document.getElementById('visual-output').innerHTML='';
   document.getElementById('app')?.classList.remove('has-results','has-visual-result');
   MemoryEngineStreamlineSession?.cleanup?.();
   currentResult=null;currentVrpResult=null;currentAraResult=null;currentRule3Result=null;currentPipelineTrace=null;currentFilter='all';designRepresentativeWords=[];clearHeadingPreviewCache();currentCatalogPromise=Promise.resolve();
+  postcardPrintPending=false;postcardSerialAdvancedForCurrent=false;
+  processedInputSnapshot=null;
   // Mock scripted data only for the built-in example when explicitly in mock mode
   const useMockData=processorMode==='mock'&&text===MOCK_MEMORY;
   try{
@@ -2905,12 +3158,13 @@ async function analyze(){
         if(container) renderValidationViolations(violations,container);
       }
     }
+    captureProcessedInputSnapshot(typedText);
   }catch(e){
     const el=document.getElementById('error-card');
     el.textContent=e.message;
     el.hidden=false;
   }finally{
-    hideMemoryLoader();
+    await hideMemoryLoader();
     btn.disabled=false;btn.innerHTML=analyzeBtnLabel();updateWordCount();syncDesignUI();
   }
 }
@@ -3324,6 +3578,58 @@ function cloneSequenceSvg(source){
   return clone;
 }
 
+let canvasPostcardSerial=null;
+let canvasPostcardSerialPromise=null;
+let postcardPrintPending=false;
+let postcardSerialAdvancedForCurrent=false;
+
+function formatCanvasArchiveId(serial=canvasPostcardSerial){
+  const n=Number(serial);
+  const value=Number.isFinite(n)&&n>0?Math.floor(n):null;
+  if(value==null)return '[ — ]';
+  return `[ ${String(value).padStart(3,'0')} ]`;
+}
+
+async function fetchPostcardSerial({force=false}={}){
+  if(!force&&canvasPostcardSerial!=null)return canvasPostcardSerial;
+  if(!force&&canvasPostcardSerialPromise)return canvasPostcardSerialPromise;
+  canvasPostcardSerialPromise=(async()=>{
+    try{
+      const res=await fetch('/api/postcard-serial');
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok)throw new Error(data?.error?.message||'Failed to load postcard serial');
+      const serial=Number(data.serial);
+      canvasPostcardSerial=Number.isFinite(serial)&&serial>0?Math.floor(serial):128;
+    }catch(err){
+      console.warn('postcard serial fetch failed:',err.message||err);
+      if(canvasPostcardSerial==null)canvasPostcardSerial=128;
+    }finally{
+      canvasPostcardSerialPromise=null;
+    }
+    return canvasPostcardSerial;
+  })();
+  return canvasPostcardSerialPromise;
+}
+
+async function completePostcardSerial(){
+  if(postcardSerialAdvancedForCurrent)return null;
+  try{
+    const res=await fetch('/api/postcard-serial',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'complete'}),
+    });
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(data?.error?.message||'Failed to advance postcard serial');
+    postcardSerialAdvancedForCurrent=true;
+    // Keep the on-canvas number as the printed serial; next design will re-fetch.
+    return data;
+  }catch(err){
+    console.warn('postcard serial advance failed:',err.message||err);
+    return null;
+  }
+}
+
 function syncVisualOutput(){
   const source=document.querySelector('#results .seq-display svg');
   const output=document.getElementById('visual-output');
@@ -3333,11 +3639,30 @@ function syncVisualOutput(){
     return;
   }
   if(source){
+    const meta=document.createElement('div');
+    meta.className='canvas-meta';
+
+    const archive=document.createElement('p');
+    archive.className='canvas-archive-id';
+    archive.textContent=formatCanvasArchiveId();
+
+    const main=document.createElement('div');
+    main.className='canvas-meta-main';
+
     const memory=document.createElement('p');
     memory.className='visual-memory-text';
     memory.dir='rtl';
     memory.textContent=currentResult?.coreNarrative||document.getElementById('memory-input')?.value.trim()||'';
-    output.replaceChildren(cloneSequenceSvg(source),memory);
+
+    const keywords=document.createElement('p');
+    keywords.className='canvas-keywords';
+    keywords.dir='rtl';
+    // Canvas name: only the generated 3-word memory name (not the full RW list).
+    keywords.textContent=getHeadingPreviewText();
+
+    main.append(memory,keywords);
+    meta.append(archive,main);
+    output.replaceChildren(meta,cloneSequenceSvg(source));
   }else output.innerHTML='';
 }
 
@@ -3505,8 +3830,8 @@ function syncDesignUI(){
   });
 }
 
-const POSTCARD_PRINT_W=1342;
-const POSTCARD_PRINT_H=678;
+const POSTCARD_PRINT_W=1322;
+const POSTCARD_PRINT_H=643;
 const POSTCARD_PAGE_W_CM=18;
 const POSTCARD_PAGE_H_CM=12.5;
 const POSTCARD_PX_PER_CM=96/2.54;
@@ -3537,13 +3862,14 @@ async function createDesignedVisual(){
   if(!btn)return;
   const app=document.getElementById('app');
   if(app?.classList.contains('has-visual-result')){
+    postcardPrintPending=true;
     window.print();
     return;
   }
   const old=btn.textContent;
   const chosenParams=Object.assign({},expressiveParams);
   btn.disabled=true;btn.textContent=old;
-  showMemoryLoader();
+  showMemoryLoader('pictograms');
   try{
     if(processorMode==='anthropic'&&currentResult){
       await previewFullApiPictograms();
@@ -3556,42 +3882,15 @@ async function createDesignedVisual(){
     refreshExpressiveSequenceDisplay();
     const source=document.querySelector('#results .seq-display svg');
     if(!source)return;
+    postcardSerialAdvancedForCurrent=false;
+    await fetchPostcardSerial({force:true});
     app?.classList.add('has-visual-result');
     syncDesignUI();
   }finally{
-    hideMemoryLoader();
+    await hideMemoryLoader();
     btn.disabled=false;
     btn.textContent=app?.classList.contains('has-visual-result')?'הדפסת זיכרון':old;
   }
-}
-
-function sequenceExportFilename(){
-  const title=(document.getElementById('entry-heading')?.textContent||'').trim();
-  const safe=title.replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,' ').trim().slice(0,80);
-  return `${safe||'pictogram-sequence'}.svg`;
-}
-
-function downloadSequenceSvg(){
-  const source=document.querySelector('#visual-output > svg')
-    || document.querySelector('#results .seq-display svg');
-  if(!source)return;
-  const clone=source.cloneNode(true);
-  if(!clone.getAttribute('xmlns'))clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
-  if(!clone.getAttribute('xmlns:xlink')){
-    const usesXlink=[...clone.querySelectorAll('*')].some(el=>[...el.attributes].some(attr=>attr.name.startsWith('xlink:')));
-    if(usesXlink)clone.setAttribute('xmlns:xlink','http://www.w3.org/1999/xlink');
-  }
-  const serialized=new XMLSerializer().serializeToString(clone);
-  const markup=serialized.startsWith('<?xml')?serialized:`<?xml version="1.0" encoding="UTF-8"?>\n${serialized}`;
-  const blob=new Blob([markup],{type:'image/svg+xml;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const link=document.createElement('a');
-  link.href=url;
-  link.download=sequenceExportFilename();
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
 }
 
 function pct(n){return n==null?'—':`${n}%`;}
@@ -3600,6 +3899,27 @@ let archiveShuffleDeck=[];
 let archiveCurrentId=null;
 let archiveDetailState={memory:null,textHover:false};
 
+const DURATION_MS=400;
+let viewTransitionBusy=false;
+let viewTransitionTimer=0;
+document.documentElement.style.setProperty('--view-transition-ms',`${DURATION_MS}ms`);
+
+function setViewTransitionBusy(busy){
+  viewTransitionBusy=busy;
+  document.getElementById('app')?.classList.toggle('is-view-transitioning',busy);
+  if(viewTransitionTimer){
+    clearTimeout(viewTransitionTimer);
+    viewTransitionTimer=0;
+  }
+  if(busy){
+    viewTransitionTimer=window.setTimeout(()=>{
+      viewTransitionBusy=false;
+      document.getElementById('app')?.classList.remove('is-view-transitioning');
+      viewTransitionTimer=0;
+    },DURATION_MS);
+  }
+}
+
 function framedArchiveMemories(){
   return (Array.isArray(globalThis.ArchivedMemories)?globalThis.ArchivedMemories:[])
     .filter(m=>m?.frames?.default);
@@ -3607,19 +3927,38 @@ function framedArchiveMemories(){
 
 function showArchiveList(){
   const app=document.getElementById('app');
-  app?.classList.add('is-archive');
-  app?.classList.remove('is-archive-detail');
+  if(!app)return;
+  if(app.classList.contains('is-memory-loading'))return;
+  const leavingDetail=app.classList.contains('is-archive-detail');
+  const alreadyArchive=app.classList.contains('is-archive')&&!leavingDetail;
+  if(alreadyArchive)return;
+  if(viewTransitionBusy)return;
+
+  // Generator → archive: track slides left (translateX 0 → -50%)
+  const shouldAnimate=!leavingDetail&&!app.classList.contains('is-archive');
+  if(shouldAnimate)setViewTransitionBusy(true);
+
+  app.classList.add('is-archive');
+  app.classList.remove('is-archive-detail');
   document.getElementById('nav-archive')?.classList.add('is-active');
   document.getElementById('nav-generator')?.classList.remove('is-active');
-  const drawer=document.getElementById('utility-drawer');
-  if(drawer)drawer.hidden=true;
   archiveDetailState={memory:null,textHover:false};
   clearArchiveHover();
 }
 
 function showGeneratorView(){
   const app=document.getElementById('app');
-  app?.classList.remove('is-archive','is-archive-detail');
+  if(!app)return;
+  if(app.classList.contains('is-memory-loading'))return;
+  const alreadyGenerator=!app.classList.contains('is-archive');
+  if(alreadyGenerator)return;
+  if(viewTransitionBusy)return;
+
+  // Archive → generator: track slides right (translateX -50% → 0)
+  const shouldAnimate=app.classList.contains('is-archive');
+  if(shouldAnimate)setViewTransitionBusy(true);
+
+  app.classList.remove('is-archive','is-archive-detail');
   document.getElementById('nav-generator')?.classList.add('is-active');
   document.getElementById('nav-archive')?.classList.remove('is-active');
   archiveDetailState={memory:null,textHover:false};
@@ -3774,17 +4113,18 @@ function bindArchiveInterface(){
 }
 
 function bindDesignedInterface(){
-  const drawer=document.getElementById('utility-drawer');
-  const setDrawer=open=>{if(drawer)drawer.hidden=!open;};
-  document.getElementById('utility-toggle')?.addEventListener('click',()=>setDrawer(drawer?.hidden));
-  document.getElementById('utility-close')?.addEventListener('click',()=>setDrawer(false));
   bindArchiveInterface();
   document.getElementById('edit-memory-btn')?.addEventListener('click',enterEditMemory);
   document.getElementById('cancel-edit-btn')?.addEventListener('click',cancelEditMemory);
   document.getElementById('create-visual-btn')?.addEventListener('click',createDesignedVisual);
-  document.getElementById('export-svg-btn')?.addEventListener('click',downloadSequenceSvg);
   window.addEventListener('beforeprint',fitPostcardForPrint);
-  window.addEventListener('afterprint',clearPostcardPrintFit);
+  window.addEventListener('afterprint',()=>{
+    clearPostcardPrintFit();
+    if(!postcardPrintPending)return;
+    postcardPrintPending=false;
+    // Advance the global counter only after a print flow started from הדפסת זיכרון.
+    completePostcardSerial();
+  });
   const sidebarContent=document.querySelector('.sidebar-content');
   sidebarContent?.addEventListener('scroll',syncSidebarScrollIndicator,{passive:true});
   if(sidebarContent&&window.ResizeObserver)new ResizeObserver(syncSidebarScrollIndicator).observe(sidebarContent);
@@ -4125,17 +4465,18 @@ function updateWordCount(){
 }
 
 /* ─── Settings panel ─── */
-document.getElementById('settings-toggle').addEventListener('click',()=>{
+document.getElementById('settings-toggle')?.addEventListener('click',()=>{
   const c=document.getElementById('settings-content');
   const ch=document.getElementById('settings-chevron');
+  if(!c||!ch)return;
   const open=!c.hidden;c.hidden=open;ch.classList.toggle('open',!open);
 });
 
 /* ─── Mode toggle ─── */
-document.querySelectorAll('.mode-btn').forEach(btn=>{
+document.querySelectorAll('#mode-bank-test, #mode-ai-words, #mode-local, #mode-mock, #mode-hybrid, #mode-anthropic').forEach(btn=>{
   btn.addEventListener('click',()=>{
     processorMode=btn.dataset.mode;
-    document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b===btn));
+    document.querySelectorAll('#mode-bank-test, #mode-ai-words, #mode-local, #mode-mock, #mode-hybrid, #mode-anthropic').forEach(b=>b.classList.toggle('active',b===btn));
     const desc=document.getElementById('mode-desc');
     const isMock=processorMode==='mock';
     const descs={
@@ -4146,7 +4487,7 @@ document.querySelectorAll('.mode-btn').forEach(btn=>{
       local:'Local: deterministic rules only — no API.',
       anthropic:'Full API: PROMPT_R1 Rule 1 → Representative Words (Hebrew + English) → Streamline pictogram preview.',
     };
-    desc.textContent=descs[processorMode]||descs.hybrid;
+    if(desc)desc.textContent=descs[processorMode]||descs.hybrid;
     const picker=document.getElementById('bank-test-picker');
     if(picker)picker.style.display=processorMode==='bank-test'?'block':'none';
     document.getElementById('analyze-btn').textContent=analyzeBtnLabel();
@@ -4212,14 +4553,23 @@ memoryInputEl?.addEventListener('input',e=>{
     revertMemoryInsert(input);
   }
   updateWordCount();
-  input.dir=input.value.match(/[\u0590-\u05FF]/)?'rtl':'auto';
+  input.dir='rtl';
 });
 document.getElementById('analyze-btn').addEventListener('click',analyze);
 memoryInputEl?.addEventListener('keydown',e=>{
   if(e.isComposing)return;
-  if((e.metaKey||e.ctrlKey)&&e.key==='Enter')analyze();
   const input=e.currentTarget;
   if(!input)return;
+
+  // Enter submits the memory (same as עיבוד זיכרון). Shift+Enter keeps a newline.
+  if(e.key==='Enter'&&!e.shiftKey){
+    e.preventDefault();
+    if(input.readOnly)return;
+    const btn=document.getElementById('analyze-btn');
+    if(btn&&!btn.disabled)analyze();
+    return;
+  }
+
   const isSpace=isSpaceKeyEvent(e);
   const isEnter=e.key==='Enter';
   const isPrintable=e.key.length===1&&!e.metaKey&&!e.ctrlKey&&!e.altKey;
