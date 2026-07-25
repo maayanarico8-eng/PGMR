@@ -310,16 +310,17 @@ textarea:focus{border-color:var(--b1)}
 @font-face{font-family:"PGMR Narkiss Block Mono";src:url("/memory-processor/assets/fonts/NarkissBlockMono-Bold-TRIAL.otf") format("opentype");font-style:normal;font-weight:700;font-display:block}
 :root{
   --figma-unit:min(.0520833333vw,1px);
-  --design-blue:#0676fe;
-  --design-blue-hover:#0365dd;
-  --design-blue-deep:#004db8;
-  --design-blue-soft:#f5f9ff;
-  --design-blue-tint:#e9f3ff;
-  --design-blue-border:#b2d4ff;
-  --design-blue-link:#4f9efe;
+  /* Figma 1227:56226 — brown / beige system (was blue) */
+  --design-blue:#462203;
+  --design-blue-hover:#5c3619;
+  --design-blue-deep:#351a02;
+  --design-blue-soft:#f2eeea;
+  --design-blue-tint:#e3d9d0;
+  --design-blue-border:#e3d9d0;
+  --design-blue-link:#462203;
   --design-line:#d9d9d9;
   --design-muted:#ababab;
-  --design-error:#df3838;
+  --design-error:#ba1a1a;
   --font-display:"PGMR Masada","Masada","Arial Hebrew",Arial,sans-serif;
   --font-body:"PGMR Narkiss Block","Narkiss Block","Arial Hebrew",Arial,sans-serif;
   --font-mono:"PGMR Narkiss Block Mono","Narkiss Block Mono","Arial Hebrew",Arial,sans-serif;
@@ -441,9 +442,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .cancel-edit-btn:focus-visible{outline:2px solid var(--design-blue);outline-offset:2px;border-radius:4px}
 .entry-count{
   position:absolute;bottom:calc(14 * var(--figma-unit));left:calc(20 * var(--figma-unit));right:auto;
-  color:var(--design-muted);font-family:var(--font-mono);font-size:calc(14 * var(--figma-unit));
+  color:#bbb;font-family:var(--font-mono);font-size:calc(14 * var(--figma-unit));
   font-weight:400;line-height:calc(18 * var(--figma-unit));text-align:left;direction:ltr;
-  pointer-events:none;visibility:hidden;background:var(--design-blue-soft)
+  pointer-events:none;visibility:hidden;background:#fcf9f6
 }
 .entry-count.is-at-limit{color:var(--design-error)}
 .memory-input-wrap:focus-within .entry-count,
@@ -457,16 +458,17 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .memory-error-msg:not([hidden]){display:block}
 .memory-input-wrap{position:relative;width:100%;height:calc(90 * var(--figma-unit));margin-bottom:calc(24 * var(--figma-unit))}
 textarea#memory-input{
+  /* Figma 1236:56629 — Default #d9d9d9 / Hover #bbb / Active #462203; bg #fcf9f6 */
   width:100%;height:100%;min-height:0;max-height:none;padding:calc(16 * var(--figma-unit)) calc(20 * var(--figma-unit)) calc(36 * var(--figma-unit));
-  resize:none;border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));background:var(--design-blue-soft);
+  resize:none;border:1px solid #d9d9d9;border-radius:calc(8 * var(--figma-unit));background:#fcf9f6;
   color:#000;font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));font-weight:400;
   line-height:calc(20 * var(--figma-unit));text-align:right;direction:rtl;overflow:hidden
 }
-textarea#memory-input::placeholder{color:var(--design-muted);opacity:1}
-textarea#memory-input:hover:not(:focus):not(:focus-visible):not([aria-invalid="true"]){border-color:var(--design-muted)}
+textarea#memory-input::placeholder{color:#bbb;opacity:1}
+textarea#memory-input:hover:not(:focus):not(:focus-visible):not([aria-invalid="true"]){border-color:#bbb}
 textarea#memory-input:focus,
 textarea#memory-input:focus-visible{
-  border-color:var(--design-blue);outline:none;box-shadow:none
+  border-color:#462203;outline:none;box-shadow:none
 }
 textarea#memory-input[aria-invalid="true"],
 textarea#memory-input[aria-invalid="true"]:focus,
@@ -520,31 +522,33 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .word-count{display:none}
 .analyze-btn,.generate-vrp-btn,.create-visual-btn{
+  /* Figma 1230:56272 Primary — Active #462203 / Hover #5c3619 / Disabled #f2eeea+#bbb */
   box-sizing:border-box;
   display:inline-flex;align-items:center;justify-content:center;
   width:calc(237 * var(--figma-unit));height:calc(39 * var(--figma-unit));min-width:0;
   padding:0 calc(24 * var(--figma-unit));border:1px solid transparent;
-  border-radius:calc(8 * var(--figma-unit));background:var(--design-blue);color:#fff;
+  border-radius:calc(8 * var(--figma-unit));background:#462203;color:#fff;
   font-family:var(--font-body);font-size:calc(19 * var(--figma-unit));font-weight:400;line-height:calc(20 * var(--figma-unit));
   text-align:center;cursor:pointer
 }
 .analyze-btn:hover:not(:disabled),.generate-vrp-btn:hover:not(:disabled),.create-visual-btn:hover:not(:disabled){
-  background:var(--design-blue-hover);border-color:transparent;color:#fff
+  background:#5c3619;border-color:transparent;color:#fff
 }
 .analyze-btn:active:not(:disabled),.generate-vrp-btn:active:not(:disabled),.create-visual-btn:active:not(:disabled){
-  background:var(--design-blue);border-color:var(--design-blue-border);color:#fff
+  background:#462203;border-color:transparent;color:#fff
 }
 .analyze-btn:disabled,.generate-vrp-btn:disabled,.create-visual-btn:disabled{
-  background:var(--design-blue-tint);border-color:var(--design-line);color:var(--design-muted);cursor:not-allowed
+  background:#f2eeea;border-color:#d9d9d9;color:#bbb;cursor:not-allowed
 }
 .edit-memory-btn{
-  display:none;border:0;background:none;color:var(--design-blue-link);padding:calc(6 * var(--figma-unit)) calc(8 * var(--figma-unit));
+  /* Figma 1230:56281 — Default #a87e5d / Hover #462203 (text + icon via currentColor) */
+  display:none;border:0;background:none;color:#a87e5d;padding:calc(6 * var(--figma-unit)) calc(8 * var(--figma-unit));
   font-family:var(--font-body);font-size:calc(19 * var(--figma-unit));font-weight:400;line-height:calc(20 * var(--figma-unit));
   cursor:pointer;align-items:center;justify-content:center;gap:calc(6 * var(--figma-unit));direction:ltr;border-radius:calc(8 * var(--figma-unit))
 }
 .edit-memory-btn:hover,
-.edit-memory-btn:focus-visible{color:var(--design-blue-deep)}
-.edit-memory-btn:active{color:var(--design-blue-hover)}
+.edit-memory-btn:focus-visible{color:#462203}
+.edit-memory-btn:active{color:#462203}
 .edit-memory-btn svg{
   width:calc(20 * var(--figma-unit));height:calc(20 * var(--figma-unit));display:block;flex-shrink:0;color:inherit
 }
@@ -589,19 +593,19 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .app.has-results.has-visual-result .input-footer-wrap{display:none}
 .postcard-block{
   display:none;flex:0 0 auto;width:100%;flex-direction:column;align-items:flex-end;
-  gap:calc(56 * var(--figma-unit));margin-top:0
+  gap:calc(27 * var(--figma-unit));margin-top:0
 }
 .app.has-results.has-visual-result .postcard-block{
-  /* Figma 1184:50378 — fill column, pin intro+canvas to bottom, 56px gap */
+  /* Figma 1236:56647 — intro + canvas, 27px gap */
   display:flex;flex:1 1 auto;min-height:0;height:100%;
   justify-content:flex-end;align-items:flex-end
 }
 .postcard-intro{
-  /* Figma 1199:53728 — title + body, gap 16 */
+  /* Figma 1236:56647 / 1227:55923 — title + body, gap 20 */
   box-sizing:border-box;flex:0 0 auto;
   width:calc(894.759 * var(--figma-unit));max-width:100%;height:auto;
   display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;
-  gap:calc(16 * var(--figma-unit));
+  gap:calc(20 * var(--figma-unit));
   color:#000;text-align:right;direction:rtl
 }
 .postcard-heading{
@@ -616,20 +620,20 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .postcard-intro-copy p{margin:0;line-height:calc(24 * var(--figma-unit))}
 .app.has-results:not(.is-editing-memory) textarea#memory-input{
-  cursor:default;border-color:var(--design-line)
+  cursor:default;border-color:#d9d9d9
 }
 .app.has-results:not(.is-editing-memory) textarea#memory-input:hover:not([aria-invalid="true"]),
 .app.has-results:not(.is-editing-memory) textarea#memory-input:focus,
 .app.has-results:not(.is-editing-memory) textarea#memory-input:focus-visible{
-  border-color:var(--design-line);outline:none;box-shadow:none
+  border-color:#d9d9d9;outline:none;box-shadow:none
 }
 .app.is-editing-memory .edit-memory-btn{display:none}
 .app.is-editing-memory .cancel-edit-btn{display:block}
 .app.is-editing-memory .input-footer{display:flex;visibility:visible;justify-content:center;pointer-events:auto}
-.app.is-editing-memory textarea#memory-input:not([aria-invalid="true"]){border-color:var(--design-blue);cursor:text}
+.app.is-editing-memory textarea#memory-input:not([aria-invalid="true"]){border-color:#462203;cursor:text}
 .app.is-editing-memory textarea#memory-input:not([aria-invalid="true"]):focus,
 .app.is-editing-memory textarea#memory-input:not([aria-invalid="true"]):focus-visible{
-  border-color:var(--design-blue);outline:none;box-shadow:none
+  border-color:#462203;outline:none;box-shadow:none
 }
 .app.is-editing-memory textarea#memory-input[aria-invalid="true"],
 .app.is-editing-memory textarea#memory-input[aria-invalid="true"]:focus,
@@ -649,7 +653,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .app.is-editing-memory .design-sidebar .add-word-btn,
 .app.is-editing-memory .design-sidebar .add-word-confirm{
-  background:var(--design-blue-soft);border-color:var(--design-line);color:var(--design-muted);opacity:1
+  background:#f2eeea;border-color:#d9d9d9;color:#bbb;opacity:1
 }
 .app.is-editing-memory .design-sidebar .add-word-btn img,
 .app.is-editing-memory .design-sidebar .add-word-confirm img{
@@ -666,14 +670,14 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .app.is-editing-memory .design-sidebar .create-visual-btn,
 .app.is-editing-memory .design-sidebar .create-visual-btn:disabled{
-  background:var(--design-blue-tint);border:1px solid var(--design-line);color:var(--design-muted);cursor:default
+  background:#f2eeea;border:1px solid #d9d9d9;color:#bbb;cursor:default
 }
 .app:not(.has-results) .memory-stage{display:none}
 .memory-stage{
-  /* Figma 1184:50380 — canvas 1322×643, border #4f2705, radius 8 */
+  /* Figma 1236:56647 / 1227:55926 — canvas 1322×643, border #d9d9d9, radius 8 */
   width:100%;height:calc(643 * var(--figma-unit));min-height:calc(643 * var(--figma-unit));
   max-height:calc(643 * var(--figma-unit));flex:0 0 auto;margin-top:0;
-  border:1px solid #4f2705;border-radius:calc(8 * var(--figma-unit));
+  border:1px solid #d9d9d9;border-radius:calc(8 * var(--figma-unit));
   display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff;padding:0;
   box-sizing:border-box
 }
@@ -724,7 +728,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   font-family:var(--font-display);font-size:calc(21 * var(--figma-unit));font-weight:600;
   line-height:calc(19 * var(--figma-unit))
 }
-.error-card{direction:rtl;margin:8px 0;color:#d42b2b;border-color:#f4a9a9;background:#fff7f7;font-size:11px}
+.error-card{direction:rtl;margin:8px 0;color:#ba1a1a;border-color:#f4a9a9;background:#fff7f7;font-size:11px}
 
 .design-sidebar{
   display:none;box-sizing:border-box;
@@ -869,21 +873,22 @@ textarea#memory-input[aria-invalid="true"]:hover{
   gap:calc(12 * var(--figma-unit)) calc(10 * var(--figma-unit))
 }
 .rep-chip{
+  /* Figma 1236:56553 — Default #d9d9d9 / Hover #bbb / Drag+Delete text #bbb */
   box-sizing:border-box;flex:0 0 auto;
   display:inline-flex;align-items:center;gap:calc(6 * var(--figma-unit));direction:ltr;
   padding:calc(4 * var(--figma-unit)) calc(8 * var(--figma-unit));
-  border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));background:#fff;
+  border:1px solid #d9d9d9;border-radius:calc(8 * var(--figma-unit));background:#fff;
   font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));font-weight:400;line-height:calc(20 * var(--figma-unit));
   color:#000;cursor:grab;user-select:none;white-space:nowrap
 }
-.rep-chip:hover{border-color:var(--design-muted)}
+.rep-chip:hover{border-color:#bbb}
 .rep-chip:has([data-remove-word]:hover){
-  border-style:dashed;border-color:var(--design-muted);color:var(--design-muted)
+  border-style:dashed;border-color:#bbb;color:#bbb
 }
 .rep-chip:has([data-remove-word]:hover) button{
-  color:var(--design-muted)
+  color:#bbb
 }
-.rep-chip.is-dragging{color:var(--design-muted);border-color:var(--design-muted)}
+.rep-chip.is-dragging{color:#bbb;border-color:#bbb;border-style:solid}
 /* Source stays full layout (X visible); only the drag preview clone drops the X. */
 .rep-chip.is-dragging button{color:inherit;pointer-events:none}
 .rep-chip button{
@@ -903,49 +908,52 @@ textarea#memory-input[aria-invalid="true"]:hover{
   direction:rtl
 }
 .add-word-btn{
+  /* Figma 1236:56501 — Default / Hover / Disabled */
   display:flex;align-items:center;gap:calc(8 * var(--figma-unit));direction:ltr;
-  border:1px solid var(--design-blue-border);background:var(--design-blue-tint);
-  color:var(--design-blue-hover);border-radius:calc(8 * var(--figma-unit));padding:calc(8 * var(--figma-unit)) calc(16 * var(--figma-unit));
+  border:1px solid #b09988;background:#f6eee7;color:#a87e5d;
+  border-radius:calc(8 * var(--figma-unit));padding:calc(8 * var(--figma-unit)) calc(16 * var(--figma-unit));
   font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit));cursor:pointer
 }
-.add-word-btn:hover:not(:disabled){border-color:var(--design-blue-hover);background:var(--design-blue-tint)}
+.add-word-btn:hover:not(:disabled){background:#ede1d9;border-color:#b09988;color:#a87e5d}
 .add-word-btn:disabled{
-  background:var(--design-blue-soft);border-color:var(--design-line);color:var(--design-muted);cursor:not-allowed
+  background:#f2eeea;border-color:#d9d9d9;color:#bbb;cursor:not-allowed
 }
 .add-word-btn img{
   width:calc(13 * var(--figma-unit));height:calc(13 * var(--figma-unit));display:block
 }
 .add-word-btn:disabled img{opacity:1;filter:none}
 .add-word-input{
-  display:none;box-sizing:border-box;width:calc(170 * var(--figma-unit));border:1px solid var(--design-blue);border-radius:calc(8 * var(--figma-unit));
+  /* Figma 1236:56522 — Write word field */
+  display:none;box-sizing:border-box;width:calc(170 * var(--figma-unit));border:1px solid #462203;border-radius:calc(8 * var(--figma-unit));
   padding:calc(8 * var(--figma-unit)) calc(16 * var(--figma-unit));font-family:var(--font-mono);background:#fff;color:#000;
   font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit));
   outline:none;box-shadow:none
 }
-.add-word-input::placeholder{color:var(--design-muted);opacity:1}
+.add-word-input::placeholder{color:#bbb;opacity:1}
 .add-word-input:focus,.add-word-input:focus-visible{
-  outline:none!important;box-shadow:none;border-color:var(--design-blue)
+  outline:none!important;box-shadow:none;border-color:#462203
 }
 .add-word-confirm{
+  /* Figma 1236:56522 mini — Default (empty) / Active+Hover (has text) */
   display:none;align-items:center;justify-content:center;
   box-sizing:border-box;min-width:calc(36 * var(--figma-unit));height:calc(36 * var(--figma-unit));
   padding:calc(8 * var(--figma-unit)) calc(12 * var(--figma-unit));
-  border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));
-  background:var(--design-blue-soft);cursor:not-allowed;outline:none;box-shadow:none
+  border:1px solid #bbb;border-radius:calc(8 * var(--figma-unit));
+  background:#f2eeea;cursor:not-allowed;outline:none;box-shadow:none
 }
 .add-word-confirm img{
   width:calc(13 * var(--figma-unit));height:calc(13 * var(--figma-unit));display:block
 }
 .add-word-confirm:focus,.add-word-confirm:focus-visible{outline:none!important;box-shadow:none}
 .add-word-confirm:not(:disabled){
-  background:var(--design-blue-tint);border-color:var(--design-blue-border);cursor:pointer
+  background:#f6eee7;border-color:#b09988;cursor:pointer
 }
 .add-word-confirm:not(:disabled) img{opacity:1;filter:none}
 .add-word-confirm:hover:not(:disabled){
-  background:var(--design-blue-tint);border-color:var(--design-blue-hover)
+  background:#ede1d9;border-color:#b09988
 }
 .add-word-confirm:active:not(:disabled){
-  background:var(--design-blue-tint);border-color:var(--design-blue-border)
+  background:#f6eee7;border-color:#b09988
 }
 .add-word-row.is-editing .add-word-btn{display:none}
 .add-word-row.is-editing .add-word-input{display:block}
@@ -969,17 +977,18 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .narrator-gender-picker .gender-lbl{font-size:11px;font-weight:400;margin-left:8px}
 .narrator-gender-picker label{
+  /* Figma 1236:56577 — Default #d9d9d9+black / Selected #462203 */
   box-sizing:border-box;min-width:calc(74 * var(--figma-unit));height:calc(36 * var(--figma-unit));
   position:relative;padding:calc(8 * var(--figma-unit)) calc(16 * var(--figma-unit));color:#000;
-  border:1px solid var(--design-line);border-radius:calc(8 * var(--figma-unit));background:#fff;
+  border:1px solid #d9d9d9;border-radius:calc(8 * var(--figma-unit));background:#fff;
   font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit));
   cursor:pointer;display:inline-flex;align-items:center;justify-content:center
 }
-.narrator-gender-picker label:hover{border-color:var(--design-muted)}
+.narrator-gender-picker label:hover{border-color:#bbb;color:#000}
 .narrator-gender-picker label:has(input:checked){
-  color:var(--design-blue);border-color:var(--design-blue);background:#fff
+  color:#462203;border-color:#462203;background:#fff
 }
-.narrator-gender-picker label:has(input:checked):hover{border-color:var(--design-blue)}
+.narrator-gender-picker label:has(input:checked):hover{border-color:#462203;color:#462203}
 .narrator-gender-picker input{position:absolute;opacity:0;pointer-events:none}
 .visual-settings{display:none}
 .app.has-visual-result .visual-settings{display:block}
@@ -1000,19 +1009,19 @@ textarea#memory-input[aria-invalid="true"]:hover{
   width:max-content;max-width:100%;display:flex;align-items:center;justify-content:flex-start;
   gap:calc(16 * var(--figma-unit));padding:0;border:0;border-radius:0;background:transparent;direction:rtl
 }
-/* Figma 1087:103162 — white chips, 8px pad, grey idle / blue active */
+/* Figma 1236:56582 — Default #d9d9d9+black / Selected #462203 */
 .source-toggle button{
   box-sizing:border-box;flex:0 0 auto;min-height:calc(36 * var(--figma-unit));
-  border:1px solid var(--design-line);background:#fff;padding:calc(8 * var(--figma-unit));
+  border:1px solid #d9d9d9;background:#fff;padding:calc(8 * var(--figma-unit));
   border-radius:calc(8 * var(--figma-unit));font-family:var(--font-mono);color:#000;
   font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit));
   white-space:nowrap;cursor:pointer
 }
-.source-toggle button:hover{border-color:var(--design-muted);background:#fff;color:#000}
+.source-toggle button:hover{border-color:#bbb;background:#fff;color:#000}
 .source-toggle button.active{
-  border-color:var(--design-blue);color:var(--design-blue);background:#fff
+  border-color:#462203;color:#462203;background:#fff
 }
-.source-toggle button.active:hover{border-color:var(--design-blue);color:var(--design-blue);background:#fff}
+.source-toggle button.active:hover{border-color:#462203;color:#462203;background:#fff}
 .mediated-relation{
   /* Always keep layout space so toggling personal/mediated doesn't jump the card. */
   display:flex;visibility:hidden;pointer-events:none;align-items:center;justify-content:flex-start;
@@ -1053,23 +1062,30 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .range-control input[type=range]:focus{outline:none}
 .range-control input[type=range]:focus-visible{outline:none}
+/* Figma 1236:56600 — Default/After #d9d9d9 border; During use #462203 border; fill #e3d9d0; thumb #462203 */
 .range-control input[type=range]::-webkit-slider-runnable-track{
-  width:100%;height:calc(11.511 * var(--figma-unit));border:1px solid var(--design-line);
+  width:100%;height:calc(11.511 * var(--figma-unit));border:1px solid #d9d9d9;
   border-radius:calc(8 * var(--figma-unit));
-  background:linear-gradient(to right,#fff 0 var(--slider-position,100%),var(--design-blue-tint) var(--slider-position,100%) 100%)
+  background:linear-gradient(to right,#fff 0 var(--slider-position,100%),#e3d9d0 var(--slider-position,100%) 100%)
+}
+.range-control.is-scrubbing input[type=range]::-webkit-slider-runnable-track{
+  border-color:#462203
 }
 .range-control input[type=range]::-webkit-slider-thumb{
   appearance:none;-webkit-appearance:none;width:calc(19.184 * var(--figma-unit));height:calc(20 * var(--figma-unit));
-  margin-top:calc(-4.245 * var(--figma-unit));border:0;border-radius:50%;background:var(--design-blue);cursor:pointer
+  margin-top:calc(-4.245 * var(--figma-unit));border:0;border-radius:50%;background:#462203;cursor:pointer
 }
 .range-control input[type=range]::-moz-range-track{
-  width:100%;height:calc(11.511 * var(--figma-unit));border:1px solid var(--design-line);
+  width:100%;height:calc(11.511 * var(--figma-unit));border:1px solid #d9d9d9;
   border-radius:calc(8 * var(--figma-unit));
-  background:linear-gradient(to right,#fff 0 var(--slider-position,100%),var(--design-blue-tint) var(--slider-position,100%) 100%)
+  background:linear-gradient(to right,#fff 0 var(--slider-position,100%),#e3d9d0 var(--slider-position,100%) 100%)
+}
+.range-control.is-scrubbing input[type=range]::-moz-range-track{
+  border-color:#462203
 }
 .range-control input[type=range]::-moz-range-thumb{
   width:calc(19.184 * var(--figma-unit));height:calc(20 * var(--figma-unit));
-  border:0;border-radius:50%;background:var(--design-blue);cursor:pointer
+  border:0;border-radius:50%;background:#462203;cursor:pointer
 }
 .range-ends{
   display:flex;justify-content:space-between;margin-top:calc(8 * var(--figma-unit));direction:ltr;
@@ -1245,8 +1261,8 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .memory-stage,.app.has-results.has-visual-result .memory-stage{width:100%;height:360px;min-height:360px;margin-top:0;border-radius:8px;padding:0;display:flex}
   .app.has-results:not(.has-visual-result) .memory-stage{display:none}
   .app.has-visual-result .memory-stage{padding:0}
-  .app.has-results.has-visual-result .postcard-block{gap:32px;justify-content:flex-start}
-  .postcard-intro{width:100%;height:auto;gap:16px;justify-content:flex-start}
+  .app.has-results.has-visual-result .postcard-block{gap:27px;justify-content:flex-start}
+  .postcard-intro{width:100%;height:auto;gap:20px;justify-content:flex-start}
   .postcard-heading{font-size:24px;line-height:28px}
   .postcard-intro-copy{font-size:14px;line-height:22px}
   .postcard-intro-copy p{line-height:22px}
@@ -1344,7 +1360,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
     position:relative!important;display:block!important;
     width:1322px!important;max-width:none!important;height:643px!important;min-height:643px!important;
     margin:0!important;padding:0!important;box-sizing:border-box!important;
-    border:1px solid #4f2705!important;border-radius:8px!important;background:#fff!important;
+    border:1px solid #d9d9d9!important;border-radius:8px!important;background:#fff!important;
     overflow:hidden!important;page-break-inside:avoid;break-inside:avoid;transform-origin:top left
   }
   .app.has-visual-result .visual-output,
@@ -4454,7 +4470,7 @@ function updateWordCount(){
       :'איזה זיכרון היית רוצה לשמר?';
   }
   input?.setAttribute('aria-invalid',errorActive?'true':'false');
-  wcEl.style.color=errorActive?'#9B3010':'';
+  wcEl.style.color=errorActive?'#ba1a1a':'';
   const errorMsg=document.getElementById('memory-error-msg');
   if(errorMsg)errorMsg.hidden=!errorActive;
   const wrap=input?.closest('.memory-input-wrap');

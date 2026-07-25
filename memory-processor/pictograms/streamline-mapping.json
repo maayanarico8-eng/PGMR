@@ -1544,6 +1544,186 @@
       },
       "searchQuery": "ears",
       "updatedAt": "2026-07-24T22:25:06.462Z"
+    },
+    "wise": {
+      "hash": "ico_lU1dzLJdm9RrCkdt",
+      "iconName": "Ulule Logo",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "wise",
+      "updatedAt": "2026-07-24T23:29:26.533Z"
+    },
+    "project": {
+      "hash": "ico_mRu4pQJ4voIzeLjvhjinpWeH",
+      "iconName": "Project Notes House",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "project",
+      "updatedAt": "2026-07-24T23:51:46.437Z"
+    },
+    "life": {
+      "hash": "ico_mRu4pQJ4vPHpeLj9ULjUAVHb",
+      "iconName": "Religion Ankh",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "life",
+      "updatedAt": "2026-07-25T00:01:20.860Z"
+    },
+    "leave": {
+      "hash": "ico_mRu4pQJ4vVDf2aEDeG6nlCtk",
+      "iconName": "Logout 2",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "leave",
+      "updatedAt": "2026-07-25T00:07:06.226Z"
+    },
+    "coin collection": {
+      "hash": "ico_mRu4pQJ4vlYO2aEdzpM5pxW8",
+      "iconName": "Crypto Currency Bitcoin Stack Coins",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "coin collection",
+      "updatedAt": "2026-07-25T00:07:16.750Z"
+    },
+    "stamp collection": {
+      "hash": "ico_mRu4pQJ4v3FdeLjM5pP2W0EG",
+      "iconName": "Stamps Famous",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "stamp collection",
+      "updatedAt": "2026-07-25T00:07:28.222Z"
+    },
+    "success": {
+      "hash": "ico_u8WLQhmbsmXTrNNg",
+      "iconName": "On Success Smile",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "success",
+      "updatedAt": "2026-07-25T00:10:18.324Z"
+    },
+    "pictogram": {
+      "hash": "ico_mRu4pQJ4vmrTeLjK1i3ziCVG",
+      "iconName": "Toilet Sign",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "pictogram",
+      "updatedAt": "2026-07-25T00:10:29.600Z"
+    },
+    "group": {
+      "hash": "ico_hbb02aFIIeLiAs6Q",
+      "iconName": "User Multiple Female Group",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "group",
+      "updatedAt": "2026-07-25T00:10:45.872Z"
     }
   }
 }
