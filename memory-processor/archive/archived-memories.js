@@ -7,12 +7,16 @@
  *
  * List hover comes from the separate “Hover a Memory” Figma frame:
  *   crop → previewPictogram; read % → frequency / clarity / impact;
- *   previewPlacement 'top'|'bottom'; optional previewFigmaTop when top Y ≠ 366.72.
+ *   previewFigmaTop → absolute Y of Group 48 on the 1920×1080 frame (extreme-right axis).
+ *   Parameters block is fixed for every memory (Figma y:810, h:121 → bottom y:931),
+ *   bottom-aligned with the pictogram bank on the Pictograms frame — do not store per row.
  *
  * To add a memory: export Click / Hover-text / Hover-a-Memory from Figma into
  *   memory-processor/assets/archive/NNN/detail-{default,hover}.{png|svg}
  *   + preview crop, then set ready:true + frames + list-hover fields below
  * (list title comes from `titles`). See archive/ADDING-MEMORIES.md.
+ *
+ * Icon Y must come from that memory’s Hover a Memory Figma frame — never invent or fallback.
  */
 (function (global) {
   const titles = [
@@ -88,19 +92,21 @@
       clarity: null,
       impact: null,
       previewPictogram: null,
+      previewFigmaTop: null,
       frames: null,
     };
     const extra = ({
+      /* previewFigmaTop = Group 48.y on that memory’s Hover a Memory frame (1920×1080) */
       '001': {
         frequency: 9,
         clarity: 36,
         impact: 71,
         previewPictogram: '/memory-processor/assets/archive/001/preview.png',
-        previewPlacement: 'top',
+        previewFigmaTop: 354.69482421875, // Figma 1147:47021
         ready: true,
         frames: {
           default: '/memory-processor/assets/archive/001/detail-default.svg',
-          hover: '/memory-processor/assets/archive/001/detail-hover.svg',
+          hover: '/memory-processor/assets/archive/001/detail-hover.png',
         },
       },
       '002': {
@@ -108,7 +114,7 @@
         clarity: 61,
         impact: 10,
         previewPictogram: '/memory-processor/assets/archive/002/preview.png',
-        previewPlacement: 'bottom',
+        previewFigmaTop: 120.5087890625, // Figma 1170:28360
         ready: true,
         frames: {
           default: '/memory-processor/assets/archive/002/detail-default.svg',
@@ -120,9 +126,7 @@
         clarity: 83,
         impact: 24,
         previewPictogram: '/memory-processor/assets/archive/003/preview.png',
-        // Figma Hover a Memory — pictogram at x:1629 y:142 w:208 h:195 (top-right)
-        previewPlacement: 'top',
-        previewFigmaTop: 142,
+        previewFigmaTop: 823.6669921875, // Figma 1172:30282
         ready: true,
         frames: {
           default: '/memory-processor/assets/archive/003/detail-default.svg',
@@ -134,9 +138,7 @@
         clarity: 100,
         impact: 100,
         previewPictogram: '/memory-processor/assets/archive/004/preview.svg',
-        // Hover a Memory — pictogram at ~x:1625 y:582 w:213 h:202 (top-right)
-        previewPlacement: 'top',
-        previewFigmaTop: 582,
+        previewFigmaTop: 120.3095703125, // Figma 1172:31261
         ready: true,
         frames: {
           default: '/memory-processor/assets/archive/004/detail-default.svg',
@@ -148,7 +150,7 @@
         clarity: 100,
         impact: 2,
         previewPictogram: '/memory-processor/assets/archive/005/preview.svg',
-        previewPlacement: 'bottom',
+        previewFigmaTop: 589.28125, // Figma 1172:32240
         ready: true,
         frames: {
           default: '/memory-processor/assets/archive/005/detail-default.svg',
@@ -160,9 +162,7 @@
         clarity: 98,
         impact: 77,
         previewPictogram: '/memory-processor/assets/archive/006/preview.svg',
-        // Hover a Memory — pictogram at ~y:473 (top-right, below default 366)
-        previewPlacement: 'top',
-        previewFigmaTop: 473,
+        previewFigmaTop: 589.28125, // Figma 1175:77774
         ready: true,
         frames: {
           default: '/memory-processor/assets/archive/006/detail-default.svg',
@@ -174,9 +174,7 @@
         clarity: 48,
         impact: 10,
         previewPictogram: '/memory-processor/assets/archive/007/preview.svg',
-        // Hover a Memory — dotted portrait ~x:1629 y:100
-        previewPlacement: 'top',
-        previewFigmaTop: 100,
+        previewFigmaTop: 354.6953125, // Figma 1172:33245
         ready: true,
         frames: {
           default: '/memory-processor/assets/archive/007/detail-default.svg',

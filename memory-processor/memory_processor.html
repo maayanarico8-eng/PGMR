@@ -348,8 +348,14 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 }
 .site-tagline{
   /* Figma 1199:53808 / 1244:57435 — Narkiss Block Mono Regular 18 / 19 (same as nav) */
-  display:block;margin:0;color:#000;white-space:nowrap;font-family:var(--font-mono);font-weight:400;
-  font-size:calc(18 * var(--figma-unit));line-height:calc(19 * var(--figma-unit));text-align:right
+  display:block;margin:0;padding:0;border:0;background:none;cursor:default;color:#000;white-space:nowrap;
+  font-family:var(--font-mono);font-weight:400;
+  font-size:calc(18 * var(--figma-unit));line-height:calc(19 * var(--figma-unit));text-align:right;
+  /* Clickable only while a memory card is open (archive detail) */
+  pointer-events:none
+}
+.app.is-archive-detail .site-tagline{
+  pointer-events:auto;cursor:pointer
 }
 .site-nav{
   display:flex;align-items:flex-start;justify-content:flex-end;gap:calc(46 * var(--figma-unit));
@@ -359,7 +365,14 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
   border:0;background:none;padding:0;cursor:pointer;color:#000;text-decoration:none;white-space:nowrap;
   font-family:var(--font-mono);font-size:calc(18 * var(--figma-unit));font-weight:400;line-height:calc(19 * var(--figma-unit))
 }
-.site-nav-link.is-active{font-family:var(--font-mono-bold);font-weight:700}
+/* Active tab is inert everywhere — bold label only; no pointer, hover, or click */
+.site-nav-link.is-active{
+  font-family:var(--font-mono-bold);font-weight:700;
+  pointer-events:none;cursor:default
+}
+.site-nav-link.is-active:hover,
+.site-nav-link.is-active:focus,
+.site-nav-link.is-active:active{cursor:default}
 .app.is-view-transitioning .site-nav-link,
 .app.is-memory-loading .site-nav-link{pointer-events:none;cursor:default}
 .view-viewport{
@@ -1224,34 +1237,53 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .archive-shell{
   position:relative;width:100%;height:100%;min-height:100%
 }
-.app.is-archive-detail{padding:0}
-.app.is-archive-detail .site-header{display:none}
+.app.is-archive-detail{padding:0;position:relative}
+/* Same live top bar (Figma Frame 282) on every archive page — overlays / covers the baked SVG header */
+.app.is-archive-detail .site-header{
+  display:flex;position:absolute;left:50%;top:0;transform:translateX(-50%);z-index:10;
+  width:calc(1920 * var(--figma-unit));max-width:100%;box-sizing:border-box;background:#fcfcfc;
+  /* Frame 282 — x:82.28 y:54.47 w:1754.72 within the 1920 frame */
+  padding:calc(54.46875 * var(--figma-unit)) calc(83 * var(--figma-unit)) 0 calc(82.2802734375 * var(--figma-unit))
+}
 .app.is-archive-detail .archive-shell{
-  height:100%;min-height:100%;display:flex;align-items:center;justify-content:center
+  /* Top-align the 1920 frame so sticky Y matches list hover (viewport Y = Figma Y) */
+  height:100%;min-height:100%;display:flex;align-items:flex-start;justify-content:center
 }
 .app.is-archive-detail .archive-list-view{display:none}
 .archive-detail-view{display:none}
-.app.is-archive-detail .archive-detail-view{display:block}
+.app.is-archive-detail .archive-detail-view{display:block;position:relative;z-index:2}
+/* Live header owns these hits — hide the SVG transparent overlays */
+.app.is-archive-detail .archive-hit-project,
+.app.is-archive-detail .archive-hit-generator,
+.app.is-archive-detail .archive-hit-archive{display:none}
 .archive-memory-list{
+  /* Figma Home Page 1147:47098 — Memory List x:83 y:120 w:1342 */
   display:flex;flex-direction:column;align-items:flex-end;width:calc(1342 * var(--figma-unit));
-  height:100%;overflow-x:hidden;overflow-y:auto;margin:0;
+  height:100%;overflow-x:hidden;overflow-y:auto;margin:calc(1 * var(--figma-unit)) 0 0;
   scrollbar-width:none
 }
 .archive-memory-list::-webkit-scrollbar{display:none}
 .archive-memory-row{
+  /* Figma Memory — h 114 (= pt 4 + lh 110); #bbb rules painted inset so they don't grow the box */
   display:flex;align-items:flex-start;justify-content:flex-end;gap:calc(48 * var(--figma-unit));
-  width:100%;padding-top:calc(4 * var(--figma-unit));
-  border-top:calc(2 * var(--figma-unit)) solid transparent;
-  border-bottom:calc(1 * var(--figma-unit)) solid var(--design-muted);
-  box-sizing:border-box;cursor:default;color:#000;text-align:right;
+  width:100%;height:calc(114 * var(--figma-unit));padding-top:calc(4 * var(--figma-unit));
+  margin-bottom:calc(-1 * var(--figma-unit));border:0;
+  background-image:linear-gradient(#bbb,#bbb);background-size:100% 1px;
+  background-position:bottom;background-repeat:no-repeat;
+  box-sizing:border-box;cursor:default;color:#000;text-align:right;position:relative;
   font-family:var(--font-display);font-weight:600;font-size:calc(70 * var(--figma-unit));
   line-height:calc(110 * var(--figma-unit))
 }
+.archive-memory-row:first-child{
+  background-image:linear-gradient(#bbb,#bbb),linear-gradient(#bbb,#bbb);
+  background-size:100% 1px,100% 1px;background-position:top,bottom
+}
 .archive-memory-row.is-ready{cursor:pointer}
 .archive-memory-row.is-hovered{
-  align-items:center;justify-content:center;
-  border-top:calc(2 * var(--figma-unit)) solid #000;
-  border-bottom:calc(2 * var(--figma-unit)) solid #000
+  /* Figma Memory / Hover — 2px black rails; keep justify-end bookends [001 … ] */
+  z-index:1;align-items:flex-start;justify-content:flex-end;
+  background-image:linear-gradient(#000,#000),linear-gradient(#000,#000);
+  background-size:100% 2px,100% 2px;background-position:top,bottom
 }
 .archive-row-index{
   display:none;align-items:center;flex-shrink:0;font-family:var(--font-display);font-weight:600;
@@ -1263,7 +1295,8 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .archive-row-parens{
   display:flex;align-items:center;gap:calc(40 * var(--figma-unit));width:calc(74 * var(--figma-unit));flex-shrink:0
 }
-.archive-memory-row.is-hovered .archive-row-parens .archive-paren-open{display:none}
+/* Figma hover keeps the open bracket in-flow at 74px width, painted transparent */
+.archive-memory-row.is-hovered .archive-row-parens .archive-paren-open{color:transparent}
 .archive-paren-open,.archive-paren-close{flex:1 0 0;min-width:0}
 .archive-list-view{position:relative;width:100%;height:100%;overflow:hidden}
 /* Figma 1920 frame: ארכיון right edge = 1762+75 = 1837 (= content right with 83px pad).
@@ -1272,28 +1305,24 @@ textarea#memory-input[aria-invalid="true"]:hover{
   position:absolute;left:0;right:0;top:0;bottom:0;display:none;pointer-events:none;z-index:3
 }
 .archive-hover-preview.is-visible{display:block}
-.app.is-archive-detail .archive-hover-preview{display:none}
+/* Detail card SVG owns icon + params + chevrons — never keep the list hover layer mounted too */
+.app.is-archive-detail .archive-hover-preview{display:none!important}
 .archive-hover-pictogram{
-  /* Figma Union 1062:95244 — x:1629.71 y:366.72 w:207.22 h:194.11; right = ארכיון right */
-  position:absolute;right:0;top:calc((366.719482421875 - 119) * var(--figma-unit));
+  /* Figma Group 48 — always extreme-right (right:0); Y set per memory via previewFigmaTop */
+  position:absolute;right:0;top:0;
   width:calc(207.220703125 * var(--figma-unit));height:calc(194.10548400878906 * var(--figma-unit));
   overflow:hidden
-}
-.archive-hover-preview.is-bottom-preview .archive-hover-pictogram{
-  /* Figma grandfather 16 1050:38858 — x:1504 y:806 w:343 h:206; right edge flush to ארכיון */
-  top:calc((806 - 119) * var(--figma-unit));
-  width:calc(343 * var(--figma-unit));height:calc(206 * var(--figma-unit))
 }
 .archive-hover-pictogram img{
   display:block;width:100%;height:100%;object-fit:fill;object-position:right center
 }
 .archive-hover-params{
-  /* Figma Parameters 1050:33496 — x:1464 y:816.11 w:251.01 h:121
-     Anchor from bottom so it stays 1:1 with the 1080 frame (not mixed with 100vh top math). */
+  /* Figma Parameters 1164:28132 — FIXED for every memory: x:1586.99 y:810 w:251 h:121
+     Bottom (y:931) aligns with the pictogram-bank bottom on the Pictograms frame. */
   position:absolute;
-  left:calc((1464 - 83) * var(--figma-unit));
-  top:auto;
-  bottom:calc((1080 - 816.113525390625 - 121) * var(--figma-unit));
+  left:calc((1586.986328125 - 83) * var(--figma-unit));
+  top:calc((810 - 119) * var(--figma-unit));
+  bottom:auto;
   width:calc(251.013916015625 * var(--figma-unit));
   height:calc(121 * var(--figma-unit));
   display:flex;flex-direction:column;align-items:stretch;gap:calc(32 * var(--figma-unit));
@@ -1325,16 +1354,32 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .archive-detail-frame{display:block;width:100%;height:100%;object-fit:fill;pointer-events:none}
 .archive-hit{
-  position:absolute;border:0;background:transparent;padding:0;margin:0;cursor:pointer;appearance:none
+  position:absolute;z-index:4;border:0;background:transparent;padding:0;margin:0;cursor:pointer;appearance:none
 }
 .archive-hit-body{cursor:default}
-/* Figma absolute hit boxes on the 1920×1080 frame */
-.archive-hit-generator{left:calc(1541 * var(--figma-unit));top:calc(54.47 * var(--figma-unit));width:calc(175 * var(--figma-unit));height:calc(19 * var(--figma-unit))}
-.archive-hit-archive{left:calc(1762 * var(--figma-unit));top:calc(54.47 * var(--figma-unit));width:calc(75 * var(--figma-unit));height:calc(19 * var(--figma-unit))}
-/* Shared text-hover zone covering body / representative-words block across memories */
-.archive-hit-body{left:calc(520 * var(--figma-unit));top:calc(280 * var(--figma-unit));width:calc(700 * var(--figma-unit));height:calc(140 * var(--figma-unit))}
-.archive-hit-prev{left:calc(61 * var(--figma-unit));top:calc(975 * var(--figma-unit));width:calc(60 * var(--figma-unit));height:calc(60 * var(--figma-unit))}
-.archive-hit-next{left:calc(1387 * var(--figma-unit));top:calc(975 * var(--figma-unit));width:calc(60 * var(--figma-unit));height:calc(60 * var(--figma-unit))}
+/* Figma Click on Memory 1147:46975 — absolute hit boxes on the 1920×1080 frame */
+/* Frame 282 1199:54049 — project / generator / archive */
+.archive-hit-project{left:calc(82.2802734375 * var(--figma-unit));top:calc(54.46875 * var(--figma-unit));width:calc(362 * var(--figma-unit));height:calc(19 * var(--figma-unit))}
+.archive-hit-generator{left:calc(1566 * var(--figma-unit));top:calc(54.46875 * var(--figma-unit));width:calc(150 * var(--figma-unit));height:calc(19 * var(--figma-unit))}
+.archive-hit-archive{left:calc(1762 * var(--figma-unit));top:calc(54.46875 * var(--figma-unit));width:calc(75 * var(--figma-unit));height:calc(19 * var(--figma-unit))}
+/* close 1164:27543 — abs (1352.80078125, 159.51193237304688) size 38.97613525390625² */
+.archive-hit-close{
+  left:calc(1352.80078125 * var(--figma-unit));
+  top:calc(159.51193237304688 * var(--figma-unit));
+  width:calc(38.97613525390625 * var(--figma-unit));
+  height:calc(38.97613525390625 * var(--figma-unit))
+}
+.archive-hit-close img{display:block;width:100%;height:100%;pointer-events:none}
+/* Memory text 1164:27526 — Memory(78,122)+Frame226(535.945,178)+Information(54.917,0)+text(0,81.828) */
+.archive-hit-body{
+  left:calc(668.861572265625 * var(--figma-unit));
+  top:calc(381.82763671875 * var(--figma-unit));
+  width:calc(392.9998474121094 * var(--figma-unit));
+  height:calc(75 * var(--figma-unit))
+}
+/* Navigation 1288:62156 — chevrons painted in detail SVG; hits transparent only */
+.archive-hit-prev{left:calc(78 * var(--figma-unit));top:calc(989 * var(--figma-unit));width:calc(32 * var(--figma-unit));height:calc(32 * var(--figma-unit))}
+.archive-hit-next{left:calc(1395 * var(--figma-unit));top:calc(989 * var(--figma-unit));width:calc(32 * var(--figma-unit));height:calc(32 * var(--figma-unit))}
 .archive-hit:disabled{cursor:default;pointer-events:none}
 
 @media(max-width:760px){
@@ -1348,11 +1393,10 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .view-viewport{height:auto;min-height:0}
   .app.is-archive .view-viewport{height:calc(100vh - 72px)}
   .app.is-archive .archive-shell{height:100%;min-height:100%}
-  .archive-memory-row{font-size:28px;line-height:44px;gap:16px}
+  .archive-memory-row{height:auto;font-size:28px;line-height:44px;gap:16px;margin-bottom:0}
   .archive-row-index{font-size:28px;line-height:44px}
   .archive-hover-preview.is-visible{position:static;display:flex;flex-direction:column;align-items:flex-end;gap:16px;margin-top:24px;left:auto;right:auto;top:auto;bottom:auto}
-  .archive-hover-pictogram,.archive-hover-preview.is-bottom-preview .archive-hover-pictogram,
-  .archive-hover-params{position:static;width:auto;max-width:100%;height:auto;left:auto;right:auto;top:auto;bottom:auto}
+  .archive-hover-pictogram,.archive-hover-params{position:static;width:auto;max-width:100%;height:auto;left:auto;right:auto;top:auto;bottom:auto}
   .archive-hover-param-value{padding-top:0}
   .archive-hover-params{bottom:auto;top:auto;position:static;height:auto}
   .app.is-archive-detail .archive-shell{height:auto;min-height:0;padding:0}
@@ -1532,11 +1576,11 @@ textarea#memory-input[aria-invalid="true"]:hover{
 <div class="app" id="app">
   <header class="site-header">
     <div class="site-header-left">
-      <p class="site-tagline">מכופתרת משבצות אוזניים ענקיות</p>
+      <button type="button" class="site-tagline" id="site-tagline" aria-disabled="true" tabindex="-1">מכופתרת משבצות אוזניים ענקיות</button>
     </div>
     <nav class="site-nav" aria-label="ניווט ראשי">
-      <button type="button" class="site-nav-link is-active" id="nav-generator">רשם זיכרונות</button>
-      <button type="button" class="site-nav-link" id="nav-archive">ארכיון</button>
+      <button type="button" class="site-nav-link is-active" id="nav-generator" aria-current="page" aria-disabled="true" tabindex="-1">רשם זיכרונות</button>
+      <button type="button" class="site-nav-link" id="nav-archive" aria-current="false" aria-disabled="false">ארכיון</button>
     </nav>
   </header>
 
@@ -1739,11 +1783,15 @@ textarea#memory-input[aria-invalid="true"]:hover{
 
     <div class="archive-detail-view" id="archive-detail-view">
       <img class="archive-detail-frame" id="archive-detail-frame" alt="">
+      <button type="button" class="archive-hit archive-hit-project" id="archive-hit-project" aria-label="מכופתרת משבצות אוזניים ענקיות"></button>
       <button type="button" class="archive-hit archive-hit-generator" id="archive-hit-generator" aria-label="רשם זיכרונות"></button>
       <button type="button" class="archive-hit archive-hit-archive" id="archive-hit-archive" aria-label="ארכיון"></button>
+      <button type="button" class="archive-hit archive-hit-close" id="archive-hit-close" aria-label="סגור זיכרון">
+        <img src="/memory-processor/assets/archive/close-x.svg" alt="" width="39" height="39">
+      </button>
       <div class="archive-hit archive-hit-body" id="archive-hit-body" aria-hidden="true"></div>
-      <button type="button" class="archive-hit archive-hit-prev" id="archive-nav-prev" aria-label="זיכרון אקראי קודם"></button>
-      <button type="button" class="archive-hit archive-hit-next" id="archive-nav-next" aria-label="זיכרון אקראי הבא"></button>
+      <button type="button" class="archive-hit archive-hit-prev" id="archive-nav-prev" aria-label="זיכרון קודם"></button>
+      <button type="button" class="archive-hit archive-hit-next" id="archive-nav-next" aria-label="זיכרון הבא"></button>
     </div>
   </div>
   </div>
@@ -4263,9 +4311,19 @@ async function createDesignedVisual(){
 
 function pct(n){return n==null?'—':`${n}%`;}
 
-let archiveShuffleDeck=[];
 let archiveCurrentId=null;
+let archiveListScrollTop=0;
 let archiveDetailState={memory:null,textHover:false};
+
+/** Fixed archive chevron cycle — never reshuffle, regenerate, or randomize. */
+const ARCHIVE_SHUFFLE_ORDER=[
+  '001','049','006','044','059','057','015','041','055','019',
+  '027','018','029','037','040','024','054','004','047','017',
+  '035','045','009','039','056','028','014','042','038','011',
+  '023','036','003','050','026','033','013','034','043','005',
+  '010','048','016','012','046','030','051','060','032','002',
+  '031','052','007','058','008','021','053','020','022','025'
+];
 
 const DURATION_MS=400;
 let viewTransitionBusy=false;
@@ -4299,6 +4357,10 @@ const CONFIRM_DIALOG_COPY={
     confirm:'התחל מחדש'
   },
   archive:{
+    title:'לעזוב את הזיכרון?',
+    confirm:'עבור לארכיון'
+  },
+  'archive-top':{
     title:'לעזוב את הזיכרון?',
     confirm:'עבור לארכיון'
   }
@@ -4411,9 +4473,9 @@ async function onConfirmDialogConfirm(){
     await fadeGeneratorToFreshWriting();
     return;
   }
-  if(mode==='archive'){
+  if(mode==='archive'||mode==='archive-top'){
     discardCurrentMemory();
-    showArchiveList();
+    showArchiveList({scrollToTop:mode==='archive-top'});
   }
 }
 
@@ -4445,8 +4507,8 @@ function bindConfirmDialog(){
 }
 
 /**
- * ESC layers: confirm dialog first (if open), else cancelEditMemory (same as X).
- * Edit-mode close never opens a confirmation — cancelEditMemory discards immediately.
+ * ESC layers: confirm dialog first (if open), else archive detail close (same as X),
+ * else cancelEditMemory (same as edit X). Edit-mode close never opens a confirmation.
  */
 function bindEscapeLayers(){
   document.addEventListener('keydown',event=>{
@@ -4457,6 +4519,11 @@ function bindEscapeLayers(){
       return;
     }
     const app=document.getElementById('app');
+    if(app?.classList.contains('is-archive-detail')){
+      event.preventDefault();
+      closeArchiveDetail();
+      return;
+    }
     if(app?.classList.contains('is-editing-memory')){
       event.preventDefault();
       cancelEditMemory();
@@ -4464,14 +4531,38 @@ function bindEscapeLayers(){
   });
 }
 
-function showArchiveList(){
+/** Project name → archive list scrolled to top (memory #1 first). */
+function goToArchiveStart(){
+  const app=document.getElementById('app');
+  if(!app)return;
+  if(app.classList.contains('is-memory-loading'))return;
+  if(app.classList.contains('is-confirm-open'))return;
+  if(!app.classList.contains('is-archive')&&isMemoryInProgress()){
+    openConfirmDialog('archive-top');
+    return;
+  }
+  showArchiveList({scrollToTop:true});
+}
+
+/** Close memory card (X / ESC) → list at the scroll position where that memory sits. */
+function closeArchiveDetail(){
+  showArchiveList({restoreScroll:true});
+}
+
+function showArchiveList(opts={}){
   const app=document.getElementById('app');
   if(!app)return;
   if(app.classList.contains('is-memory-loading'))return;
   if(app.classList.contains('is-confirm-open'))return;
   const leavingDetail=app.classList.contains('is-archive-detail');
   const alreadyArchive=app.classList.contains('is-archive')&&!leavingDetail;
-  if(alreadyArchive)return;
+  if(alreadyArchive){
+    if(opts.scrollToTop){
+      const list=document.getElementById('archive-memory-list');
+      if(list)list.scrollTop=0;
+    }
+    return;
+  }
   if(viewTransitionBusy)return;
 
   // Generator → archive: track slides left (translateX 0 → -50%)
@@ -4480,10 +4571,19 @@ function showArchiveList(){
 
   app.classList.add('is-archive');
   app.classList.remove('is-archive-detail');
-  document.getElementById('nav-archive')?.classList.add('is-active');
-  document.getElementById('nav-generator')?.classList.remove('is-active');
+  syncSiteNavActive('archive');
   archiveDetailState={memory:null,textHover:false};
+  archiveCurrentId=null;
   clearArchiveHover();
+
+  const list=document.getElementById('archive-memory-list');
+  if(list){
+    if(opts.scrollToTop){
+      list.scrollTop=0;
+    }else if(opts.restoreScroll&&leavingDetail){
+      list.scrollTop=archiveListScrollTop;
+    }
+  }
 }
 
 function showGeneratorView(){
@@ -4503,8 +4603,7 @@ function showGeneratorView(){
   if(shouldAnimate)setViewTransitionBusy(true);
 
   app.classList.remove('is-archive','is-archive-detail');
-  document.getElementById('nav-generator')?.classList.add('is-active');
-  document.getElementById('nav-archive')?.classList.remove('is-active');
+  syncSiteNavActive('generator');
   archiveDetailState={memory:null,textHover:false};
   clearArchiveHover();
 }
@@ -4512,37 +4611,68 @@ function showGeneratorView(){
 function clearArchiveHover(){
   document.querySelectorAll('.archive-memory-row.is-hovered').forEach(el=>el.classList.remove('is-hovered'));
   const preview=document.getElementById('archive-hover-preview');
+  const pic=document.getElementById('archive-hover-pictogram');
   preview?.classList.remove('is-visible');
   if(preview)preview.setAttribute('aria-hidden','true');
+  if(pic){pic.innerHTML='';pic.style.top='';}
 }
 
-function setArchiveHover(memory,row){
-  document.querySelectorAll('.archive-memory-row.is-hovered').forEach(el=>el.classList.remove('is-hovered'));
-  row?.classList.add('is-hovered');
+/**
+ * Sticky right-side icon + parameters. Same DOM layer for list hover and detail —
+ * only the coordinate space changes (shell vs 1920 frame). Never invent icon Y.
+ */
+function syncArchiveStickyPreview(memory){
   const preview=document.getElementById('archive-hover-preview');
   const pic=document.getElementById('archive-hover-pictogram');
   if(!preview||!pic)return;
-  if(memory?.previewPictogram){
-    pic.innerHTML=`<img src="${memory.previewPictogram}" alt="">`;
-    document.getElementById('archive-hover-frequency').textContent=pct(memory.frequency);
-    document.getElementById('archive-hover-clarity').textContent=pct(memory.clarity);
-    document.getElementById('archive-hover-impact').textContent=pct(memory.impact);
-    const placement=memory.previewPlacement||(memory.id==='001'?'top':'bottom');
-    preview.classList.toggle('is-bottom-preview',placement==='bottom');
-    // Optional Figma absolute Y for top-slot pictograms that aren't the 001 default (366.72)
-    if(placement==='top'&&memory.previewFigmaTop!=null){
-      pic.style.top=`calc((${Number(memory.previewFigmaTop)} - 119) * var(--figma-unit))`;
-    }else{
-      pic.style.top='';
+
+  const hasParams=memory!=null&&memory.frequency!=null&&memory.clarity!=null&&memory.impact!=null;
+  const hasIcon=typeof memory?.previewPictogram==='string'&&memory.previewPictogram;
+  const hasIconY=memory?.previewFigmaTop!=null&&Number.isFinite(Number(memory.previewFigmaTop));
+
+  if(hasIcon&&!hasIconY){
+    console.warn(`[archive] memory ${memory.id} is missing previewFigmaTop — provide its Hover a Memory Figma link`);
+  }
+
+  if(!hasParams&&!(hasIcon&&hasIconY)){
+    pic.innerHTML='';
+    pic.style.top='';
+    preview.classList.remove('is-visible');
+    preview.setAttribute('aria-hidden','true');
+    return;
+  }
+
+  document.getElementById('archive-hover-frequency').textContent=hasParams?pct(memory.frequency):'—';
+  document.getElementById('archive-hover-clarity').textContent=hasParams?pct(memory.clarity):'—';
+  document.getElementById('archive-hover-impact').textContent=hasParams?pct(memory.impact):'—';
+
+  if(hasIcon&&hasIconY){
+    const src=memory.previewPictogram;
+    const existing=pic.querySelector('img');
+    // Keep the same <img> when opening from hover so the icon does not remount/jump.
+    if(!existing||existing.getAttribute('src')!==src){
+      pic.innerHTML=`<img src="${src}" alt="">`;
     }
-    preview.classList.add('is-visible');
-    preview.setAttribute('aria-hidden','false');
+    const y=Number(memory.previewFigmaTop);
+    const inDetail=document.getElementById('app')?.classList.contains('is-archive-detail');
+    // List: shell below 119px header → (Y−119). Detail: absolute Figma Y on the 1920 frame.
+    pic.style.top=inDetail
+      ?`calc(${y} * var(--figma-unit))`
+      :`calc((${y} - 119) * var(--figma-unit))`;
   }else{
     pic.innerHTML='';
     pic.style.top='';
-    preview.classList.remove('is-visible','is-bottom-preview');
-    preview.setAttribute('aria-hidden','true');
   }
+
+  preview.classList.add('is-visible');
+  preview.setAttribute('aria-hidden','false');
+}
+
+function setArchiveHover(memory,row){
+  if(document.getElementById('app')?.classList.contains('is-archive-detail'))return;
+  document.querySelectorAll('.archive-memory-row.is-hovered').forEach(el=>el.classList.remove('is-hovered'));
+  row?.classList.add('is-hovered');
+  syncArchiveStickyPreview(memory);
 }
 
 function preloadArchiveFrames(frames){
@@ -4564,43 +4694,80 @@ function syncArchiveDetailFrame(){
   if(frame.getAttribute('src')!==src)frame.setAttribute('src',src);
 }
 
-function shuffleArchiveDeck(excludeId){
-  const ids=framedArchiveMemories().map(m=>m.id).filter(id=>id!==excludeId);
-  for(let i=ids.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));
-    [ids[i],ids[j]]=[ids[j],ids[i]];
-  }
-  archiveShuffleDeck=ids;
+function archiveMemoryById(id){
+  return (Array.isArray(globalThis.ArchivedMemories)?globalThis.ArchivedMemories:[])
+    .find(m=>m?.id===id)||null;
 }
 
-function shuffleToNextArchiveMemory(){
-  const memories=framedArchiveMemories();
-  if(memories.length<2)return;
-  if(!archiveShuffleDeck.length)shuffleArchiveDeck(archiveCurrentId);
-  const nextId=archiveShuffleDeck.shift();
-  const next=memories.find(m=>m.id===nextId);
-  if(next)openArchiveDetail(next,{fromShuffle:true});
+function archiveCycleIndex(id){
+  return ARCHIVE_SHUFFLE_ORDER.indexOf(id);
+}
+
+/**
+ * Neighbor in ARCHIVE_SHUFFLE_ORDER (circular). delta +1 = forward, −1 = back.
+ * Walks only this fixed list — never randomizes or reshuffles. IDs without a
+ * detail frame yet are stepped over so navigation works while the catalog is
+ * incomplete; once every ID has frames, neighbors match the list exactly
+ * (001→049→006… and 001←025).
+ */
+function archiveCycleNeighbor(id,delta){
+  const n=ARCHIVE_SHUFFLE_ORDER.length;
+  if(!n)return null;
+  let i=archiveCycleIndex(id);
+  if(i<0)i=0;
+  const step=delta<0?-1:1;
+  for(let stepCount=0;stepCount<n;stepCount++){
+    i=(i+step+n)%n;
+    const candidate=archiveMemoryById(ARCHIVE_SHUFFLE_ORDER[i]);
+    if(candidate?.frames?.default)return candidate;
+  }
+  return null;
+}
+
+/** Forward chevron → next ID in the fixed cycle (025 → 001). */
+function goToNextArchiveMemory(){
+  if(!archiveCurrentId)return;
+  const next=archiveCycleNeighbor(archiveCurrentId,1);
+  if(next)openArchiveDetail(next,{fromCycle:true});
+}
+
+/** Back chevron → previous ID in the fixed cycle (001 → 025). */
+function goToPreviousArchiveMemory(){
+  if(!archiveCurrentId)return;
+  const prev=archiveCycleNeighbor(archiveCurrentId,-1);
+  if(prev)openArchiveDetail(prev,{fromCycle:true});
+}
+
+/** Both chevrons are always available in detail — no empty-history / hidden state. */
+function syncArchiveNavButtons(){
+  const prevBtn=document.getElementById('archive-nav-prev');
+  const nextBtn=document.getElementById('archive-nav-next');
+  if(prevBtn)prevBtn.disabled=false;
+  if(nextBtn)nextBtn.disabled=false;
 }
 
 function openArchiveDetail(memory,opts={}){
   if(!memory?.frames?.default)return;
-  if(!opts.fromShuffle&&!memory.ready)return;
+  if(!opts.fromCycle&&!memory.ready)return;
   const app=document.getElementById('app');
-  app?.classList.add('is-archive','is-archive-detail');
-  document.getElementById('nav-archive')?.classList.add('is-active');
-  document.getElementById('nav-generator')?.classList.remove('is-active');
-  if(!opts.fromShuffle)shuffleArchiveDeck(memory.id);
+  if(!app)return;
+
+  if(!opts.fromCycle){
+    // Opened from list — freeze scroll so X/ESC can restore it.
+    const list=document.getElementById('archive-memory-list');
+    archiveListScrollTop=list?list.scrollTop:0;
+  }
+
+  app.classList.add('is-archive','is-archive-detail');
+  syncSiteNavActive('archive');
   archiveCurrentId=memory.id;
   archiveDetailState={memory,textHover:false};
   preloadArchiveFrames(memory.frames);
   const frame=document.getElementById('archive-detail-frame');
   if(frame)frame.alt=memory.title||'';
   syncArchiveDetailFrame();
-  const canShuffle=framedArchiveMemories().length>1;
-  const prevBtn=document.getElementById('archive-nav-prev');
-  const nextBtn=document.getElementById('archive-nav-next');
-  if(prevBtn)prevBtn.disabled=!canShuffle;
-  if(nextBtn)nextBtn.disabled=!canShuffle;
+  syncArchiveNavButtons();
+  // Card SVG is the sole icon/params/chevrons instance — unmount the list hover layer.
   clearArchiveHover();
 }
 
@@ -4631,15 +4798,51 @@ function renderArchiveList(){
   list.onmouseleave=()=>clearArchiveHover();
 }
 
+/** Active tab is inert: bold only — no click, hover, or re-navigation. */
+function syncSiteNavActive(which){
+  const archive=document.getElementById('nav-archive');
+  const generator=document.getElementById('nav-generator');
+  const archiveOn=which==='archive';
+  if(archive){
+    archive.classList.toggle('is-active',archiveOn);
+    archive.setAttribute('aria-current',archiveOn?'page':'false');
+    archive.setAttribute('aria-disabled',archiveOn?'true':'false');
+    archive.tabIndex=archiveOn?-1:0;
+  }
+  if(generator){
+    generator.classList.toggle('is-active',!archiveOn);
+    generator.setAttribute('aria-current',!archiveOn?'page':'false');
+    generator.setAttribute('aria-disabled',!archiveOn?'true':'false');
+    generator.tabIndex=!archiveOn?-1:0;
+  }
+  syncSiteTaglineInteractive();
+}
+
+/** Project name is interactive only while a memory card is open. */
+function syncSiteTaglineInteractive(){
+  const tag=document.getElementById('site-tagline');
+  if(!tag)return;
+  const open=!!document.getElementById('app')?.classList.contains('is-archive-detail');
+  tag.setAttribute('aria-disabled',open?'false':'true');
+  tag.tabIndex=open?0:-1;
+}
+
 function bindArchiveInterface(){
   renderArchiveList();
+  syncSiteNavActive(document.getElementById('app')?.classList.contains('is-archive')?'archive':'generator');
+  document.getElementById('site-tagline')?.addEventListener('click',()=>{
+    if(!document.getElementById('app')?.classList.contains('is-archive-detail'))return;
+    goToArchiveStart();
+  });
   document.getElementById('nav-archive')?.addEventListener('click',(e)=>{
     e.preventDefault();
     const app=document.getElementById('app');
     if(!app)return;
     if(app.classList.contains('is-confirm-open'))return;
+    // Already on archive (list or open card) — active tab does nothing.
+    if(app.classList.contains('is-archive'))return;
     // Mid-creation on generator → confirm before leaving to archive.
-    if(!app.classList.contains('is-archive')&&isMemoryInProgress()){
+    if(isMemoryInProgress()){
       openConfirmDialog('archive');
       return;
     }
@@ -4647,12 +4850,23 @@ function bindArchiveInterface(){
   });
   document.getElementById('nav-generator')?.addEventListener('click',(e)=>{
     e.preventDefault();
+    const app=document.getElementById('app');
+    // Already on generator — active tab does nothing.
+    if(app&&!app.classList.contains('is-archive'))return;
     showGeneratorView();
   });
+  document.getElementById('archive-hit-project')?.addEventListener('click',()=>goToArchiveStart());
   document.getElementById('archive-hit-generator')?.addEventListener('click',()=>showGeneratorView());
-  document.getElementById('archive-hit-archive')?.addEventListener('click',()=>showArchiveList());
-  document.getElementById('archive-nav-prev')?.addEventListener('click',()=>shuffleToNextArchiveMemory());
-  document.getElementById('archive-nav-next')?.addEventListener('click',()=>shuffleToNextArchiveMemory());
+  // Archive tab hit is only meaningful when inactive; while a card is open the live
+  // header owns the tabs and the active ארכיון tab is inert via syncSiteNavActive.
+  document.getElementById('archive-hit-archive')?.addEventListener('click',()=>{
+    const app=document.getElementById('app');
+    if(app?.classList.contains('is-archive'))return;
+    closeArchiveDetail();
+  });
+  document.getElementById('archive-hit-close')?.addEventListener('click',()=>closeArchiveDetail());
+  document.getElementById('archive-nav-prev')?.addEventListener('click',()=>goToPreviousArchiveMemory());
+  document.getElementById('archive-nav-next')?.addEventListener('click',()=>goToNextArchiveMemory());
   const bodyHit=document.getElementById('archive-hit-body');
   bodyHit?.addEventListener('mouseenter',()=>{
     archiveDetailState.textHover=true;

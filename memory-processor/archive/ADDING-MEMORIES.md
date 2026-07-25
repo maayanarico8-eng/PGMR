@@ -31,7 +31,7 @@ From the archive frames for that memory (1920×1080), export **all three**:
 |-------------------------------|----------|---------|
 | **Hover a Memory** | List-row hover — source for pictogram crop + read the three % values | keep for cropping (do not ship the full frame) |
 | **Click on Memory** | Detail idle | `detail-default.png` or `.svg` |
-| **Hover on Memory Text – Reveal Representative Words** | Detail text hover | `detail-hover.png` or `.svg` |
+| **Pictograms** (frame with Memory text-hover) | Detail text hover — representative words + pictogram bank + source info | `detail-hover.png` or `.svg` (prefer PNG if SVG export drops nested pictograms) |
 
 From **Hover a Memory**, also note:
 
@@ -43,14 +43,19 @@ From **Hover a Memory**, also note:
 
 PNG or SVG both work for detail frames (`<img src>`). Prefer whatever Figma exports cleanly at 1920×1080.
 
-### Preview pictogram crop
+### Preview pictogram crop + permanent Y
 
-| Placement | Typical Figma box | Catalog |
-|-----------|-------------------|---------|
-| Top-right (001, 003, …) | ~`x:1629` `w:208` `h:195` — **Y varies per memory** | `previewPlacement: 'top'` + `previewFigmaTop: <Y>` when Y ≠ 366.72 |
-| Bottom-right (002, …) | `x:1504` `y:806` `w:343` `h:206` | `previewPlacement: 'bottom'` |
+On every **Hover a Memory** frame the icon is **Group 48**:
+
+| | Figma (1920×1080) |
+|--|-------------------|
+| Axis | Extreme right — `x ≈ 1629.71`, `w:207.22`, `h:194.11` |
+| Varies per memory | **Y only** (`Group 48.y`) → store as `previewFigmaTop` |
+| Parameters | Always `x:1586.99` `y:810` `w:251` `h:121` — fixed in CSS, not per memory |
 
 Save the crop as `preview.png` or `preview.svg` (white/`#FCFCFC` background). Do **not** commit the full Hover a Memory frame into `assets/archive/NNN/`.
+
+**Never invent Y.** Extract `previewFigmaTop` from that memory’s Hover a Memory Figma link. If a ready memory is missing it, stop and ask — no fallback / random / computed position.
 
 ---
 
@@ -58,8 +63,8 @@ Save the crop as `preview.png` or `preview.svg` (white/`#FCFCFC` background). Do
 
 ```text
 memory-processor/assets/archive/NNN/
-  detail-default.png   # or .svg  ← Click on Memory
-  detail-hover.png     # or .svg  ← Hover on Memory Text
+  detail-default.png   # or .svg  ← Click on Memory (open card)
+  detail-hover.png     # or .svg  ← Pictograms (hover the memory text)
   preview.png          # crop from Hover a Memory (required for list hover UI)
 ```
 
@@ -90,8 +95,7 @@ Edit only:
   clarity: 83,            // בהירות הזיכרון
   impact: 24,             // השפעת הזיכרון
   previewPictogram: '/memory-processor/assets/archive/004/preview.png',
-  previewPlacement: 'top', // or 'bottom' — match Figma
-  previewFigmaTop: 142,    // only when top Y ≠ 001’s default 366.72
+  previewFigmaTop: 120.31, // Group 48.y from THIS memory’s Hover a Memory frame — required
   ready: true,             // required — row becomes clickable
   frames: {
     default: '/memory-processor/assets/archive/004/detail-default.svg',
@@ -104,13 +108,14 @@ Rules:
 
 - `ready: true` **and** `frames.default` are required for click → detail.
 - `frames.hover` is required for text-hover swap.
-- List hover needs `previewPictogram` **and** the three % fields — otherwise the row hover panel stays empty.
-- `previewPlacement: 'top' | 'bottom'` — use `'bottom'` when the pictogram sits in the 1504×806 slot (like 002).
-- `previewFigmaTop` — Figma absolute Y for top-slot pictograms that are not at 366.72 (003 uses `142`).
+- List hover needs `previewPictogram`, `previewFigmaTop`, **and** the three % fields.
+- `previewFigmaTop` — permanent absolute Y of Group 48 on that memory’s Hover a Memory frame. Same every session.
+- Parameters % text always renders at the shared CSS position (Figma y:810) — do not store a per-memory params position.
 - Paths are site-root absolute (`/memory-processor/assets/...`).
 - Do **not** add layout HTML/CSS for the detail content of that memory.
 - Do **not** add a `frames.bank` field (removed from the product).
-- Do **not** ship the full **Hover a Memory** frame as a detail asset — HTML builds the list; only the pictogram crop + % numbers are used.
+- Do **not** ship the full **Hover a Memory** frame as a detail asset — HTML builds the list; only the pictogram crop + % numbers + Y are used.
+- Do **not** use `previewPlacement` (removed).
 
 ---
 
@@ -130,7 +135,7 @@ Rules:
 
 ```bash
 # from repo root — only the new assets + archived-memories.js
-# (include memory_processor.html only if previewPlacement / previewFigmaTop behavior changed)
+# (include memory_processor.html only if hover layout behavior changed)
 git add memory-processor/archive/archived-memories.js memory-processor/assets/archive/NNN/
 git commit -m "Add archive memory NNN via Figma frame exports."
 git push origin main
