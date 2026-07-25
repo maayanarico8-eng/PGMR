@@ -3179,7 +3179,10 @@ function exitEditMemory(){
   if(btn&&!btn.querySelector('.spinner'))btn.textContent=analyzeBtnLabel();
 }
 
-/** Close edit without applying changes — restore text and return to results view. */
+/**
+ * Close edit mode (X and ESC share this). No confirmation dialog — ever.
+ * Closes immediately and discards unsaved edits by restoring the snapshot.
+ */
 function cancelEditMemory(){
   const app=document.getElementById('app');
   if(!app?.classList.contains('is-editing-memory'))return;
@@ -3950,16 +3953,15 @@ function animateResetParams(){
     start[id]=input?Number(input.value)||0:0;
   });
   const slidersNeedReset=DESIGN_RANGE_IDS.some(id=>start[id]!==0);
-  // Source snaps back immediately; sliders animate when off default.
+  // Percentages vanish immediately; only thumbs animate. Source snaps to default.
+  clearRangeTouched();
   resetMemorySourceToDefault();
   if(!slidersNeedReset){
-    clearRangeTouched();
     refreshExpressiveSequenceDisplay();
     syncVisualOutput();
     syncResetParamsButton();
     return;
   }
-  setRangeScrubbing(true);
   const duration=250;
   const t0=performance.now();
   const easeOut=t=>1-Math.pow(1-t,3);
@@ -3975,6 +3977,8 @@ function animateResetParams(){
     const frame={};
     DESIGN_RANGE_IDS.forEach(id=>{frame[id]=Math.round(start[id]*(1-k));});
     applyDesignRangeFrame(frame);
+    // Keep labels hidden while handles move (applyDesignRangeFrame must not re-show them).
+    clearRangeTouched();
     if(t<1)resetParamsAnim=requestAnimationFrame(step);
     else finish();
   };
@@ -4299,6 +4303,11 @@ async function onConfirmDialogConfirm(){
   }
 }
 
+function isConfirmDialogOpen(){
+  const root=document.getElementById('confirm-dialog');
+  return !!root&&!root.hidden&&root.classList.contains('is-open');
+}
+
 function bindConfirmDialog(){
   const root=document.getElementById('confirm-dialog');
   const confirmBtn=document.getElementById('confirm-dialog-confirm');
@@ -4306,12 +4315,7 @@ function bindConfirmDialog(){
   cancelBtn?.addEventListener('click',()=>closeConfirmDialog());
   confirmBtn?.addEventListener('click',()=>{onConfirmDialogConfirm();});
   root?.addEventListener('keydown',event=>{
-    if(root.hidden||!root.classList.contains('is-open'))return;
-    if(event.key==='Escape'){
-      event.preventDefault();
-      closeConfirmDialog();
-      return;
-    }
+    if(!isConfirmDialogOpen())return;
     if(event.key!=='Tab'||!confirmBtn||!cancelBtn)return;
     // DOM order: confirm (left) then cancel (right); initial focus is cancel.
     const first=confirmBtn;
@@ -4322,6 +4326,26 @@ function bindConfirmDialog(){
     }else if(!event.shiftKey&&document.activeElement===last){
       event.preventDefault();
       first.focus();
+    }
+  });
+}
+
+/**
+ * ESC layers: confirm dialog first (if open), else cancelEditMemory (same as X).
+ * Edit-mode close never opens a confirmation — cancelEditMemory discards immediately.
+ */
+function bindEscapeLayers(){
+  document.addEventListener('keydown',event=>{
+    if(event.key!=='Escape'||event.isComposing)return;
+    if(isConfirmDialogOpen()){
+      event.preventDefault();
+      closeConfirmDialog();
+      return;
+    }
+    const app=document.getElementById('app');
+    if(app?.classList.contains('is-editing-memory')){
+      event.preventDefault();
+      cancelEditMemory();
     }
   });
 }
@@ -4529,6 +4553,7 @@ function bindArchiveInterface(){
 function bindDesignedInterface(){
   bindArchiveInterface();
   bindConfirmDialog();
+  bindEscapeLayers();
   document.getElementById('restart-memory-btn')?.addEventListener('click',()=>{
     if(!isMemoryInProgress())return;
     openConfirmDialog('restart');
