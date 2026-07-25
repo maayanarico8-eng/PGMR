@@ -101,12 +101,12 @@
         frequency: 9,
         clarity: 36,
         impact: 71,
-        previewPictogram: '/memory-processor/assets/archive/001/preview.png',
+        previewPictogram: '/memory-processor/assets/archive/001/preview.svg',
         previewFigmaTop: 354.69482421875, // Figma 1147:47021
         ready: true,
         frames: {
           default: '/memory-processor/assets/archive/001/detail-default.svg',
-          hover: '/memory-processor/assets/archive/001/detail-hover.png',
+          hover: '/memory-processor/assets/archive/001/detail-hover.svg',
         },
       },
       '002': {
