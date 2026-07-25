@@ -342,8 +342,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
   display:flex;align-items:flex-start;gap:calc(16 * var(--figma-unit));min-width:0;flex:0 1 auto
 }
 .site-tagline{
-  display:block;margin:0;color:#000;white-space:nowrap;font-family:var(--font-display);font-weight:400;
-  font-size:calc(21 * var(--figma-unit));line-height:calc(19 * var(--figma-unit));text-align:right
+  /* Figma 1199:53808 / 1244:57435 — Narkiss Block Mono Regular 18 / 19 (same as nav) */
+  display:block;margin:0;color:#000;white-space:nowrap;font-family:var(--font-mono);font-weight:400;
+  font-size:calc(18 * var(--figma-unit));line-height:calc(19 * var(--figma-unit));text-align:right
 }
 .site-nav{
   display:flex;align-items:flex-start;justify-content:flex-end;gap:calc(46 * var(--figma-unit));
@@ -384,7 +385,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .view-panel{
   box-sizing:border-box;flex:0 0 50%;width:50%;min-width:0;height:100%;overflow:hidden
 }
-.view-panel-generator{overflow:visible}
+.view-panel-generator{overflow:visible;transition:opacity 200ms ease}
+.view-panel-generator.is-fading{opacity:0}
 .app.is-view-transitioning .view-panel-generator,
 .app.is-memory-loading .view-panel-generator{overflow:hidden}
 .workspace{
@@ -540,6 +542,61 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .analyze-btn:disabled,.generate-vrp-btn:disabled,.create-visual-btn:disabled{
   background:#f2eeea;border-color:#d9d9d9;color:#bbb;cursor:not-allowed
 }
+.restart-memory-btn{
+  /* Figma 1244:56681 Secondary — Active white+#462203 / Hover #f6eee7 / Disabled #f2eeea+#bbb */
+  box-sizing:border-box;
+  display:inline-flex;align-items:center;justify-content:center;
+  width:calc(237 * var(--figma-unit));height:calc(39 * var(--figma-unit));min-width:0;
+  padding:0 calc(24 * var(--figma-unit));border:1px solid #462203;
+  border-radius:calc(8 * var(--figma-unit));background:#fff;color:#462203;
+  font-family:var(--font-body);font-size:calc(19 * var(--figma-unit));font-weight:400;line-height:calc(20 * var(--figma-unit));
+  text-align:center;cursor:pointer
+}
+.restart-memory-btn:hover:not(:disabled){
+  background:#f6eee7;border-color:#462203;color:#462203
+}
+.restart-memory-btn:active:not(:disabled){
+  background:#fff;border-color:#462203;color:#462203
+}
+.restart-memory-btn:disabled{
+  background:#f2eeea;border-color:#d9d9d9;color:#bbb;cursor:not-allowed
+}
+/* Figma 1256:58474 / 1262:59107 — confirmation dialog */
+.confirm-dialog-root{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity 200ms ease,visibility 200ms ease
+}
+.confirm-dialog-root.is-open{opacity:1;visibility:visible;pointer-events:auto}
+.confirm-dialog-scrim{
+  position:absolute;inset:0;background:rgba(217,217,217,.5)
+}
+.confirm-dialog{
+  position:relative;z-index:1;box-sizing:border-box;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:calc(50 * var(--figma-unit));
+  height:calc(284 * var(--figma-unit));
+  padding:calc(24 * var(--figma-unit)) calc(64 * var(--figma-unit));
+  border:1px solid #d9d9d9;border-radius:calc(8 * var(--figma-unit));background:#fff;
+  box-shadow:0 2px 3px rgba(0,0,0,.1)
+}
+.confirm-dialog-copy{
+  display:flex;flex-direction:column;align-items:center;gap:calc(24 * var(--figma-unit));
+  text-align:center;color:#000
+}
+.confirm-dialog-title{
+  margin:0;font-family:var(--font-body);font-size:calc(22 * var(--figma-unit));font-weight:500;
+  line-height:calc(28 * var(--figma-unit));direction:rtl
+}
+.confirm-dialog-body{
+  margin:0;font-family:var(--font-mono);font-size:calc(17 * var(--figma-unit));font-weight:400;
+  line-height:calc(25 * var(--figma-unit));direction:rtl
+}
+.confirm-dialog-actions{
+  display:flex;align-items:flex-start;gap:calc(40 * var(--figma-unit));direction:ltr
+}
+.app.is-confirm-open .view-viewport{pointer-events:none}
+.app.is-confirm-open .site-nav-link{pointer-events:none;cursor:default}
 .edit-memory-btn{
   /* Figma 1230:56281 — Default #a87e5d / Hover #462203 (text + icon via currentColor) */
   display:none;border:0;background:none;color:#a87e5d;padding:calc(6 * var(--figma-unit)) calc(8 * var(--figma-unit));
@@ -550,7 +607,8 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .edit-memory-btn:focus-visible{color:#462203}
 .edit-memory-btn:active{color:#462203}
 .edit-memory-btn svg{
-  width:calc(20 * var(--figma-unit));height:calc(20 * var(--figma-unit));display:block;flex-shrink:0;color:inherit
+  /* Figma 1230:56289 / 1256:58452 — rounded edit, 17.968×18 ≈ 18 */
+  width:calc(18 * var(--figma-unit));height:calc(18 * var(--figma-unit));display:block;flex-shrink:0;color:inherit
 }
 .edit-memory-btn svg path{fill:currentColor}
 .app.has-results .entry-heading-row{margin:0}
@@ -741,7 +799,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .sidebar-body{
   flex:1;min-height:0;box-sizing:border-box;overflow:hidden;position:relative;
   padding:calc(24 * var(--figma-unit));
-  padding-bottom:calc(111 * var(--figma-unit))
+  padding-bottom:calc(166 * var(--figma-unit))
 }
 .sidebar-content{
   width:100%;max-width:none;min-width:0;height:100%;
@@ -780,8 +838,9 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 /* Approved postcard sidebar — Figma 1006:14426 / 1047:26004 */
 .app.has-visual-result .pictogram-section{
-  padding:0;border:0;margin:0 0 calc(32 * var(--figma-unit))
+  padding:0;border:0;margin:0 0 calc(32 * var(--figma-unit));overflow:visible
 }
+.app.has-visual-result .pictogram-section .side-heading-row{overflow:visible}
 .app.has-visual-result .rep-count,
 .app.has-visual-result .add-word-row,
 .app.has-visual-result .side-copy,
@@ -808,7 +867,8 @@ textarea#memory-input[aria-invalid="true"]:hover{
   display:block;margin:0;font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));
   line-height:calc(20 * var(--figma-unit));color:#000;white-space:nowrap
 }
-.app.has-visual-result .pictogram-section .side-heading{margin-bottom:calc(16 * var(--figma-unit))}
+.app.has-visual-result .pictogram-section .side-heading-row{margin-bottom:calc(16 * var(--figma-unit))}
+.app.has-visual-result .pictogram-section .side-heading{margin-bottom:0}
 .app.has-visual-result .visual-params-copy{
   display:block;width:100%;margin:0 0 calc(16 * var(--figma-unit));
   font-family:var(--font-mono);font-size:calc(13 * var(--figma-unit));font-weight:400;
@@ -856,6 +916,30 @@ textarea#memory-input[aria-invalid="true"]:hover{
   margin:0;flex:1 1 auto;min-width:0;font-family:var(--font-body);font-size:calc(22 * var(--figma-unit));font-weight:500;
   line-height:calc(28 * var(--figma-unit));color:#000;text-align:right
 }
+/* Figma 1244:57802 / 1244:57369 — reset next to ייצוג חזותי (left edge) */
+.reset-params-btn{
+  position:relative;display:none;flex:0 0 auto;align-items:center;justify-content:center;
+  width:calc(18 * var(--figma-unit));height:calc(18 * var(--figma-unit));margin:0;padding:0;
+  border:0;border-radius:0;background:transparent;cursor:pointer;color:inherit
+}
+.app.has-visual-result .reset-params-btn{display:inline-flex}
+.reset-params-btn img{display:block;width:100%;height:100%;pointer-events:none}
+.reset-params-btn:disabled{cursor:default}
+.reset-params-tooltip{
+  /* Figma 1244:57799 — above icon, 8px gap, centered */
+  position:absolute;z-index:3;left:50%;bottom:calc(100% + 8 * var(--figma-unit));
+  transform:translateX(-50%);box-sizing:border-box;
+  display:flex;align-items:center;justify-content:center;
+  min-width:calc(124 * var(--figma-unit));height:calc(28 * var(--figma-unit));
+  padding:calc(4 * var(--figma-unit)) calc(16 * var(--figma-unit));
+  border:1px solid #eee;border-radius:calc(4 * var(--figma-unit));background:#fff;
+  box-shadow:0 2px 6px rgba(0,0,0,.1);
+  font-family:var(--font-body);font-size:calc(15 * var(--figma-unit));font-weight:400;
+  line-height:calc(20 * var(--figma-unit));color:#000;text-align:center;white-space:nowrap;direction:rtl;
+  opacity:0;visibility:hidden;pointer-events:none
+}
+.reset-params-btn:hover:not(:disabled) .reset-params-tooltip,
+.reset-params-btn:focus-visible:not(:disabled) .reset-params-tooltip{opacity:1;visibility:visible}
 .rep-count{
   margin:0;flex:0 0 auto;font-family:var(--font-mono);font-size:calc(13 * var(--figma-unit));font-weight:400;
   line-height:calc(18 * var(--figma-unit));color:var(--design-muted);direction:ltr;white-space:nowrap;text-align:left
@@ -1093,9 +1177,11 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .range-ends span{direction:rtl}
 .sidebar-action{
-  position:absolute;z-index:2;left:-1px;right:-1px;bottom:-1px;height:calc(87 * var(--figma-unit));
+  /* Figma 1244:57053 — primary + secondary stacked, gap 16, padding 24 → height 142 */
+  position:absolute;z-index:2;left:-1px;right:-1px;bottom:-1px;height:calc(142 * var(--figma-unit));
   margin:0;border:1px solid var(--design-line);border-radius:0 0 calc(8 * var(--figma-unit)) calc(8 * var(--figma-unit));
-  padding:calc(24 * var(--figma-unit));display:flex;align-items:flex-end;justify-content:center;background:#fff
+  padding:calc(24 * var(--figma-unit));display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  gap:calc(16 * var(--figma-unit));background:#fff
 }
 
 .processor-details{margin-top:14px;border-top:1px solid var(--b3);padding-top:14px}
@@ -1274,9 +1360,9 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .design-sidebar,.app.has-results .design-sidebar{width:100%;height:auto;min-height:620px;max-height:none;border-radius:8px}
   .app.has-results .design-sidebar{display:flex}
   .app.has-results .edit-memory-btn{position:absolute;left:0;bottom:0;height:39px;margin-top:0;font-size:18px;line-height:20px;padding:6px 8px;gap:6px}
-  .app.has-results .edit-memory-btn svg{width:20px;height:20px}
+  .app.has-results .edit-memory-btn svg{width:18px;height:18px}
   .app.has-results .input-footer-wrap{min-height:39px}
-  .sidebar-body{padding:24px;padding-bottom:111px;position:relative}
+  .sidebar-body{padding:24px;padding-bottom:166px;position:relative}
   .sidebar-content{width:100%;max-width:none;padding:0}
   .sidebar-scroll-indicator{
     position:absolute;top:24px;bottom:111px;right:8.5px;width:7px;display:block
@@ -1289,6 +1375,8 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .app.has-visual-result .pictogram-section{padding:0;margin-bottom:32px;border:0}
   .side-heading-row{gap:16px;margin-bottom:16px}
   .side-heading{font-size:22px;line-height:28px}
+  .reset-params-btn{width:18px;height:18px}
+  .reset-params-tooltip{min-width:124px;height:28px;padding:4px 16px;border-radius:4px;font-size:15px;line-height:20px;bottom:calc(100% + 8px)}
   .rep-count{font-size:13px;line-height:18px}
   .rep-chips{gap:12px 10px}
   .rep-chip,.add-word-btn{padding:4px 8px;gap:6px;border-radius:8px;font-size:15px;line-height:20px}
@@ -1316,8 +1404,8 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .range-control input[type=range]::-moz-range-track{height:11.511px;border-radius:5.755px}
   .range-control input[type=range]::-moz-range-thumb{width:19.184px;height:20px}
   .range-ends{margin-top:8px;font-size:14px;line-height:17px}
-  .sidebar-action{height:87px;padding:24px;border-radius:0 0 8px 8px}
-  .create-visual-btn{width:237px;height:39px;padding:0 24px;border-radius:8px;font-size:19px;line-height:20px;display:inline-flex;align-items:center;justify-content:center;text-align:center}
+  .sidebar-action{height:142px;padding:24px;border-radius:0 0 8px 8px;gap:16px}
+  .create-visual-btn,.restart-memory-btn{width:237px;height:39px;padding:0 24px;border-radius:8px;font-size:19px;line-height:20px;display:inline-flex;align-items:center;justify-content:center;text-align:center}
 }
 
 /* Print: only the canvas (sequence + in-canvas sentence), page 18×12.5cm */
@@ -1419,6 +1507,20 @@ textarea#memory-input[aria-invalid="true"]:hover{
     </nav>
   </header>
 
+  <div class="confirm-dialog-root" id="confirm-dialog" hidden aria-hidden="true">
+    <div class="confirm-dialog-scrim" id="confirm-dialog-scrim"></div>
+    <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title" aria-describedby="confirm-dialog-body">
+      <div class="confirm-dialog-copy">
+        <h2 class="confirm-dialog-title" id="confirm-dialog-title">להתחיל מחדש?</h2>
+        <p class="confirm-dialog-body" id="confirm-dialog-body">הזיכרון שלפניך יימחק. אפשר תמיד לכתוב אותו שוב,<br>אבל כמו כל זיכרון, הוא יחזור בצורה קצת אחרת.</p>
+      </div>
+      <div class="confirm-dialog-actions">
+        <button type="button" class="restart-memory-btn" id="confirm-dialog-confirm">התחל מחדש</button>
+        <button type="button" class="create-visual-btn" id="confirm-dialog-cancel">חזרה לזיכרון</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Hidden pipeline host (sequence SVG / debug panels); no longer exposed via כלים -->
   <div id="results" hidden></div>
 
@@ -1459,8 +1561,8 @@ textarea#memory-input[aria-invalid="true"]:hover{
         </div>
         <button type="button" class="edit-memory-btn" id="edit-memory-btn">
           <span>עריכת הזיכרון</span>
-          <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false">
-            <path d="M4.16667 15.8333H5.35417L13.5 7.6875L12.3125 6.5L4.16667 14.6458V15.8333ZM2.5 17.5V13.9583L13.5 2.97917C13.6667 2.82639 13.8507 2.70833 14.0521 2.625C14.2535 2.54167 14.4653 2.5 14.6875 2.5C14.9097 2.5 15.125 2.54167 15.3333 2.625C15.5417 2.70833 15.7222 2.83333 15.875 3L17.0208 4.16667C17.1875 4.31944 17.309 4.5 17.3854 4.70833C17.4618 4.91667 17.5 5.125 17.5 5.33333C17.5 5.55556 17.4618 5.76736 17.3854 5.96875C17.309 6.17014 17.1875 6.35417 17.0208 6.52083L6.04167 17.5H2.5ZM12.8958 7.10417L12.3125 6.5L13.5 7.6875L12.8958 7.10417Z"/>
+          <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true" focusable="false">
+            <path d="M2.24068 15.6467H3.60886L12.9941 6.26145L11.6259 4.89327L2.24068 14.2785V15.6467ZM0.320435 17.5669V13.4864L12.9941 0.83674C13.1861 0.660717 13.3981 0.524699 13.6302 0.428687C13.8622 0.332674 14.1062 0.284668 14.3623 0.284668C14.6183 0.284668 14.8663 0.332674 15.1064 0.428687C15.3464 0.524699 15.5544 0.668718 15.7304 0.860743L17.0506 2.20492C17.2426 2.38094 17.3827 2.58897 17.4707 2.829C17.5587 3.06903 17.6027 3.30906 17.6027 3.54909C17.6027 3.80513 17.5587 4.04916 17.4707 4.28119C17.3827 4.51322 17.2426 4.72525 17.0506 4.91727L4.40097 17.5669H0.320435ZM12.298 5.58936L11.6259 4.89327L12.9941 6.26145L12.298 5.58936Z"/>
           </svg>
         </button>
       </div>
@@ -1509,7 +1611,16 @@ textarea#memory-input[aria-invalid="true"]:hover{
         </section>
 
         <section class="side-section visual-settings pictogram-section">
-          <h2 class="side-heading" id="visual-settings-heading">פיקטוגרמות</h2>
+          <div class="side-heading-row">
+            <h2 class="side-heading" id="visual-settings-heading">פיקטוגרמות</h2>
+            <button type="button" class="reset-params-btn" id="reset-params-btn" disabled aria-label="איפוס פרמטרים">
+              <span class="reset-params-tooltip" aria-hidden="true">איפוס פרמטרים</span>
+              <img src="/memory-processor/assets/icons/reset-params-disabled-figma.svg" alt=""
+                data-icon-default="/memory-processor/assets/icons/reset-params-default-figma.svg"
+                data-icon-hover="/memory-processor/assets/icons/reset-params-hover-figma.svg"
+                data-icon-disabled="/memory-processor/assets/icons/reset-params-disabled-figma.svg">
+            </button>
+          </div>
           <p class="visual-params-copy" id="visual-params-copy">הפרמטרים מייצגים היבטים שונים של הזיכרון, המשפיעים על ייצוגו.</p>
           <div class="pictogram-strip" id="pictogram-strip"></div>
         </section>
@@ -1530,7 +1641,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
           <div class="range-row">
             <label for="design-frequency">באיזו תדירות הזיכרון עולה?</label>
             <div class="range-control">
-              <span class="range-value-bubble" aria-hidden="true">0%</span>
+              <span class="range-value-bubble" aria-hidden="true">100%</span>
               <input type="range" id="design-frequency" min="0" max="100" value="0" data-range-key="memoryFrequency">
             </div>
             <div class="range-ends"><span>לעיתים רחוקות</span><span>לעיתים קרובות</span></div>
@@ -1541,7 +1652,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
           <div class="range-row">
             <label for="design-clarity">עד כמה פרטי הזיכרון ברורים?</label>
             <div class="range-control">
-              <span class="range-value-bubble" aria-hidden="true">0%</span>
+              <span class="range-value-bubble" aria-hidden="true">100%</span>
               <input type="range" id="design-clarity" min="0" max="100" value="0" data-range-key="memoryClarity">
             </div>
             <div class="range-ends"><span>עמומים</span><span>חדים</span></div>
@@ -1552,7 +1663,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
           <div class="range-row">
             <label for="design-impact">עד כמה הזיכרון משמעותי עבורך?</label>
             <div class="range-control">
-              <span class="range-value-bubble" aria-hidden="true">0%</span>
+              <span class="range-value-bubble" aria-hidden="true">100%</span>
               <input type="range" id="design-impact" min="0" max="100" value="0" data-range-key="memoryImpact">
             </div>
             <div class="range-ends"><span>כמעט לא</span><span>מאוד</span></div>
@@ -1564,6 +1675,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
       </div>
       <div class="sidebar-action">
         <button type="button" class="create-visual-btn" id="create-visual-btn">רישום זיכרון</button>
+        <button type="button" class="restart-memory-btn" id="restart-memory-btn">התחל מחדש</button>
       </div>
     </aside>
   </main>
@@ -3712,8 +3824,8 @@ function syncRangeVisual(input){
   // RTL range: value 0 sits on the right (empty); value 100 fills toward the left.
   const emptyProgress=1-progress;
   const control=input.closest('.range-control');
-  // Percent follows fill amount from the empty default (0% right → 100% left).
-  const percent=Math.round(progress*100);
+  // Display only: right end = 100%, left end = 0% (inverse of internal value).
+  const percent=Math.round(emptyProgress*100);
   const trackWidth=input.clientWidth||control?.clientWidth||0;
   // Thumb is ~19.184×20 in Figma; derive from the input’s laid-out height.
   const thumbSize=(input.clientHeight||20)*(19.184/20);
@@ -3736,6 +3848,84 @@ function designRangeValue(key,expressiveValue){
 
 function expressiveRangeValue(key,designValue){
   return (key==='memoryFrequency'||key==='memoryClarity')?100-Number(designValue):Number(designValue);
+}
+
+const DESIGN_RANGE_IDS=['design-frequency','design-clarity','design-impact'];
+let resetParamsAnim=null;
+
+/** Displayed 100% = design value 0 (thumb at right). Any offset enables reset. */
+function areDesignParamsAtDefault(){
+  return DESIGN_RANGE_IDS.every(id=>{
+    const input=document.getElementById(id);
+    return !input||Number(input.value)===0;
+  });
+}
+
+function syncResetParamsButton(){
+  const btn=document.getElementById('reset-params-btn');
+  const icon=btn?.querySelector('img');
+  if(!btn||!icon)return;
+  const atDefault=areDesignParamsAtDefault();
+  btn.disabled=atDefault;
+  const def=icon.dataset.iconDefault||'/memory-processor/assets/icons/reset-params-default-figma.svg';
+  const dis=icon.dataset.iconDisabled||'/memory-processor/assets/icons/reset-params-disabled-figma.svg';
+  if(atDefault){
+    icon.src=dis;
+    btn.classList.remove('is-hover');
+  }else if(!btn.classList.contains('is-hover')){
+    icon.src=def;
+  }
+}
+
+function applyDesignRangeFrame(valuesById){
+  DESIGN_RANGE_IDS.forEach(id=>{
+    const input=document.getElementById(id);
+    const key=input?.dataset.rangeKey;
+    if(!input||!key||valuesById[id]==null)return;
+    const designValue=valuesById[id];
+    input.value=String(designValue);
+    expressiveParams[key]=expressiveRangeValue(key,designValue);
+    syncRangeVisual(input);
+  });
+  refreshExpressiveSequenceDisplay();
+  syncVisualOutput();
+  syncResetParamsButton();
+}
+
+function setRangeScrubbing(active){
+  DESIGN_RANGE_IDS.forEach(id=>{
+    document.getElementById(id)?.closest('.range-control')?.classList.toggle('is-scrubbing',!!active);
+  });
+}
+
+function animateResetParams(){
+  if(areDesignParamsAtDefault())return;
+  if(resetParamsAnim)cancelAnimationFrame(resetParamsAnim);
+  const start={};
+  DESIGN_RANGE_IDS.forEach(id=>{
+    const input=document.getElementById(id);
+    start[id]=input?Number(input.value)||0:0;
+  });
+  if(DESIGN_RANGE_IDS.every(id=>start[id]===0))return;
+  setRangeScrubbing(true);
+  const duration=250;
+  const t0=performance.now();
+  const easeOut=t=>1-Math.pow(1-t,3);
+  const finish=()=>{
+    resetParamsAnim=null;
+    applyDesignRangeFrame({[DESIGN_RANGE_IDS[0]]:0,[DESIGN_RANGE_IDS[1]]:0,[DESIGN_RANGE_IDS[2]]:0});
+    setRangeScrubbing(false);
+  };
+  const step=now=>{
+    const t=Math.min(1,(now-t0)/duration);
+    const k=easeOut(t);
+    const frame={};
+    DESIGN_RANGE_IDS.forEach(id=>{frame[id]=Math.round(start[id]*(1-k));});
+    applyDesignRangeFrame(frame);
+    if(t<1)resetParamsAnim=requestAnimationFrame(step);
+    else finish();
+  };
+  resetParamsAnim=requestAnimationFrame(step);
 }
 
 function syncSidebarScrollIndicator(){
@@ -3838,10 +4028,12 @@ function syncDesignUI(){
       syncRangeVisual(input);
     }
   });
+  syncResetParamsButton();
   syncPictogramStrip();
   syncVisualOutput();
   requestAnimationFrame(()=>{
-    ['design-frequency','design-clarity','design-impact'].forEach(id=>syncRangeVisual(document.getElementById(id)));
+    DESIGN_RANGE_IDS.forEach(id=>syncRangeVisual(document.getElementById(id)));
+    syncResetParamsButton();
     syncSidebarScrollIndicator();
   });
 }
@@ -3941,10 +4133,159 @@ function framedArchiveMemories(){
     .filter(m=>m?.frames?.default);
 }
 
+const CONFIRM_DIALOG_COPY={
+  restart:{
+    title:'להתחיל מחדש?',
+    confirm:'התחל מחדש'
+  },
+  archive:{
+    title:'לעזוב את הזיכרון לארכיון?',
+    confirm:'עבור לארכיון'
+  }
+};
+const CONFIRM_DIALOG_BODY='הזיכרון שלפניך יימחק. אפשר תמיד לכתוב אותו שוב,<br>אבל כמו כל זיכרון, הוא יחזור בצורה קצת אחרת.';
+let confirmDialogMode=null;
+let confirmDialogLastFocus=null;
+
+function isMemoryInProgress(){
+  return !!document.getElementById('app')?.classList.contains('has-results');
+}
+
+function discardCurrentMemory(){
+  exitEditMemory();
+  const error=document.getElementById('error-card');
+  if(error)error.hidden=true;
+  const results=document.getElementById('results');
+  if(results)results.innerHTML='';
+  const visual=document.getElementById('visual-output');
+  if(visual)visual.innerHTML='';
+  const app=document.getElementById('app');
+  app?.classList.remove('has-results','has-visual-result','is-editing-memory');
+  MemoryEngineStreamlineSession?.cleanup?.();
+  currentResult=null;currentVrpResult=null;currentAraResult=null;currentRule3Result=null;currentPipelineTrace=null;currentFilter='all';
+  designRepresentativeWords=[];clearHeadingPreviewCache();
+  currentCatalogPromise=Promise.resolve();
+  postcardPrintPending=false;postcardSerialAdvancedForCurrent=false;
+  processedInputSnapshot=null;
+  cachedBaseSequenceSvg='';cachedSequenceBuild=null;lastExpressiveState=null;
+  resetExpressiveParams();
+  const input=document.getElementById('memory-input');
+  if(input){
+    input.value='';
+    input.dir='rtl';
+    rememberMemoryValue('');
+    syncMemoryInputPlaceholder(input);
+  }
+  const btn=document.getElementById('analyze-btn');
+  if(btn&&!btn.querySelector('.spinner')){
+    btn.disabled=true;
+    btn.textContent=analyzeBtnLabel();
+  }
+  updateWordCount();
+  syncDesignUI();
+}
+
+function closeConfirmDialog(){
+  const root=document.getElementById('confirm-dialog');
+  const app=document.getElementById('app');
+  if(!root||root.hidden)return;
+  root.classList.remove('is-open');
+  app?.classList.remove('is-confirm-open');
+  const finish=()=>{
+    if(root.classList.contains('is-open'))return;
+    root.hidden=true;
+    root.setAttribute('aria-hidden','true');
+    confirmDialogMode=null;
+    const restore=confirmDialogLastFocus;
+    confirmDialogLastFocus=null;
+    if(restore&&typeof restore.focus==='function'){
+      try{restore.focus();}catch(_){}
+    }
+  };
+  window.setTimeout(finish,200);
+}
+
+function openConfirmDialog(mode){
+  const copy=CONFIRM_DIALOG_COPY[mode];
+  const root=document.getElementById('confirm-dialog');
+  const title=document.getElementById('confirm-dialog-title');
+  const body=document.getElementById('confirm-dialog-body');
+  const confirmBtn=document.getElementById('confirm-dialog-confirm');
+  const cancelBtn=document.getElementById('confirm-dialog-cancel');
+  const app=document.getElementById('app');
+  if(!copy||!root||!title||!body||!confirmBtn||!cancelBtn)return;
+  confirmDialogMode=mode;
+  confirmDialogLastFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
+  title.textContent=copy.title;
+  body.innerHTML=CONFIRM_DIALOG_BODY;
+  confirmBtn.textContent=copy.confirm;
+  root.hidden=false;
+  root.setAttribute('aria-hidden','false');
+  app?.classList.add('is-confirm-open');
+  requestAnimationFrame(()=>{
+    root.classList.add('is-open');
+    cancelBtn.focus();
+  });
+}
+
+async function fadeGeneratorToFreshWriting(){
+  const panel=document.querySelector('.view-panel-generator');
+  if(panel){
+    panel.classList.add('is-fading');
+    await new Promise(r=>setTimeout(r,200));
+  }
+  discardCurrentMemory();
+  if(panel){
+    requestAnimationFrame(()=>panel.classList.remove('is-fading'));
+  }
+}
+
+async function onConfirmDialogConfirm(){
+  const mode=confirmDialogMode;
+  closeConfirmDialog();
+  await new Promise(r=>setTimeout(r,200));
+  if(mode==='restart'){
+    await fadeGeneratorToFreshWriting();
+    return;
+  }
+  if(mode==='archive'){
+    discardCurrentMemory();
+    showArchiveList();
+  }
+}
+
+function bindConfirmDialog(){
+  const root=document.getElementById('confirm-dialog');
+  const confirmBtn=document.getElementById('confirm-dialog-confirm');
+  const cancelBtn=document.getElementById('confirm-dialog-cancel');
+  cancelBtn?.addEventListener('click',()=>closeConfirmDialog());
+  confirmBtn?.addEventListener('click',()=>{onConfirmDialogConfirm();});
+  root?.addEventListener('keydown',event=>{
+    if(root.hidden||!root.classList.contains('is-open'))return;
+    if(event.key==='Escape'){
+      event.preventDefault();
+      closeConfirmDialog();
+      return;
+    }
+    if(event.key!=='Tab'||!confirmBtn||!cancelBtn)return;
+    // DOM order: confirm (left) then cancel (right); initial focus is cancel.
+    const first=confirmBtn;
+    const last=cancelBtn;
+    if(event.shiftKey&&document.activeElement===first){
+      event.preventDefault();
+      last.focus();
+    }else if(!event.shiftKey&&document.activeElement===last){
+      event.preventDefault();
+      first.focus();
+    }
+  });
+}
+
 function showArchiveList(){
   const app=document.getElementById('app');
   if(!app)return;
   if(app.classList.contains('is-memory-loading'))return;
+  if(app.classList.contains('is-confirm-open'))return;
   const leavingDetail=app.classList.contains('is-archive-detail');
   const alreadyArchive=app.classList.contains('is-archive')&&!leavingDetail;
   if(alreadyArchive)return;
@@ -3966,9 +4307,13 @@ function showGeneratorView(){
   const app=document.getElementById('app');
   if(!app)return;
   if(app.classList.contains('is-memory-loading'))return;
+  if(app.classList.contains('is-confirm-open'))return;
   const alreadyGenerator=!app.classList.contains('is-archive');
   if(alreadyGenerator)return;
   if(viewTransitionBusy)return;
+
+  // Archive → generator: always land on a fresh writing screen.
+  discardCurrentMemory();
 
   // Archive → generator: track slides right (translateX -50% → 0)
   const shouldAnimate=app.classList.contains('is-archive');
@@ -4107,6 +4452,14 @@ function bindArchiveInterface(){
   renderArchiveList();
   document.getElementById('nav-archive')?.addEventListener('click',(e)=>{
     e.preventDefault();
+    const app=document.getElementById('app');
+    if(!app)return;
+    if(app.classList.contains('is-confirm-open'))return;
+    // Mid-creation on generator → confirm before leaving to archive.
+    if(!app.classList.contains('is-archive')&&isMemoryInProgress()){
+      openConfirmDialog('archive');
+      return;
+    }
     showArchiveList();
   });
   document.getElementById('nav-generator')?.addEventListener('click',(e)=>{
@@ -4130,6 +4483,11 @@ function bindArchiveInterface(){
 
 function bindDesignedInterface(){
   bindArchiveInterface();
+  bindConfirmDialog();
+  document.getElementById('restart-memory-btn')?.addEventListener('click',()=>{
+    if(!isMemoryInProgress())return;
+    openConfirmDialog('restart');
+  });
   document.getElementById('edit-memory-btn')?.addEventListener('click',enterEditMemory);
   document.getElementById('cancel-edit-btn')?.addEventListener('click',cancelEditMemory);
   document.getElementById('create-visual-btn')?.addEventListener('click',createDesignedVisual);
@@ -4387,14 +4745,41 @@ function bindDesignedInterface(){
     input.addEventListener('lostpointercapture',()=>setScrubbing(false));
     input.addEventListener('blur',()=>setScrubbing(false));
     input.addEventListener('input',event=>{
+      if(resetParamsAnim){
+        cancelAnimationFrame(resetParamsAnim);
+        resetParamsAnim=null;
+        setRangeScrubbing(false);
+      }
       expressiveParams[key]=expressiveRangeValue(key,event.target.value);
       syncRangeVisual(event.target);
+      syncResetParamsButton();
       refreshExpressiveSequenceDisplay();syncVisualOutput();
     });
   };
   bindRange('design-frequency','memoryFrequency');
   bindRange('design-clarity','memoryClarity');
   bindRange('design-impact','memoryImpact');
+  const resetBtn=document.getElementById('reset-params-btn');
+  const resetIcon=resetBtn?.querySelector('img');
+  if(resetBtn&&resetIcon){
+    const hoverSrc=()=>resetIcon.dataset.iconHover||'/memory-processor/assets/icons/reset-params-hover-figma.svg';
+    const defaultSrc=()=>resetIcon.dataset.iconDefault||'/memory-processor/assets/icons/reset-params-default-figma.svg';
+    resetBtn.addEventListener('pointerenter',()=>{
+      if(resetBtn.disabled)return;
+      resetBtn.classList.add('is-hover');
+      resetIcon.src=hoverSrc();
+    });
+    resetBtn.addEventListener('pointerleave',()=>{
+      resetBtn.classList.remove('is-hover');
+      if(!resetBtn.disabled)resetIcon.src=defaultSrc();
+    });
+    resetBtn.addEventListener('click',()=>{
+      if(resetBtn.disabled)return;
+      resetBtn.classList.remove('is-hover');
+      animateResetParams();
+    });
+  }
+  syncResetParamsButton();
 }
 
 /* ─── Init ─── */
