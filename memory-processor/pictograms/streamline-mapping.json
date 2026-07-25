@@ -1984,6 +1984,66 @@
       },
       "searchQuery": "finish",
       "updatedAt": "2026-07-25T19:17:31.859Z"
+    },
+    "swimming pool": {
+      "hash": "ico_mRu4pQJ4vOifeLjK1ifvjei2",
+      "iconName": "Swimming Pool Stairs",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "swimming pool",
+      "updatedAt": "2026-07-25T21:24:44.741Z"
+    },
+    "ask": {
+      "hash": "ico_mRu4pQJ4vDkD2aEaf7g0YqmI",
+      "iconName": "Team Meeting Message Question",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "ask",
+      "updatedAt": "2026-07-25T21:24:55.546Z"
+    },
+    "home": {
+      "hash": "ico_mRu4pQJ4vM1qeLjvhjgWajwr",
+      "iconName": "House Home Building 1",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "home",
+      "updatedAt": "2026-07-25T21:25:16.661Z"
     }
   }
 }

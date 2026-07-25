@@ -1033,19 +1033,20 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .rep-chip.is-dragging button{color:inherit;pointer-events:none}
 .rep-chip-ghost{
-  position:fixed;z-index:50;margin:0;pointer-events:none;box-sizing:border-box;
+  position:fixed;left:0;top:0;z-index:50;margin:0;pointer-events:none;box-sizing:border-box;
   display:inline-flex;align-items:center;justify-content:center;gap:calc(6 * var(--figma-unit));direction:ltr;
   padding:calc(4 * var(--figma-unit)) calc(8 * var(--figma-unit));
   border:1px solid var(--design-muted,#ababab);border-radius:calc(8 * var(--figma-unit));background:#fff;
   font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));font-weight:400;line-height:calc(20 * var(--figma-unit));
   color:var(--design-muted,#ababab);white-space:nowrap;cursor:grabbing;
-  will-change:left,top
+  will-change:transform;transform:translate3d(0,0,0)
 }
 .rep-chip-placeholder{
   box-sizing:border-box;flex:0 0 auto;
   border:1px dashed #d9d9d9;border-radius:calc(8 * var(--figma-unit));
   background:transparent;pointer-events:none;visibility:hidden
 }
+.rep-chip.is-flip-animating{z-index:1;pointer-events:none}
 .rep-chip.is-drop-settling{transition:transform 180ms ease-out;z-index:2}
 .rep-chip button{
   width:calc(9.75 * var(--figma-unit));height:calc(9.75 * var(--figma-unit));
@@ -5282,8 +5283,11 @@ function bindDesignedInterface(){
   let dragMoveRaf=0;
   let dragMoveX=0;
   let dragMoveY=0;
+  let dragSlotKey=null;
+  let dragFlipToken=0;
   const CHIP_SETTLE_MS=180;
-  const CHIP_DRAG_THRESHOLD=4;
+  const CHIP_DRAG_THRESHOLD=6;
+  const CHIP_ROW_TOLERANCE=10;
 
   function commitRepChipOrderFromDom(){
     if(!repChips||!dragOrderSnapshot)return;
@@ -5299,7 +5303,7 @@ function bindDesignedInterface(){
 
   function clearDragLiftStyles(chip){
     if(!chip)return;
-    chip.classList.remove('is-dragging','is-drop-settling');
+    chip.classList.remove('is-dragging','is-drop-settling','is-flip-animating');
     chip.style.left='';
     chip.style.top='';
     chip.style.width='';
@@ -5308,9 +5312,19 @@ function bindDesignedInterface(){
     chip.style.transition='';
   }
 
+  function clearRepChipFlipStyles(){
+    if(!repChips)return;
+    repChips.querySelectorAll('.rep-chip.is-flip-animating').forEach(chip=>{
+      chip.classList.remove('is-flip-animating');
+      chip.style.transform='';
+      chip.style.transition='';
+    });
+  }
+
   function cleanupDragPlaceholder(){
     dragPlaceholder?.remove();
     dragPlaceholder=null;
+    dragSlotKey=null;
   }
 
   function cleanupDragGhost(){
@@ -5320,44 +5334,90 @@ function bindDesignedInterface(){
 
   function positionDragGhost(clientX,clientY){
     if(!dragGhost)return;
-    dragGhost.style.left=`${clientX-dragOffsetX}px`;
-    dragGhost.style.top=`${clientY-dragOffsetY}px`;
+    // Transform tracking avoids left/top layout thrash while the pointer moves.
+    dragGhost.style.transform=`translate3d(${clientX-dragOffsetX}px,${clientY-dragOffsetY}px,0)`;
+  }
+
+  function layoutRect(el){
+    // Hit-test / FLIP must use untransformed boxes or mid-FLIP frames fight each other.
+    const prevTransform=el.style.transform;
+    const prevTransition=el.style.transition;
+    el.style.transition='none';
+    el.style.transform='none';
+    const rect=el.getBoundingClientRect();
+    el.style.transform=prevTransform;
+    el.style.transition=prevTransition;
+    return rect;
+  }
+
+  function flipRepChips(beforeRects){
+    if(!repChips||!beforeRects?.size)return;
+    const token=++dragFlipToken;
+    const chips=[...repChips.querySelectorAll('.rep-chip')];
+    chips.forEach(chip=>{
+      const first=beforeRects.get(chip);
+      if(!first)return;
+      const last=chip.getBoundingClientRect();
+      const dx=first.left-last.left;
+      const dy=first.top-last.top;
+      if(Math.abs(dx)<0.5&&Math.abs(dy)<0.5)return;
+      chip.classList.add('is-flip-animating');
+      chip.style.transition='none';
+      chip.style.transform=`translate(${dx}px,${dy}px)`;
+    });
+    void repChips.offsetWidth;
+    chips.forEach(chip=>{
+      if(!chip.classList.contains('is-flip-animating'))return;
+      chip.style.transition=`transform ${CHIP_SETTLE_MS}ms ease-out`;
+      chip.style.transform='';
+      const done=()=>{
+        if(token!==dragFlipToken)return;
+        chip.classList.remove('is-flip-animating');
+        chip.style.transform='';
+        chip.style.transition='';
+        chip.removeEventListener('transitionend',done);
+      };
+      chip.addEventListener('transitionend',done);
+      window.setTimeout(done,CHIP_SETTLE_MS+40);
+    });
   }
 
   function moveDragPlaceholderAt(clientX,clientY){
     if(!repChips||!dragPlaceholder||!dragLiftedChip)return;
+    clearRepChipFlipStyles();
     const others=[...repChips.querySelectorAll('.rep-chip')];
     if(!others.length){
-      if(dragPlaceholder.parentElement===repChips)repChips.appendChild(dragPlaceholder);
+      if(dragPlaceholder.parentElement!==repChips||dragPlaceholder.nextElementSibling){
+        repChips.appendChild(dragPlaceholder);
+        dragSlotKey='end';
+      }
       return;
     }
 
-    // Layout rects only (no transforms) so hit-testing stays stable while dragging.
-    const rectOf=chip=>chip.getBoundingClientRect();
     // Visual left→right (chips container is direction:rtl).
     const visual=[...others].sort((a,b)=>{
-      const ra=rectOf(a);
-      const rb=rectOf(b);
-      if(Math.abs(ra.top-rb.top)>8)return ra.top-rb.top;
+      const ra=layoutRect(a);
+      const rb=layoutRect(b);
+      if(Math.abs(ra.top-rb.top)>CHIP_ROW_TOLERANCE)return ra.top-rb.top;
       return ra.left-rb.left;
     });
 
-    let rowTop=rectOf(visual[0]).top;
+    let rowTop=layoutRect(visual[0]).top;
     let bestRowDist=Infinity;
     for(const chip of visual){
-      const rect=rectOf(chip);
+      const rect=layoutRect(chip);
       const dist=Math.abs(clientY-(rect.top+rect.height/2));
       if(dist<bestRowDist){
         bestRowDist=dist;
         rowTop=rect.top;
       }
     }
-    const rowChips=visual.filter(chip=>Math.abs(rectOf(chip).top-rowTop)<8);
+    const rowChips=visual.filter(chip=>Math.abs(layoutRect(chip).top-rowTop)<CHIP_ROW_TOLERANCE);
 
     // First chip whose center is to the right of the pointer → slot is visually left of it.
     let visualLeftOf=null;
     for(const chip of rowChips){
-      const rect=rectOf(chip);
+      const rect=layoutRect(chip);
       if(clientX<rect.left+rect.width/2){
         visualLeftOf=chip;
         break;
@@ -5365,19 +5425,33 @@ function bindDesignedInterface(){
     }
 
     // RTL flex: earlier in DOM = visually righter. Visually-left-of X ⇒ DOM after X.
-    // Instant reorder (no FLIP) — competing FLIP frames were causing jump/glitch.
+    let beforeEl=null;
+    let slotKey='end';
     if(visualLeftOf){
-      if(dragPlaceholder.previousElementSibling!==visualLeftOf){
-        repChips.insertBefore(dragPlaceholder,visualLeftOf.nextElementSibling);
-      }
+      beforeEl=visualLeftOf.nextElementSibling===dragPlaceholder
+        ?dragPlaceholder.nextElementSibling
+        :visualLeftOf.nextElementSibling;
+      slotKey=`after:${visualLeftOf.dataset.wordIndex}`;
+      // Already sitting right after visualLeftOf.
+      if(dragPlaceholder.previousElementSibling===visualLeftOf)return;
     }else if(rowChips.length){
       const rightmost=rowChips[rowChips.length-1];
-      if(dragPlaceholder.nextElementSibling!==rightmost){
-        repChips.insertBefore(dragPlaceholder,rightmost);
-      }
+      beforeEl=rightmost;
+      slotKey=`before:${rightmost.dataset.wordIndex}`;
+      if(dragPlaceholder.nextElementSibling===rightmost)return;
     }else{
-      repChips.appendChild(dragPlaceholder);
+      beforeEl=null;
+      slotKey='end';
+      if(!dragPlaceholder.nextElementSibling&&dragPlaceholder.parentElement===repChips)return;
     }
+
+    if(slotKey===dragSlotKey)return;
+    dragSlotKey=slotKey;
+
+    const beforeRects=new Map(others.map(chip=>[chip,layoutRect(chip)]));
+    if(beforeEl&&beforeEl!==dragPlaceholder)repChips.insertBefore(dragPlaceholder,beforeEl);
+    else if(!beforeEl)repChips.appendChild(dragPlaceholder);
+    flipRepChips(beforeRects);
   }
 
   function settleChipIntoPlaceholder(chip){
@@ -5418,6 +5492,8 @@ function bindDesignedInterface(){
   function cancelRepChipDrag(){
     if(!dragLiftedChip)return;
     if(dragMoveRaf){cancelAnimationFrame(dragMoveRaf);dragMoveRaf=0;}
+    dragFlipToken++;
+    clearRepChipFlipStyles();
     if(dragPlaceholder){
       dragPlaceholder.replaceWith(dragLiftedChip);
       dragPlaceholder=null;
@@ -5437,6 +5513,7 @@ function bindDesignedInterface(){
     dragLiftedChip=null;
     dragPointerId=null;
     dragMoved=false;
+    dragSlotKey=null;
   }
 
   async function finishRepChipDrag(){
@@ -5444,6 +5521,8 @@ function bindDesignedInterface(){
     dropHandling=true;
     const chip=dragLiftedChip;
     try{
+      dragFlipToken++;
+      clearRepChipFlipStyles();
       await settleChipIntoPlaceholder(chip);
       commitRepChipOrderFromDom();
       if(document.getElementById('app')?.classList.contains('has-visual-result')){
@@ -5458,6 +5537,7 @@ function bindDesignedInterface(){
       dragLiftedChip=null;
       dragPointerId=null;
       dragMoved=false;
+      dragSlotKey=null;
       dropHandling=false;
     }
   }
@@ -5474,6 +5554,7 @@ function bindDesignedInterface(){
     if(!dragMoved){
       if(Math.hypot(event.clientX-(dragLiftedChip.getBoundingClientRect().left+dragOffsetX),event.clientY-(dragLiftedChip.getBoundingClientRect().top+dragOffsetY))<CHIP_DRAG_THRESHOLD)return;
       dragMoved=true;
+      clearRepChipFlipStyles();
       const startRect=dragLiftedChip.getBoundingClientRect();
       dragPlaceholder=document.createElement('span');
       dragPlaceholder.className='rep-chip-placeholder';
@@ -5482,6 +5563,7 @@ function bindDesignedInterface(){
       dragPlaceholder.style.height=`${startRect.height}px`;
       // Detach chip from the list so it can't distort RTL insert math mid-drag.
       dragLiftedChip.replaceWith(dragPlaceholder);
+      dragSlotKey=`idx:${dragLiftedChip.dataset.wordIndex}`;
       dragGhost=document.createElement('span');
       dragGhost.className='rep-chip-ghost';
       dragGhost.style.width=`${startRect.width}px`;
