@@ -219,7 +219,7 @@ textarea:focus{border-color:var(--b1)}
 .cat-hit{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--r);border:1px solid #5DCAA5;background:#E1F5EE;margin-bottom:6px}
 .cat-miss{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--r);border:1px solid #F0997B;background:#FAECE7;margin-bottom:6px;border-left-width:3px}
 .cat-svg-wrap{width:56px;height:56px;flex-shrink:0;background:#fff;border:1px solid rgba(26,25,24,.11);border-radius:5px;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.cat-svg-wrap svg{width:52px;height:52px;display:block}
+.cat-svg-wrap svg{height:52px;width:auto;max-width:52px;display:block}
 .cat-hit-info{flex:1}
 .cat-hit-word{font-size:14px;font-weight:500;direction:rtl}
 .cat-hit-meta{font-size:11px;color:#04342C;margin-top:3px}
@@ -237,7 +237,8 @@ textarea:focus{border-color:var(--b1)}
 .cat-skip-gap .cat-skip-meta{color:#9B4D2C}
 .cat-skip-sub{font-size:10px;color:var(--t3);margin-top:6px}
 .seq-display{background:#fff;border:1px solid rgba(26,25,24,.22);border-radius:var(--r);padding:20px;display:flex;justify-content:center;overflow-x:auto;margin:14px 0}
-.seq-display svg{display:block}
+/* Bank canvas is 48 tall; scale the sequence so glyphs read at 105px (gap already 0.875px in user units). */
+.seq-display>svg{display:block;height:105px;width:auto;max-width:100%}
 .expressive-panel{margin:0 0 20px;padding:14px 16px;border:1px solid var(--b3);border-radius:var(--r);background:var(--bg2)}
 .expressive-panel .sec-label{margin:0 0 12px}
 .expressive-row{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
@@ -262,7 +263,7 @@ textarea:focus{border-color:var(--b1)}
 .translate-source{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);padding:2px 7px;border:1px solid var(--b3);border-radius:10px;white-space:nowrap}
 .word-en-ref{font-size:10px;color:var(--t3);margin-top:2px}
 .cat-gap-wrap{background:#FAECE7;border-color:#F0997B}
-.cat-gap-wrap svg{width:52px;height:52px}
+.cat-gap-wrap svg{height:52px;width:auto;max-width:52px}
 .mode-toggle{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px}
 .mode-btn{padding:5px 14px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid var(--b2);background:transparent;color:var(--t3);cursor:pointer;font-family:var(--f)}
 .mode-btn.active{border-color:var(--b1);background:var(--bg2);color:var(--t1)}
@@ -330,6 +331,10 @@ textarea:focus{border-color:var(--b1)}
 html{min-width:320px;background:#fcfcfc}
 body{min-height:100vh;background:#fcfcfc;color:#000;font-family:var(--font-body)}
 button,input,textarea{font:inherit}
+/* Keyboard only — never show a ring after mouse click / programmatic focus. */
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible){outline:none}
 button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--design-blue);outline-offset:2px}
 .app{width:100%;max-width:1920px;min-height:100vh;margin:0 auto;padding:0 calc(83 * var(--figma-unit)) calc(63 * var(--figma-unit));background:#fcfcfc}
 .site-header{
@@ -749,9 +754,14 @@ textarea#memory-input[aria-invalid="true"]:hover{
 /* Canvas layout — Figma 1184:50380 / 1227:55236 */
 .app.has-visual-result .visual-output{position:relative;display:block;width:100%;height:100%}
 .app.has-visual-result .visual-output>svg{
-  /* Frame 1184:50388 — 500×195 at canvas (63.5+699, 62+248) */
-  position:absolute;left:calc(762.5 * var(--figma-unit));top:calc(310 * var(--figma-unit));
-  width:calc(500 * var(--figma-unit));height:calc(195 * var(--figma-unit));
+  /* Figma 1227:55926 / 1227:55937 — pictogram row in items-end column under the name.
+     Name + row share right edge 1262.5 (stage 1322 → right inset 59.5).
+     Masters are 153.6 tall (48 bank × 3.2) with ~14px top inset inside the 195 frame. */
+  position:absolute;left:auto;
+  right:calc(59.5 * var(--figma-unit));
+  top:calc(324 * var(--figma-unit));
+  width:calc(500 * var(--figma-unit));
+  height:calc(153.6 * var(--figma-unit));
   max-width:none;max-height:none
 }
 .canvas-meta{
@@ -848,7 +858,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .app.has-visual-result .pictogram-strip{display:none!important}
 /* Bracketed words reuse the same .rep-chips 320px wrap column — only the chip chrome changes. */
 .app.has-visual-result .rep-chip{
-  border:0;background:transparent;padding:0;border-radius:0;cursor:default;gap:0;
+  border:0;background:transparent;padding:0;border-radius:0;cursor:grab;gap:0;
   font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit))
 }
 .app.has-visual-result .rep-chip:hover{border-color:transparent}
@@ -976,9 +986,19 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .rep-chip:has([data-remove-word]:hover) button{
   color:#bbb
 }
-.rep-chip.is-dragging{color:#bbb;border-color:#bbb;border-style:solid}
-/* Source stays full layout (X visible); only the drag preview clone drops the X. */
+.rep-chip.is-dragging{
+  /* Lifted out of flow — placeholder keeps the slot. Native drag image is the preview. */
+  position:fixed;z-index:40;margin:0;pointer-events:none;opacity:0;
+  color:#bbb;border-color:#bbb;border-style:solid;transition:none!important
+}
 .rep-chip.is-dragging button{color:inherit;pointer-events:none}
+.rep-chip-placeholder{
+  box-sizing:border-box;flex:0 0 auto;
+  border:1px dashed #d9d9d9;border-radius:calc(8 * var(--figma-unit));
+  background:transparent;pointer-events:none;visibility:hidden
+}
+.rep-chip.is-flip-animating{transition:transform 180ms ease-out;z-index:1}
+.rep-chip.is-drop-settling{transition:transform 180ms ease-out;z-index:2}
 .rep-chip button{
   width:calc(9.75 * var(--figma-unit));height:calc(9.75 * var(--figma-unit));
   border:0;background:currentColor;cursor:pointer;padding:0;color:#000;
@@ -1083,14 +1103,14 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .pictogram-strip{
   width:100%;display:flex;flex-wrap:wrap;
   justify-content:flex-start;align-content:flex-start;align-items:flex-end;
-  gap:calc(16 * var(--figma-unit));direction:rtl
+  gap:0.875px;direction:rtl
 }
 .pictogram-strip .pictogram-placeholder{
-  width:calc(64 * var(--figma-unit));height:calc(58 * var(--figma-unit));
+  width:105px;height:105px;
   border:1px solid #bbb;border-radius:3px;opacity:.75
 }
 .pictogram-strip svg,.pictogram-strip .panel-pictogram{
-  width:calc(64 * var(--figma-unit));height:calc(58 * var(--figma-unit));
+  height:105px;width:auto;
   display:block;color:#111;overflow:visible;object-fit:contain
 }
 .source-toggle{
@@ -1363,7 +1383,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .postcard-heading{font-size:24px;line-height:28px}
   .postcard-intro-copy{font-size:14px;line-height:22px}
   .postcard-intro-copy p{line-height:22px}
-  .app.has-visual-result .visual-output>svg{left:auto;right:4%;top:42%;width:58%;height:auto;max-height:120px}
+  .app.has-visual-result .visual-output>svg{left:auto;right:4%;top:42%;width:58%;height:auto;max-height:120px;max-width:none}
   .canvas-meta{top:24px;left:16px;right:16px;width:auto;gap:8px;flex-wrap:wrap}
   .canvas-meta-main{width:100%;max-width:100%;flex:1 1 auto;gap:8px}
   .canvas-archive-id,.visual-memory-text,.canvas-keywords{font-size:14px;line-height:16px}
@@ -1401,8 +1421,9 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .narrator-section{gap:16px}
   .narrator-gender-picker{gap:16px;padding:0;border:0;align-self:flex-start}
   .narrator-gender-picker label{min-width:74px;height:36px;padding:8px 16px;border-radius:8px;font-size:15px;line-height:20px}
-  .pictogram-strip{gap:16px}
-  .pictogram-strip svg,.pictogram-strip .panel-pictogram,.pictogram-strip .pictogram-placeholder{width:64px;height:58px}
+  .pictogram-strip{gap:0.875px}
+  .pictogram-strip svg,.pictogram-strip .panel-pictogram{height:105px;width:auto}
+  .pictogram-strip .pictogram-placeholder{width:105px;height:105px}
   .source-toggle{gap:16px;padding:0;border:0}
   .source-toggle button{padding:8px;border-radius:8px;font-size:15px;line-height:20px}
   .mediated-relation{gap:16px;margin-top:10px;font-size:15px;line-height:20px}
@@ -1473,8 +1494,9 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .memory-loader{display:none!important}
   .app.has-visual-result .visual-output>svg,
   .visual-output>svg{
-    position:absolute!important;left:762.5px!important;top:310px!important;
-    width:500px!important;height:195px!important;max-width:none!important;max-height:none!important;display:block!important
+    /* Match Figma 1227:55937 — right-flush with name, masters 153.6 tall */
+    position:absolute!important;left:auto!important;right:59.5px!important;top:324px!important;
+    width:500px!important;height:153.6px!important;max-width:none!important;max-height:none!important;display:block!important
   }
   .canvas-meta{
     display:flex!important;position:absolute!important;z-index:1!important;box-sizing:border-box!important;
@@ -2138,7 +2160,7 @@ JSON SCHEMA:
 
 /* Pictograms: pictogram-cache → streamline-mapping → Streamline HQ API */
 
-const GAP_SVG=`<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#D85A30" stroke-width="1.5" stroke-dasharray="5 4"/><text x="32" y="40" text-anchor="middle" font-family="system-ui,sans-serif" font-size="26" font-weight="600" fill="#D85A30">✕</text></svg>`;
+const GAP_SVG=`<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" width="48" height="48" data-pgmr-bank="1"><rect x="4.5" y="4.5" width="39" height="39" rx="4" fill="none" stroke="#D85A30" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 3"/><text x="24" y="30" text-anchor="middle" font-family="system-ui,sans-serif" font-size="18" font-weight="600" fill="#D85A30">✕</text></svg>`;
 
 /* ─── Catalog (shared engine module) ─── */
 const CAT=(()=>{
@@ -2401,25 +2423,45 @@ function lookupHitForUnit(u){
   return{word,hit,cr};
 }
 
-/** Canonicalize + size a pictogram for the sequence row (stroke 0.5, #000000, size 64). */
-function sequenceSlotSvg(svgHtml,size=64){
+/** Embed a bank-canvas pictogram in the sequence (height 48, width from viewBox — display scales to 105px). */
+function sequenceSlotSvg(svgHtml){
   const api=MemoryEngineNormalizePictogramSvg;
   const strip=api?.stripSvgProlog;
-  const norm=api?.normalizePictogramSvg;
-  let svg=norm?norm(svgHtml):(strip?strip(svgHtml):(svgHtml||'').trim());
+  let svg=strip?strip(svgHtml):(svgHtml||'').trim();
   if(!/^<svg/i.test(svg))return svg;
+  // Masters are already bank-fitted at fetch/cache time — do not re-stroke or re-box.
+  if(api?.ensureBankRootAttrs)svg=api.ensureBankRootAttrs(svg);
+  const size=api?.readBankCanvasSize?.(svg)||{width:48,height:48};
   return svg.replace(/^<svg([^>]*)>/i,(match,attrs)=>{
     let a=attrs.replace(/\s(?:width|height)="[^"]*"/gi,'');
     a=a.replace(/\s(?:width|height)=[^\s>]+/gi,'');
-    if(!/\bviewBox=/i.test(a))a+=` viewBox="0 0 ${size} ${size}"`;
-    return`<svg width="${size}" height="${size}"${a} overflow="hidden">`;
+    if(!/\bviewBox=/i.test(a))a+=` viewBox="0 0 ${size.width} ${size.height}"`;
+    if(!/\boverflow=/i.test(a))a+=' overflow="hidden"';
+    return`<svg width="${size.width}" height="${size.height}"${a}>`;
   });
 }
 
-/** Normalize a pictogram for list thumbs / previews (matches sequence base style). */
+/** Pictogram for list thumbs / previews (bank canvas; CSS sets height). */
 function displayPictogramSvg(svgHtml){
-  const norm=MemoryEngineNormalizePictogramSvg?.normalizePictogramSvg;
-  return norm?norm(svgHtml):(svgHtml||'');
+  const api=MemoryEngineNormalizePictogramSvg;
+  if(!api)return svgHtml||'';
+  if(api.isBankCanvasSvg?.(svgHtml)||api.ensureBankRootAttrs){
+    return api.ensureBankRootAttrs(api.stripSvgProlog(svgHtml));
+  }
+  return api.normalizeExternalToBankCanvas
+    ?api.normalizeExternalToBankCanvas(svgHtml)
+    :(svgHtml||'');
+}
+
+function sequenceLayoutMetrics(slotSvgs){
+  const api=MemoryEngineNormalizePictogramSvg;
+  const gap=api?.bankDisplayGapUnits?.()??(0.875*48/105);
+  const heights=48;
+  const widths=(slotSvgs||[]).map(svg=>{
+    const size=api?.readBankCanvasSize?.(svg);
+    return size?.width>0?size.width:48;
+  });
+  return{gap,heights,widths};
 }
 
 function getExpressiveParams(){
@@ -2541,14 +2583,22 @@ async function buildBankSequence(slots,rtl=true){
   const seqSlots=(slots||[]).filter(s=>!s.duplicateOf);
   const N=seqSlots.length;if(!N){cachedSequenceBuild=null;return'';}
   cachedSequenceBuild={kind:'bank',slots,rtl:!!rtl};
-  const ps=64,gap=12,cW=Math.max(320,N*ps+(N-1)*gap+40),cH=128;
-  const totW=N*ps+(N-1)*gap,x0=(cW-totW)/2,y0=(cH-ps)/2;
-  const parts=seqSlots.map((slot,i)=>{
-    const svg=slot.status==='hit'&&slot.svg?slot.svg:GAP_SVG;
-    const x=rtl?x0+(N-1-i)*(ps+gap):x0+i*(ps+gap);
-    return`<g transform="translate(${x},${y0})">${sequenceSlotSvg(svg)}</g>`;
-  });
-  const base=`<svg viewBox="0 0 ${cW} ${cH}" xmlns="http://www.w3.org/2000/svg">${parts.join('')}</svg>`;
+  const slotSvgs=seqSlots.map(slot=>slot.status==='hit'&&slot.svg?slot.svg:GAP_SVG);
+  const{gap,heights:ps,widths}=sequenceLayoutMetrics(slotSvgs);
+  const totW=widths.reduce((a,w)=>a+w,0)+(N-1)*gap;
+  // Tight width + right-packed so the rightmost glyph can flush to the canvas name edge.
+  const cW=Math.max(totW,1),cH=ps,y0=0;
+  const x0=0;
+  const xs=new Array(N);
+  if(rtl){
+    let x=x0+totW;
+    for(let i=0;i<N;i++){x-=widths[i];xs[i]=x;x-=gap;}
+  }else{
+    let x=x0;
+    for(let i=0;i<N;i++){xs[i]=x;x+=widths[i]+gap;}
+  }
+  const parts=seqSlots.map((slot,i)=>`<g transform="translate(${xs[i]},${y0})">${sequenceSlotSvg(slotSvgs[i])}</g>`);
+  const base=`<svg viewBox="0 0 ${cW} ${cH}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMaxYMid meet">${parts.join('')}</svg>`;
   return finalizeSequenceSvg(base);
 }
 
@@ -2646,18 +2696,26 @@ async function buildSequenceSVG(vrpResult,slots){
   });
   const N=units.length;if(!N){if(slots)cachedSequenceBuild=null;return'';}
   if(slots)cachedSequenceBuild={kind:'vrp',slots,vrpResult};
-  const ps=64,gap=12,cW=856,cH=128;
-  const totW=N*ps+(N-1)*gap,x0=(cW-totW)/2,y0=(cH-ps)/2;
+  const slotSvgs=units.map(u=>{
+    const slot=slotByHebrew[u.unit||''];
+    return slot?.status==='hit'&&slot.svg?slot.svg:GAP_SVG;
+  });
+  const{gap,heights:ps,widths}=sequenceLayoutMetrics(slotSvgs);
+  const totW=widths.reduce((a,w)=>a+w,0)+(N-1)*gap;
+  const cW=Math.max(totW,1),cH=ps,y0=0;
+  const x0=0;
   const rtl=currentResult?.memoryLanguage==='Hebrew';
-  const parts=await Promise.all(units.map(async(u,i)=>{
-    const hebrew=u.unit||'';
-    const slot=slotByHebrew[hebrew];
-    const x=rtl?x0+(N-1-i)*(ps+gap):x0+i*(ps+gap);
-    const svg=slot?.status==='hit'&&slot.svg?slot.svg:GAP_SVG;
-    return`<g transform="translate(${x},${y0})">${sequenceSlotSvg(svg)}</g>`;
-  }));
+  const xs=new Array(N);
+  if(rtl){
+    let x=x0+totW;
+    for(let i=0;i<N;i++){x-=widths[i];xs[i]=x;x-=gap;}
+  }else{
+    let x=x0;
+    for(let i=0;i<N;i++){xs[i]=x;x+=widths[i]+gap;}
+  }
+  const parts=await Promise.all(units.map(async(u,i)=>`<g transform="translate(${xs[i]},${y0})">${sequenceSlotSvg(slotSvgs[i])}</g>`));
   const inner=parts.join('');
-  const base=inner?`<svg viewBox="0 0 ${cW} ${cH}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`:'';
+  const base=inner?`<svg viewBox="0 0 ${cW} ${cH}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMaxYMid meet">${inner}</svg>`:'';
   return finalizeSequenceSvg(base);
 }
 
@@ -2861,6 +2919,34 @@ async function rebuildSequence(){
     const stateEl=document.getElementById('expressive-state');
     if(stateEl)stateEl.outerHTML=renderExpressiveStateHtml(lastExpressiveState);
   }
+}
+
+/** Reorder cached sequence slots to match designRepresentativeWords; refresh canvas once (post-drop). */
+async function applyRepresentativeWordOrderToCanvas(){
+  if(!cachedSequenceBuild?.slots?.length){
+    syncVisualOutput();
+    return;
+  }
+  const byKey=new Map();
+  for(const slot of cachedSequenceBuild.slots){
+    const key=slot.hebrew||slot.english||'';
+    if(key&&!byKey.has(key))byKey.set(key,slot);
+  }
+  const reordered=[];
+  const used=new Set();
+  for(const word of designRepresentativeWords){
+    const slot=byKey.get(word);
+    if(slot&&!used.has(slot)){
+      reordered.push(slot);
+      used.add(slot);
+    }
+  }
+  for(const slot of cachedSequenceBuild.slots){
+    if(!used.has(slot))reordered.push(slot);
+  }
+  cachedSequenceBuild.slots=reordered;
+  await rebuildSequence();
+  syncVisualOutput();
 }
 
 function buildSkippedLookupReason(u){
@@ -3183,6 +3269,13 @@ function exitEditMemory(){
  * Close edit mode (X and ESC share this). No confirmation dialog — ever.
  * Closes immediately and discards unsaved edits by restoring the snapshot.
  */
+function blurActiveIfContained(root){
+  const active=document.activeElement;
+  if(!(active instanceof HTMLElement))return;
+  if(root&&!root.contains(active)&&active!==root)return;
+  try{active.blur();}catch(_){}
+}
+
 function cancelEditMemory(){
   const app=document.getElementById('app');
   if(!app?.classList.contains('is-editing-memory'))return;
@@ -3191,6 +3284,9 @@ function cancelEditMemory(){
     input.value=editMemorySnapshot;
     input.dir='rtl';
   }
+  blurActiveIfContained(app);
+  document.getElementById('edit-memory-btn')?.blur();
+  document.getElementById('cancel-edit-btn')?.blur();
   exitEditMemory();
   if(input)rememberMemoryValue(input.value);
   updateWordCount();
@@ -3695,6 +3791,21 @@ async function generateAra(){
 /* ─── Designed interface adapters ─── */
 function cloneSequenceSvg(source){
   const clone=source.cloneNode(true);
+  // Figma 1227:55937: rightmost master flush with name; xMax + tight content viewBox.
+  // Expressive pads the viewBox equally — crop it back so 48 bank units → 153.6px (×3.2).
+  clone.setAttribute('preserveAspectRatio','xMaxYMin meet');
+  clone.setAttribute('overflow','visible');
+  const pad=Number(lastExpressiveState?.pad)||0;
+  if(pad>0){
+    const parts=String(clone.getAttribute('viewBox')||'').trim().split(/[\s,]+/).map(Number);
+    if(parts.length===4&&parts.every(Number.isFinite)){
+      const[vx,vy,vw,vh]=parts;
+      clone.setAttribute(
+        'viewBox',
+        `${vx+pad} ${vy+pad} ${Math.max(1,vw-2*pad)} ${Math.max(1,vh-2*pad)}`
+      );
+    }
+  }
   const prefix=`visual-${++visualCloneSerial}-`;
   const idMap=new Map();
   clone.querySelectorAll('[id]').forEach(element=>{
@@ -4032,7 +4143,8 @@ function syncDesignUI(){
   const hasVisual=!!app?.classList.contains('has-visual-result');
   const chips=document.getElementById('rep-chips');
   if(chips){
-    chips.innerHTML=designRepresentativeWords.map((word,index)=>`<span class="rep-chip" draggable="${hasVisual?'false':'true'}" data-word-index="${index}"><span>${esc(word)}</span><button type="button" draggable="false" data-remove-word="${index}" aria-label="הסרת ${esc(word)}"><img src="/memory-processor/assets/icons/remove-word-figma.svg" alt="" draggable="false"></button></span>`).join('');
+    // Keep chips draggable after visual so order can update the canvas row on drop.
+    chips.innerHTML=designRepresentativeWords.map((word,index)=>`<span class="rep-chip" draggable="true" data-word-index="${index}"><span>${esc(word)}</span><button type="button" draggable="false" data-remove-word="${index}" aria-label="הסרת ${esc(word)}"><img src="/memory-processor/assets/icons/remove-word-figma.svg" alt="" draggable="false"></button></span>`).join('');
   }
   const count=document.getElementById('rep-count');
   if(count)count.textContent=`[${designRepresentativeWords.length}/10]`;
@@ -4240,16 +4352,18 @@ function closeConfirmDialog(){
   if(!root||root.hidden)return;
   root.classList.remove('is-open');
   app?.classList.remove('is-confirm-open');
+  // Drop focus so ESC/click-close never leaves a ring on the trigger button.
+  blurActiveIfContained(root);
+  const trigger=confirmDialogLastFocus;
+  confirmDialogLastFocus=null;
+  if(trigger&&typeof trigger.blur==='function'){
+    try{trigger.blur();}catch(_){}
+  }
   const finish=()=>{
     if(root.classList.contains('is-open'))return;
     root.hidden=true;
     root.setAttribute('aria-hidden','true');
     confirmDialogMode=null;
-    const restore=confirmDialogLastFocus;
-    confirmDialogLastFocus=null;
-    if(restore&&typeof restore.focus==='function'){
-      try{restore.focus();}catch(_){}
-    }
   };
   window.setTimeout(finish,200);
 }
@@ -4580,12 +4694,17 @@ function bindDesignedInterface(){
   const addConfirm=document.getElementById('add-word-confirm');
   const exitAddWordEditing=()=>{
     addRow?.classList.remove('is-editing');
-    if(addInput)addInput.value='';
+    if(addInput){
+      addInput.value='';
+      try{addInput.blur();}catch(_){}
+    }
     if(addConfirm){
       addConfirm.disabled=true;
       const icon=addConfirm.querySelector('img');
       if(icon)icon.src=icon.dataset.iconDisabled||'/memory-processor/assets/icons/add-word-confirm-default-figma.svg';
+      try{addConfirm.blur();}catch(_){}
     }
+    document.getElementById('add-word-btn')?.blur();
   };
   const syncAddWordConfirmIcon=()=>{
     if(!addConfirm)return;
@@ -4639,13 +4758,17 @@ function bindDesignedInterface(){
   let dragOrderSnapshot=null;
   let dragItemsSnapshot=null;
   let chipDidDrop=false;
+  let dropHandling=false;
+  let dragPlaceholder=null;
+  let dragLiftedChip=null;
+  const CHIP_FLIP_MS=180;
+
   function setRepChipDragImage(event,chip){
     const rect=chip.getBoundingClientRect();
     const radius=getComputedStyle(chip).borderRadius||'8px';
     const muted=getComputedStyle(document.documentElement).getPropertyValue('--design-muted').trim()||'#ababab';
     const clone=chip.cloneNode(true);
-    // Drag preview: word-only chip at natural narrower width (no X, no empty side space).
-    clone.classList.remove('is-dragging');
+    clone.classList.remove('is-dragging','is-flip-animating','is-drop-settling');
     clone.removeAttribute('data-word-index');
     clone.querySelectorAll('button').forEach(btn=>btn.remove());
     clone.style.cssText=[
@@ -4674,6 +4797,39 @@ function bindDesignedInterface(){
     event.dataTransfer.setDragImage(clone,offsetX,offsetY);
     requestAnimationFrame(()=>clone.remove());
   }
+
+  function flipChipPositions(nodes,firstRects){
+    nodes.forEach(node=>{
+      const first=firstRects.get(node);
+      if(!first)return;
+      const last=node.getBoundingClientRect();
+      const dx=first.left-last.left;
+      const dy=first.top-last.top;
+      if(Math.abs(dx)<0.5&&Math.abs(dy)<0.5)return;
+      node.classList.remove('is-flip-animating','is-drop-settling');
+      node.style.transition='none';
+      node.style.transform=`translate(${dx}px,${dy}px)`;
+      void node.offsetWidth;
+      node.classList.add('is-flip-animating');
+      node.style.transition='';
+      node.style.transform='';
+      const clear=()=>{
+        node.classList.remove('is-flip-animating');
+        node.style.transform='';
+        node.style.transition='';
+        node.removeEventListener('transitionend',clear);
+      };
+      node.addEventListener('transitionend',clear);
+      window.setTimeout(clear,CHIP_FLIP_MS+40);
+    });
+  }
+
+  function measureChipRects(nodes){
+    const map=new Map();
+    nodes.forEach(node=>map.set(node,node.getBoundingClientRect()));
+    return map;
+  }
+
   function commitRepChipOrderFromDom(){
     if(!repChips||!dragOrderSnapshot)return;
     const chips=[...repChips.querySelectorAll('.rep-chip')];
@@ -4683,22 +4839,39 @@ function bindDesignedInterface(){
       const newItems=chips.map(chip=>dragItemsSnapshot[Number(chip.dataset.wordIndex)]).filter(item=>item!=null);
       currentResult.representativeWords.splice(0,currentResult.representativeWords.length,...newItems);
     }
+    chips.forEach((chip,index)=>{chip.dataset.wordIndex=String(index);});
   }
-  function moveDraggingChip(event){
-    const dragging=repChips.querySelector('.rep-chip.is-dragging');
-    if(!dragging)return;
+
+  function clearDragLiftStyles(chip){
+    if(!chip)return;
+    chip.classList.remove('is-dragging','is-drop-settling','is-flip-animating');
+    chip.style.left='';
+    chip.style.top='';
+    chip.style.width='';
+    chip.style.height='';
+    chip.style.transform='';
+    chip.style.transition='';
+  }
+
+  function cleanupDragPlaceholder(){
+    dragPlaceholder?.remove();
+    dragPlaceholder=null;
+  }
+
+  function moveDragPlaceholder(event){
+    if(!repChips||!dragPlaceholder||!dragLiftedChip)return;
     const x=event.clientX;
     const y=event.clientY;
-    const others=[...repChips.querySelectorAll('.rep-chip')].filter(chip=>chip!==dragging);
+    const others=[...repChips.querySelectorAll('.rep-chip')].filter(chip=>chip!==dragLiftedChip);
     if(!others.length){
-      if(dragging.parentElement===repChips)repChips.appendChild(dragging);
+      if(dragPlaceholder.parentElement===repChips)repChips.appendChild(dragPlaceholder);
       return;
     }
 
-    // Pick the row band under the pointer (works over empty trailing space, not only chip hit-targets).
+    const firstRects=measureChipRects(others);
     const measured=others.map(chip=>{
       const rect=chip.getBoundingClientRect();
-      return {chip,rect,top:rect.top,midY:rect.top+rect.height/2,midX:rect.left+rect.width/2};
+      return{chip,rect,top:rect.top,midY:rect.top+rect.height/2,midX:rect.left+rect.width/2};
     });
     let rowTop=measured[0].top;
     let bestRowDist=Infinity;
@@ -4710,35 +4883,70 @@ function bindDesignedInterface(){
       }
     }
     const rowItems=measured.filter(item=>Math.abs(item.top-rowTop)<8);
-    // DOM order within the row (RTL flex: earlier = visually righter).
     const rowDom=others.filter(chip=>rowItems.some(item=>item.chip===chip));
 
     let placeBefore=null;
     for(const chip of rowDom){
       const item=rowItems.find(entry=>entry.chip===chip);
       if(!item)continue;
-      // Pointer on/right of chip center → insert before it (move toward the right / earlier).
       if(x>=item.midX){
         placeBefore=chip;
         break;
       }
     }
 
-    const next=placeBefore||(rowDom.length?rowDom[rowDom.length-1].nextElementSibling:null);
+    const beforeMove=dragPlaceholder.nextElementSibling;
     if(placeBefore){
-      if(dragging.nextElementSibling!==placeBefore)repChips.insertBefore(dragging,placeBefore);
+      if(dragPlaceholder.nextElementSibling!==placeBefore)repChips.insertBefore(dragPlaceholder,placeBefore);
     }else if(rowDom.length){
       const last=rowDom[rowDom.length-1];
-      if(dragging.previousElementSibling!==last)repChips.insertBefore(dragging,last.nextElementSibling);
-    }else if(next){
-      if(dragging.nextElementSibling!==next)repChips.insertBefore(dragging,next);
+      if(dragPlaceholder.previousElementSibling!==last)repChips.insertBefore(dragPlaceholder,last.nextElementSibling);
     }else{
-      repChips.appendChild(dragging);
+      repChips.appendChild(dragPlaceholder);
     }
+    if(dragPlaceholder.nextElementSibling===beforeMove&&dragPlaceholder.parentElement===repChips){
+      // No structural change — skip FLIP.
+      return;
+    }
+    flipChipPositions(others,firstRects);
   }
+
+  function settleChipIntoPlaceholder(chip){
+    if(!chip||!dragPlaceholder||!repChips){
+      clearDragLiftStyles(chip);
+      cleanupDragPlaceholder();
+      return Promise.resolve();
+    }
+    const from=chip.getBoundingClientRect();
+    const to=dragPlaceholder.getBoundingClientRect();
+    repChips.insertBefore(chip,dragPlaceholder);
+    cleanupDragPlaceholder();
+    clearDragLiftStyles(chip);
+    const dx=from.left-to.left;
+    const dy=from.top-to.top;
+    if(Math.abs(dx)<0.5&&Math.abs(dy)<0.5)return Promise.resolve();
+    chip.style.transition='none';
+    chip.style.transform=`translate(${dx}px,${dy}px)`;
+    void chip.offsetWidth;
+    chip.classList.add('is-drop-settling');
+    chip.style.transition='';
+    chip.style.transform='';
+    return new Promise(resolve=>{
+      const done=()=>{
+        chip.classList.remove('is-drop-settling');
+        chip.style.transform='';
+        chip.style.transition='';
+        chip.removeEventListener('transitionend',done);
+        resolve();
+      };
+      chip.addEventListener('transitionend',done);
+      window.setTimeout(done,CHIP_FLIP_MS+40);
+    });
+  }
+
   repChips?.addEventListener('dragstart',event=>{
     if(event.target.closest('[data-remove-word]')){event.preventDefault();return;}
-    const chip=event.target.closest('.rep-chip');if(!chip)return;
+    const chip=event.target.closest('.rep-chip');if(!chip||!repChips)return;
     draggedWordIndex=Number(chip.dataset.wordIndex);
     dragOrderSnapshot=[...designRepresentativeWords];
     dragItemsSnapshot=currentResult?.representativeWords?[...currentResult.representativeWords]:null;
@@ -4747,34 +4955,69 @@ function bindDesignedInterface(){
     event.dataTransfer.setData('application/x-rep-word-index',String(draggedWordIndex));
     event.dataTransfer.setData('text/plain',String(draggedWordIndex));
     setRepChipDragImage(event,chip);
+
+    const rect=chip.getBoundingClientRect();
+    dragPlaceholder=document.createElement('span');
+    dragPlaceholder.className='rep-chip-placeholder';
+    dragPlaceholder.setAttribute('aria-hidden','true');
+    dragPlaceholder.style.width=`${rect.width}px`;
+    dragPlaceholder.style.height=`${rect.height}px`;
+    chip.after(dragPlaceholder);
+
+    dragLiftedChip=chip;
     chip.classList.add('is-dragging');
+    chip.style.left=`${rect.left}px`;
+    chip.style.top=`${rect.top}px`;
+    chip.style.width=`${rect.width}px`;
+    chip.style.height=`${rect.height}px`;
   });
   repChips?.addEventListener('dragover',event=>{
     if(draggedWordIndex==null)return;
     event.preventDefault();event.dataTransfer.dropEffect='move';
-    moveDraggingChip(event);
+    moveDragPlaceholder(event);
   });
-  repChips?.addEventListener('drop',event=>{
-    if(draggedWordIndex==null)return;
+  repChips?.addEventListener('drop',async event=>{
+    if(draggedWordIndex==null||dropHandling)return;
     event.preventDefault();
     chipDidDrop=true;
-    moveDraggingChip(event);
-    commitRepChipOrderFromDom();
-    draggedWordIndex=null;
-    dragOrderSnapshot=null;
-    dragItemsSnapshot=null;
-    syncDesignUI();
+    dropHandling=true;
+    moveDragPlaceholder(event);
+    const chip=dragLiftedChip;
+    try{
+      await settleChipIntoPlaceholder(chip);
+      commitRepChipOrderFromDom();
+      // Canvas pictogram row updates once after drop — never mid-drag.
+      if(document.getElementById('app')?.classList.contains('has-visual-result')){
+        await applyRepresentativeWordOrderToCanvas();
+      }else{
+        syncPictogramStrip();
+      }
+    }finally{
+      draggedWordIndex=null;
+      dragOrderSnapshot=null;
+      dragItemsSnapshot=null;
+      dragLiftedChip=null;
+      dropHandling=false;
+      chipDidDrop=false;
+    }
   });
   repChips?.addEventListener('dragend',()=>{
-    if(!chipDidDrop&&dragOrderSnapshot){
+    // drop handler owns async settle/cleanup; avoid racing it.
+    if(chipDidDrop||dropHandling)return;
+    if(dragLiftedChip&&dragPlaceholder){
+      repChips.insertBefore(dragLiftedChip,dragPlaceholder);
+    }
+    clearDragLiftStyles(dragLiftedChip);
+    cleanupDragPlaceholder();
+    if(dragOrderSnapshot){
       designRepresentativeWords.splice(0,designRepresentativeWords.length,...dragOrderSnapshot);
-      syncDesignUI();
-    }else{
-      repChips.querySelectorAll('.is-dragging').forEach(chip=>chip.classList.remove('is-dragging'));
+      const chips=[...repChips.querySelectorAll('.rep-chip')];
+      chips.forEach((chip,index)=>{chip.dataset.wordIndex=String(index);});
     }
     draggedWordIndex=null;
     dragOrderSnapshot=null;
     dragItemsSnapshot=null;
+    dragLiftedChip=null;
     chipDidDrop=false;
   });
 

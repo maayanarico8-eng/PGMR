@@ -328,8 +328,8 @@
     const attrs = openMatch[2];
     const transform = getAttr(attrs, 'transform') || '';
     const { x, y } = parseTranslate(transform);
-    const size = fallbackSize || 64;
-    // Prefer nested svg width/height if present
+    const size = fallbackSize || 48;
+    // Prefer nested svg width/height if present (bank canvas: height 48, width varies)
     const nested = elHtml.match(/<svg\b([^>]*)>/i);
     let w = size;
     let h = size;
@@ -338,6 +338,11 @@
       const nh = parseFloat(getAttr(nested[1], 'height'));
       if (Number.isFinite(nw) && nw > 0) w = nw;
       if (Number.isFinite(nh) && nh > 0) h = nh;
+      if (!(Number.isFinite(nw) && nw > 0) || !(Number.isFinite(nh) && nh > 0)) {
+        const vb = parseViewBox(getAttr(nested[1], 'viewBox') || '');
+        if (!(Number.isFinite(nw) && nw > 0) && vb.w > 0) w = vb.w;
+        if (!(Number.isFinite(nh) && nh > 0) && vb.h > 0) h = vb.h;
+      }
     }
     return {
       html: elHtml,
@@ -366,7 +371,7 @@
         const innerKids = extractTopLevelElements(om[2]);
         if (innerKids.length > 1 || (innerKids.length === 1 && !/^<svg\b/i.test(innerKids[0]))) {
           children = innerKids.map((kid) => {
-            const p = parsePictogramElement(kid, 64);
+            const p = parsePictogramElement(kid, 48);
             if (!p) return kid;
             const nx = p.x + wrapT.x;
             const ny = p.y + wrapT.y;
@@ -387,7 +392,7 @@
 
     const pictograms = children
       .map((html, i) => {
-        const p = parsePictogramElement(html, 64);
+        const p = parsePictogramElement(html, 48);
         if (!p) return null;
         if (options && options.metrics && options.metrics[i]) {
           const m = options.metrics[i];
@@ -502,27 +507,30 @@
       .trim();
   }
 
-  function forceMasterSvgSize(attrs, size) {
+  function forceMasterSvgSize(attrs, width, height) {
+    const w = Math.max(1, Number(width) || 48);
+    const h = Math.max(1, Number(height) || 48);
     let a = String(attrs || '');
     a = a.replace(/\s(?:width|height)\s*=\s*["'][^"']*["']/gi, '');
     a = a.replace(/\s(?:width|height)\s*=\s*[^\s>]+/gi, '');
     // Drop duplicate Layer ids so multiple masters in one sequence don't collide.
     a = a.replace(/\sid\s*=\s*["'][^"']*["']/gi, '');
-    if (!/\bviewBox\s*=/i.test(a)) a += ` viewBox="0 0 ${size} ${size}"`;
+    if (!/\bviewBox\s*=/i.test(a)) a += ` viewBox="0 0 ${formatNum(w)} ${formatNum(h)}"`;
     if (!/\boverflow\s*=/i.test(a)) a += ' overflow="hidden"';
-    return ` width="${size}" height="${size}"${a}`;
+    return ` width="${formatNum(w)}" height="${formatNum(h)}"${a}`;
   }
 
   function localMasterHtml(p) {
-    // Keep a nested <svg width/height=64> so every pictogram shares one slot size.
+    // Keep nested <svg> at bank-canvas size (height 48, width auto from master).
     // Only strip <?xml …?> — unwrapping children made bank icons (girl) huge vs Streamline icons.
     const nested = p.html.match(/^<g\b[^>]*>([\s\S]*)<\/g\s*>$/i);
     if (nested) {
       const inner = stripSvgProlog(nested[1]);
       const svgM = inner.match(/^<svg\b([^>]*)>([\s\S]*)<\/svg\s*>$/i);
       if (svgM) {
-        const size = Math.max(1, Math.round(p.width) || 64);
-        return `<svg${forceMasterSvgSize(svgM[1], size)}>${svgM[2]}</svg>`;
+        const w = Math.max(1, p.width || 48);
+        const h = Math.max(1, p.height || 48);
+        return `<svg${forceMasterSvgSize(svgM[1], w, h)}>${svgM[2]}</svg>`;
       }
       return inner;
     }

@@ -28,6 +28,12 @@
   let mappingCache = null;
   let mappingLoadPromise = null;
   const svgCacheMemory = {};
+  /** Normalized SVG by source hash — same external icon is never bank-fitted twice. */
+  const normalizedBySource = {};
+  const EMPTY_STATE_WORD = 'empty state';
+  const EMPTY_STATE_HASH = 'bank:empty state';
+  /** Shared sentinels — must not block other terms when the same placeholder hash is reused. */
+  const SHARED_HASH_SENTINELS = new Set(['manual-upload', EMPTY_STATE_HASH]);
   let cacheWriteQueue = Promise.resolve();
   let mappingWriteQueue = Promise.resolve();
 
@@ -370,11 +376,45 @@
     });
   }
 
+  function sourceCacheKey(hash, svg) {
+    const h = hash == null ? '' : String(hash).trim();
+    if (h && !SHARED_HASH_SENTINELS.has(h) && !h.startsWith('bank:')) return h;
+    // Fall back to a short stable fingerprint of the SVG bytes.
+    const text = String(svg || '');
+    let mix = 0;
+    for (let i = 0; i < text.length; i++) mix = (mix * 33 + text.charCodeAt(i)) >>> 0;
+    return `svg:${mix.toString(16)}:${text.length}`;
+  }
+
+  /**
+   * One-time bank-canvas normalize for external icons, memoized by source hash.
+   * Bank masters keep their geometry (marker / 48-tall canvas only).
+   */
+  function normalizeSvgForSource(svg, hash, source) {
+    const api = root.MemoryEngineNormalizePictogramSvg;
+    if (!api) return svg;
+    const src = String(source || '');
+    const isBank = src === 'bank' || src === 'bank-fallback';
+    if (isBank) {
+      return api.ensureBankRootAttrs ? api.ensureBankRootAttrs(svg) : api.stripSvgProlog(svg);
+    }
+    const key = sourceCacheKey(hash, svg);
+    if (normalizedBySource[key]) return normalizedBySource[key];
+    if (api.isBankCanvasSvg?.(svg)) {
+      const out = api.ensureBankRootAttrs(svg);
+      normalizedBySource[key] = out;
+      return out;
+    }
+    const prepare = api.preparePictogramSvg || api.normalizeExternalToBankCanvas;
+    const out = prepare(svg, { source: src || 'external' });
+    normalizedBySource[key] = out;
+    return out;
+  }
+
   async function saveCacheEntry(english, entry) {
     const key = normalizeEnglish(english);
     if (!key || !entry?.svg) return false;
-    const norm = root.MemoryEngineNormalizePictogramSvg?.normalizePictogramSvg;
-    const svg = norm ? norm(entry.svg) : entry.svg;
+    const svg = normalizeSvgForSource(entry.svg, entry.hash, entry.source || 'cache');
     const stored = {
       svg,
       hash: entry.hash || null,
@@ -390,14 +430,13 @@
    */
   async function ensureBankedIcons(items) {
     const pending = {};
-    const norm = root.MemoryEngineNormalizePictogramSvg?.normalizePictogramSvg;
     for (const item of items || []) {
       const key = normalizeEnglish(item?.english);
       if (!key || !item?.svg) continue;
       const existing = await getCachedEntry(key);
       if (existing?.svg) continue;
       pending[key] = {
-        svg: norm ? norm(item.svg) : item.svg,
+        svg: normalizeSvgForSource(item.svg, item.hash, item.source || 'cache'),
         hash: item.hash || null,
         cachedAt: new Date().toISOString(),
       };
@@ -504,12 +543,6 @@
     root.MemoryEngineStreamlineSession?.register?.(svg, meta);
   }
 
-  const EMPTY_STATE_WORD = 'empty state';
-  const EMPTY_STATE_HASH = 'bank:empty state';
-
-  /** Shared sentinels — must not block other terms when the same placeholder hash is reused. */
-  const SHARED_HASH_SENTINELS = new Set(['manual-upload', EMPTY_STATE_HASH]);
-
   function stableAssetHash(term, hash) {
     const h = hash == null ? '' : String(hash).trim();
     if (!h || SHARED_HASH_SENTINELS.has(h)) return `bank:${normalizeEnglish(term)}`;
@@ -517,9 +550,8 @@
   }
 
   function returnSvg(term, svg, hash, source) {
-    const norm = root.MemoryEngineNormalizePictogramSvg?.normalizePictogramSvg;
-    const out = norm ? norm(svg) : svg;
     const stableHash = stableAssetHash(term, hash);
+    const out = normalizeSvgForSource(svg, stableHash, source);
     registerSession(out, { english: term, hash: stableHash, source });
     return { svg: out, source, hash: stableHash, english: term };
   }
@@ -617,7 +649,7 @@
       updatedAt: new Date().toISOString(),
     };
     await saveMappingEntry(term, mappingEntry);
-    await saveCacheEntry(term, { svg, hash: icon.hash });
+    await saveCacheEntry(term, { svg, hash: icon.hash, source: 'streamline-new' });
 
     return returnSvg(term, svg, icon.hash, 'streamline-new');
   }
@@ -658,7 +690,18 @@
       const cacheHash = stableAssetHash(term, cached.hash);
       if (!isHashExcluded(cacheHash, excludeSet) && !isHashExcluded(cached.hash, excludeSet)) {
         step('cache-hit', { hash: cacheHash, rawHash: cached.hash, source: 'cache' });
-        return returnSvg(term, cached.svg, cacheHash, 'cache');
+        const resolved = returnSvg(term, cached.svg, cacheHash, 'cache');
+        // Upgrade legacy 64×64 cache payloads to bank canvas once.
+        const normApi = root.MemoryEngineNormalizePictogramSvg;
+        if (
+          resolved?.svg &&
+          normApi?.isBankCanvasSvg &&
+          !normApi.isBankCanvasSvg(cached.svg) &&
+          normApi.isBankCanvasSvg(resolved.svg)
+        ) {
+          saveCacheEntry(term, { svg: resolved.svg, hash: cached.hash, source: 'cache' }).catch(() => {});
+        }
+        return resolved;
       }
       step('cache-skipped-excluded', {
         hash: cacheHash,
@@ -683,7 +726,7 @@
     if (mapped?.hash && !isHashExcluded(mapped.hash, excludeSet)) {
       try {
         const svg = await downloadSvg(mapped.hash, mapped.downloadParams || DEFAULT_DOWNLOAD_PARAMS);
-        await saveCacheEntry(term, { svg, hash: mapped.hash });
+        await saveCacheEntry(term, { svg, hash: mapped.hash, source: 'mapping' });
         step('mapping-download-hit', { hash: mapped.hash });
         return returnSvg(term, svg, mapped.hash, 'mapping');
       } catch (err) {
@@ -723,6 +766,7 @@
     mappingCache = null;
     mappingLoadPromise = null;
     Object.keys(svgCacheMemory).forEach((k) => delete svgCacheMemory[k]);
+    Object.keys(normalizedBySource).forEach((k) => delete normalizedBySource[k]);
   }
 
   root.MemoryEngineCatalogStreamlineProvider = {

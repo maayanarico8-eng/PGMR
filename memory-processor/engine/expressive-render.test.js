@@ -305,17 +305,18 @@ console.log('expressive-render tests…');
 
   const seq =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 128">` +
-    `<g transform="translate(20,32)">` +
-    `<svg width="64" height="64" viewBox="0 0 48 48">` +
+    `<g transform="translate(20,40)">` +
+    `<svg width="48" height="48" viewBox="0 0 48 48">` +
     `<g transform="scale(1.073)" stroke-width="0.931707"><path d="M8 24h32"/></g>` +
     `</svg></g>` +
-    `<g transform="translate(100,32)">` +
-    `<svg width="64" height="64" viewBox="0 0 64 64">` +
-    `<path d="M8 32h48" fill="none" stroke="#000" stroke-width="0.25"/>` +
-    `</svg></g>` +
+    `<g transform="translate(100,40)">` +
+    `<svg width="48" height="48" viewBox="0 0 48 48" data-pgmr-bank="1">` +
+    `<g transform="translate(3,3) scale(1.75)" stroke-width="0.571429">` +
+    `<path d="M8 32h48" fill="none" stroke="#000"/>` +
+    `</g></svg></g>` +
     `</svg>`;
   const { svg, state } = api.applyExpressiveRendering(seq, api.DEFAULT_PARAMS);
-  assert(state.pictogramCount === 2, 'bank+streamline count as two');
+  assert(state.pictogramCount === 2, 'bank+external count as two');
   assert(state.strokeWidth === 0.93, 'unified stroke floor 0.93');
   assert((svg.match(/stroke-width="0\.93"/g) || []).length >= 2, 'both masters get stroke 0.93');
   assert((svg.match(/vector-effect="non-scaling-stroke"/g) || []).length >= 2, 'both get non-scaling-stroke');
@@ -330,28 +331,33 @@ console.log('expressive-render tests…');
   globalThis.MemoryEngineNormalizePictogramSvg = normalizeApi;
   const girl = fs.readFileSync(path.join(__dirname, '../pictograms/bank/girl.svg'), 'utf8');
   assert(girl.trim().startsWith('<?xml'), 'fixture has xml prolog');
-  const normalized = normalizeApi.normalizePictogramSvg(girl);
+  const normalized = normalizeApi.preparePictogramSvg(girl, { source: 'bank' });
   assert(normalized.startsWith('<svg'), 'girl normalizes without xml prolog');
+  const size = normalizeApi.readBankCanvasSize(normalized);
   const slotSvg = normalized.replace(/^<svg([^>]*)>/i, (m, attrs) => {
     let a = attrs.replace(/\s(?:width|height)="[^"]*"/gi, '');
-    return `<svg width="64" height="64"${a} overflow="hidden">`;
+    return `<svg width="${size.width}" height="${size.height}"${a} overflow="hidden">`;
   });
-  const walk =
+  const walk = normalizeApi.normalizeExternalToBankCanvas(
     `<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">` +
-    `<path d="M8 32h48" fill="none" stroke="#000" stroke-width="0.5"/>` +
-    `</svg>`;
+      `<path d="M8 32h48" fill="none" stroke="#000" stroke-width="0.5"/>` +
+      `</svg>`,
+    { bbox: { x: 8, y: 31.75, width: 48, height: 0.5, strokeWidth: 0.5 } }
+  );
+  const walkSize = normalizeApi.readBankCanvasSize(walk);
   const seq =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 128">` +
-    `<g transform="translate(20,32)">${slotSvg}</g>` +
-    `<g transform="translate(100,32)">${walk}</g>` +
+    `<g transform="translate(20,40)">${slotSvg}</g>` +
+    `<g transform="translate(100,40)"><svg width="${walkSize.width}" height="${walkSize.height}" viewBox="0 0 ${walkSize.width} ${walkSize.height}">` +
+    `${walk.replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '')}</svg></g>` +
     `</svg>`;
   const { svg, state } = api.applyExpressiveRendering(seq, api.DEFAULT_PARAMS);
   assert(state.pictogramCount === 2, 'girl+walk count as two pictograms');
   assert(!/<\?xml/i.test(svg), 'expressive output has no xml prolog in masters');
   const master = svg.match(/id="ex-master-0">([\s\S]*?)<\/g>\s*<clipPath/)?.[1] || '';
   assert(master.length > 0, 'girl master exists');
-  assert(/^<svg\b/i.test(master.trim()), 'master keeps nested svg for uniform size');
-  assert(/width="64"/.test(master) && /height="64"/.test(master), 'master svg forced to 64');
+  assert(/^<svg\b/i.test(master.trim()), 'master keeps nested svg for bank canvas size');
+  assert(/height="48"/.test(master), 'master svg height is bank 48');
   assert(/39\.61,38\.03/.test(svg), 'girl path retained in sequence output');
   assert(/<use\b[^>]*href="#ex-master-0"/.test(svg), 'girl referenced via use');
 }
