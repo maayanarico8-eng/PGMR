@@ -959,17 +959,25 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .reset-params-btn{
   position:relative;display:none;flex:0 0 auto;align-items:center;justify-content:center;
   width:calc(18 * var(--figma-unit));height:calc(18 * var(--figma-unit));margin:0;padding:0;
-  border:0;border-radius:0;background:transparent;cursor:pointer;color:inherit
+  border:0;border-radius:0;background:transparent;cursor:pointer;color:#A87E5D
 }
 .app.has-visual-result .reset-params-btn{display:inline-flex}
-.reset-params-btn img{display:block;width:100%;height:100%;pointer-events:none}
-.reset-params-btn:disabled{cursor:default}
+.reset-params-icon{
+  display:block;width:100%;height:100%;pointer-events:none;background:currentColor;
+  -webkit-mask:url('/memory-processor/assets/icons/reset-params-default-figma.svg') center/contain no-repeat;
+  mask:url('/memory-processor/assets/icons/reset-params-default-figma.svg') center/contain no-repeat;
+  -webkit-mask-source-type:alpha;mask-mode:alpha
+}
+.reset-params-btn:hover:not(:disabled),
+.reset-params-btn:focus-visible:not(:disabled){color:#462203}
+.reset-params-btn:disabled{cursor:default;color:#BBBBBB}
 .reset-params-tooltip{
-  /* Figma 1244:57799 — above icon, 8px gap, centered */
-  position:absolute;z-index:3;left:50%;bottom:calc(100% + 8 * var(--figma-unit));
-  transform:translateX(-50%);box-sizing:border-box;
+  /* Above icon, 8px gap. Flush-left (not centered) so it opens into the sidebar —
+     centering clips the label against .design-sidebar / .sidebar-content overflow. */
+  position:absolute;z-index:5;left:0;right:auto;bottom:calc(100% + 8 * var(--figma-unit));
+  transform:none;box-sizing:border-box;
   display:flex;align-items:center;justify-content:center;
-  min-width:calc(124 * var(--figma-unit));height:calc(28 * var(--figma-unit));
+  min-width:calc(124 * var(--figma-unit));width:max-content;height:calc(28 * var(--figma-unit));
   padding:calc(4 * var(--figma-unit)) calc(16 * var(--figma-unit));
   border:1px solid #eee;border-radius:calc(4 * var(--figma-unit));background:#fff;
   box-shadow:0 2px 6px rgba(0,0,0,.1);
@@ -1019,18 +1027,18 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .rep-chip.is-dragging button{color:inherit;pointer-events:none}
 .rep-chip-ghost{
   position:fixed;z-index:50;margin:0;pointer-events:none;box-sizing:border-box;
-  display:inline-flex;align-items:center;gap:calc(6 * var(--figma-unit));direction:ltr;
+  display:inline-flex;align-items:center;justify-content:center;gap:calc(6 * var(--figma-unit));direction:ltr;
   padding:calc(4 * var(--figma-unit)) calc(8 * var(--figma-unit));
   border:1px solid var(--design-muted,#ababab);border-radius:calc(8 * var(--figma-unit));background:#fff;
   font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));font-weight:400;line-height:calc(20 * var(--figma-unit));
-  color:var(--design-muted,#ababab);white-space:nowrap;cursor:grabbing
+  color:var(--design-muted,#ababab);white-space:nowrap;cursor:grabbing;
+  will-change:left,top
 }
 .rep-chip-placeholder{
   box-sizing:border-box;flex:0 0 auto;
   border:1px dashed #d9d9d9;border-radius:calc(8 * var(--figma-unit));
   background:transparent;pointer-events:none;visibility:hidden
 }
-.rep-chip.is-flip-animating{transition:transform 180ms ease-out;z-index:1}
 .rep-chip.is-drop-settling{transition:transform 180ms ease-out;z-index:2}
 .rep-chip button{
   width:calc(9.75 * var(--figma-unit));height:calc(9.75 * var(--figma-unit));
@@ -1189,21 +1197,19 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .range-row{width:100%;margin:0}
 .range-row label{
-  display:block;margin-bottom:calc(16 * var(--figma-unit));font-family:var(--font-body);
+  display:block;margin-bottom:calc(24 * var(--figma-unit));font-family:var(--font-body);
   font-size:calc(22 * var(--figma-unit));font-weight:500;line-height:calc(28 * var(--figma-unit));text-align:right
 }
 .range-control{position:relative;width:100%}
 .range-value-bubble{
+  /* Always visible — default, while scrubbing, and after release. */
   position:absolute;z-index:1;top:0;left:var(--slider-thumb-center,100%);
   transform:translate(-50%,calc(-100% - 2px));
   margin:0;padding:0;border:0;background:transparent;pointer-events:none;
   font-family:var(--font-mono);font-size:calc(13 * var(--figma-unit));font-weight:400;
   line-height:calc(18 * var(--figma-unit));color:#000;white-space:nowrap;direction:ltr;
-  opacity:0;visibility:hidden
+  opacity:1;visibility:visible
 }
-/* Show % while dragging, and keep it after first touch until reset. */
-.range-control.is-scrubbing .range-value-bubble,
-.range-control.is-touched .range-value-bubble{opacity:1;visibility:visible}
 .range-control input[type=range]{
   appearance:none;-webkit-appearance:none;width:100%;height:calc(20 * var(--figma-unit));display:block;
   margin:0;border:0;background:transparent;direction:rtl
@@ -1511,7 +1517,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .side-heading-row{gap:16px;margin-bottom:16px}
   .side-heading{font-size:22px;line-height:28px}
   .reset-params-btn{width:18px;height:18px}
-  .reset-params-tooltip{min-width:124px;height:28px;padding:4px 16px;border-radius:4px;font-size:15px;line-height:20px;bottom:calc(100% + 8px)}
+  .reset-params-tooltip{min-width:124px;width:max-content;height:28px;padding:4px 16px;border-radius:4px;font-size:15px;line-height:20px;bottom:calc(100% + 8px);left:0;transform:none}
   .rep-count{font-size:13px;line-height:18px}
   .rep-chips{gap:12px 10px}
   .rep-chip,.add-word-btn{padding:4px 8px;gap:6px;border-radius:8px;font-size:15px;line-height:20px}
@@ -1752,10 +1758,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
             <h2 class="side-heading" id="visual-settings-heading">פיקטוגרמות</h2>
             <button type="button" class="reset-params-btn" id="reset-params-btn" disabled aria-label="איפוס פרמטרים">
               <span class="reset-params-tooltip" aria-hidden="true">איפוס פרמטרים</span>
-              <img src="/memory-processor/assets/icons/reset-params-disabled-figma.svg" alt=""
-                data-icon-default="/memory-processor/assets/icons/reset-params-default-figma.svg"
-                data-icon-hover="/memory-processor/assets/icons/reset-params-hover-figma.svg"
-                data-icon-disabled="/memory-processor/assets/icons/reset-params-disabled-figma.svg">
+              <span class="reset-params-icon" aria-hidden="true"></span>
             </button>
           </div>
           <p class="visual-params-copy" id="visual-params-copy">הפרמטרים מייצגים היבטים שונים של הזיכרון, המשפיעים על ייצוגו.</p>
@@ -1812,7 +1815,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
       </div>
       <div class="sidebar-action">
         <button type="button" class="create-visual-btn" id="create-visual-btn">רישום זיכרון</button>
-        <button type="button" class="restart-memory-btn" id="restart-memory-btn">התחל מחדש</button>
+        <button type="button" class="restart-memory-btn" id="restart-memory-btn" disabled>התחל מחדש</button>
       </div>
     </aside>
   </main>
@@ -4183,18 +4186,8 @@ function resetMemorySourceToDefault(){
 
 function syncResetParamsButton(){
   const btn=document.getElementById('reset-params-btn');
-  const icon=btn?.querySelector('img');
-  if(!btn||!icon)return;
-  const atDefault=areDesignParamsAtDefault();
-  btn.disabled=atDefault;
-  const def=icon.dataset.iconDefault||'/memory-processor/assets/icons/reset-params-default-figma.svg';
-  const dis=icon.dataset.iconDisabled||'/memory-processor/assets/icons/reset-params-disabled-figma.svg';
-  if(atDefault){
-    icon.src=dis;
-    btn.classList.remove('is-hover');
-  }else if(!btn.classList.contains('is-hover')){
-    icon.src=def;
-  }
+  if(!btn)return;
+  btn.disabled=areDesignParamsAtDefault();
 }
 
 function applyDesignRangeFrame(valuesById){
@@ -4348,6 +4341,9 @@ function syncDesignUI(){
     create.disabled=!hasResults;
     create.textContent=hasVisual?'הדפסת זיכרון':'רישום זיכרון';
   }
+  // התחל מחדש only after רישום זיכרון (has-visual-result).
+  const restart=document.getElementById('restart-memory-btn');
+  if(restart)restart.disabled=!hasVisual;
   const params=getExpressiveParams();
   syncMemorySourceUI();
   [['design-frequency','memoryFrequency'],['design-clarity','memoryClarity'],['design-impact','memoryImpact']].forEach(([id,key])=>{
@@ -5177,7 +5173,8 @@ function bindDesignedInterface(){
   bindConfirmDialog();
   bindEscapeLayers();
   document.getElementById('restart-memory-btn')?.addEventListener('click',()=>{
-    if(!isMemoryInProgress())return;
+    const restart=document.getElementById('restart-memory-btn');
+    if(!restart||restart.disabled||!isMemoryInProgress())return;
     openConfirmDialog('restart');
   });
   document.getElementById('edit-memory-btn')?.addEventListener('click',enterEditMemory);
@@ -5273,40 +5270,11 @@ function bindDesignedInterface(){
   let dragOffsetX=0;
   let dragOffsetY=0;
   let dragMoved=false;
-  const CHIP_FLIP_MS=180;
+  let dragMoveRaf=0;
+  let dragMoveX=0;
+  let dragMoveY=0;
+  const CHIP_SETTLE_MS=180;
   const CHIP_DRAG_THRESHOLD=4;
-
-  function flipChipPositions(nodes,firstRects){
-    nodes.forEach(node=>{
-      const first=firstRects.get(node);
-      if(!first)return;
-      const last=node.getBoundingClientRect();
-      const dx=first.left-last.left;
-      const dy=first.top-last.top;
-      if(Math.abs(dx)<0.5&&Math.abs(dy)<0.5)return;
-      node.classList.remove('is-flip-animating','is-drop-settling');
-      node.style.transition='none';
-      node.style.transform=`translate(${dx}px,${dy}px)`;
-      void node.offsetWidth;
-      node.classList.add('is-flip-animating');
-      node.style.transition='';
-      node.style.transform='';
-      const clear=()=>{
-        node.classList.remove('is-flip-animating');
-        node.style.transform='';
-        node.style.transition='';
-        node.removeEventListener('transitionend',clear);
-      };
-      node.addEventListener('transitionend',clear);
-      window.setTimeout(clear,CHIP_FLIP_MS+40);
-    });
-  }
-
-  function measureChipRects(nodes){
-    const map=new Map();
-    nodes.forEach(node=>map.set(node,node.getBoundingClientRect()));
-    return map;
-  }
 
   function commitRepChipOrderFromDom(){
     if(!repChips||!dragOrderSnapshot)return;
@@ -5322,7 +5290,7 @@ function bindDesignedInterface(){
 
   function clearDragLiftStyles(chip){
     if(!chip)return;
-    chip.classList.remove('is-dragging','is-drop-settling','is-flip-animating');
+    chip.classList.remove('is-dragging','is-drop-settling');
     chip.style.left='';
     chip.style.top='';
     chip.style.width='';
@@ -5355,42 +5323,40 @@ function bindDesignedInterface(){
       return;
     }
 
-    const firstRects=measureChipRects(others);
+    // Layout rects only (no transforms) so hit-testing stays stable while dragging.
+    const rectOf=chip=>chip.getBoundingClientRect();
     // Visual left→right (chips container is direction:rtl).
     const visual=[...others].sort((a,b)=>{
-      const ra=a.getBoundingClientRect();
-      const rb=b.getBoundingClientRect();
+      const ra=rectOf(a);
+      const rb=rectOf(b);
       if(Math.abs(ra.top-rb.top)>8)return ra.top-rb.top;
       return ra.left-rb.left;
     });
 
-    let rowTop=visual[0].getBoundingClientRect().top;
+    let rowTop=rectOf(visual[0]).top;
     let bestRowDist=Infinity;
     for(const chip of visual){
-      const rect=chip.getBoundingClientRect();
+      const rect=rectOf(chip);
       const dist=Math.abs(clientY-(rect.top+rect.height/2));
       if(dist<bestRowDist){
         bestRowDist=dist;
         rowTop=rect.top;
       }
     }
-    const rowChips=visual.filter(chip=>{
-      const rect=chip.getBoundingClientRect();
-      return Math.abs(rect.top-rowTop)<8;
-    });
+    const rowChips=visual.filter(chip=>Math.abs(rectOf(chip).top-rowTop)<8);
 
     // First chip whose center is to the right of the pointer → slot is visually left of it.
     let visualLeftOf=null;
     for(const chip of rowChips){
-      const rect=chip.getBoundingClientRect();
+      const rect=rectOf(chip);
       if(clientX<rect.left+rect.width/2){
         visualLeftOf=chip;
         break;
       }
     }
 
-    const beforeMove=dragPlaceholder.nextElementSibling;
     // RTL flex: earlier in DOM = visually righter. Visually-left-of X ⇒ DOM after X.
+    // Instant reorder (no FLIP) — competing FLIP frames were causing jump/glitch.
     if(visualLeftOf){
       if(dragPlaceholder.previousElementSibling!==visualLeftOf){
         repChips.insertBefore(dragPlaceholder,visualLeftOf.nextElementSibling);
@@ -5403,8 +5369,6 @@ function bindDesignedInterface(){
     }else{
       repChips.appendChild(dragPlaceholder);
     }
-    if(dragPlaceholder.nextElementSibling===beforeMove&&dragPlaceholder.parentElement===repChips)return;
-    flipChipPositions(others,firstRects);
   }
 
   function settleChipIntoPlaceholder(chip){
@@ -5438,12 +5402,13 @@ function bindDesignedInterface(){
         resolve();
       };
       chip.addEventListener('transitionend',done);
-      window.setTimeout(done,CHIP_FLIP_MS+40);
+      window.setTimeout(done,CHIP_SETTLE_MS+40);
     });
   }
 
   function cancelRepChipDrag(){
     if(!dragLiftedChip)return;
+    if(dragMoveRaf){cancelAnimationFrame(dragMoveRaf);dragMoveRaf=0;}
     if(dragPlaceholder){
       dragPlaceholder.replaceWith(dragLiftedChip);
       dragPlaceholder=null;
@@ -5488,6 +5453,13 @@ function bindDesignedInterface(){
     }
   }
 
+  function flushRepChipDragMove(){
+    dragMoveRaf=0;
+    if(!dragLiftedChip||!dragMoved)return;
+    positionDragGhost(dragMoveX,dragMoveY);
+    moveDragPlaceholderAt(dragMoveX,dragMoveY);
+  }
+
   function onRepChipPointerMove(event){
     if(dragPointerId==null||event.pointerId!==dragPointerId||!dragLiftedChip)return;
     if(!dragMoved){
@@ -5503,6 +5475,8 @@ function bindDesignedInterface(){
       dragLiftedChip.replaceWith(dragPlaceholder);
       dragGhost=document.createElement('span');
       dragGhost.className='rep-chip-ghost';
+      dragGhost.style.width=`${startRect.width}px`;
+      dragGhost.style.height=`${startRect.height}px`;
       dragGhost.textContent=dragLiftedChip.querySelector('span')?.textContent||'';
       document.body.appendChild(dragGhost);
       dragLiftedChip.classList.add('is-dragging');
@@ -5512,14 +5486,21 @@ function bindDesignedInterface(){
       dragLiftedChip.style.height=`${startRect.height}px`;
       // Keep chip in DOM (hidden) for settle animation ownership; not inside .rep-chips.
       document.body.appendChild(dragLiftedChip);
+      positionDragGhost(event.clientX,event.clientY);
     }
     event.preventDefault();
-    positionDragGhost(event.clientX,event.clientY);
-    moveDragPlaceholderAt(event.clientX,event.clientY);
+    dragMoveX=event.clientX;
+    dragMoveY=event.clientY;
+    if(!dragMoveRaf)dragMoveRaf=requestAnimationFrame(flushRepChipDragMove);
   }
 
   function onRepChipPointerUp(event){
     if(dragPointerId==null||event.pointerId!==dragPointerId)return;
+    if(dragMoveRaf){
+      cancelAnimationFrame(dragMoveRaf);
+      dragMoveRaf=0;
+      if(dragMoved)flushRepChipDragMove();
+    }
     const captureEl=dragMoved?repChips:dragLiftedChip;
     try{captureEl?.releasePointerCapture?.(event.pointerId);}catch(_){}
     try{dragLiftedChip?.releasePointerCapture?.(event.pointerId);}catch(_){}
@@ -5612,23 +5593,11 @@ function bindDesignedInterface(){
   bindRange('design-frequency','memoryFrequency');
   bindRange('design-clarity','memoryClarity');
   bindRange('design-impact','memoryImpact');
+  DESIGN_RANGE_IDS.forEach(id=>syncRangeVisual(document.getElementById(id)));
   const resetBtn=document.getElementById('reset-params-btn');
-  const resetIcon=resetBtn?.querySelector('img');
-  if(resetBtn&&resetIcon){
-    const hoverSrc=()=>resetIcon.dataset.iconHover||'/memory-processor/assets/icons/reset-params-hover-figma.svg';
-    const defaultSrc=()=>resetIcon.dataset.iconDefault||'/memory-processor/assets/icons/reset-params-default-figma.svg';
-    resetBtn.addEventListener('pointerenter',()=>{
-      if(resetBtn.disabled)return;
-      resetBtn.classList.add('is-hover');
-      resetIcon.src=hoverSrc();
-    });
-    resetBtn.addEventListener('pointerleave',()=>{
-      resetBtn.classList.remove('is-hover');
-      if(!resetBtn.disabled)resetIcon.src=defaultSrc();
-    });
+  if(resetBtn){
     resetBtn.addEventListener('click',()=>{
       if(resetBtn.disabled)return;
-      resetBtn.classList.remove('is-hover');
       animateResetParams();
     });
   }

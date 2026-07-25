@@ -1844,6 +1844,66 @@
       },
       "searchQuery": "sad",
       "updatedAt": "2026-07-25T17:08:41.592Z"
+    },
+    "reaction": {
+      "hash": "ico_mRu4pQJ4vHTDeLjM5p2324iM",
+      "iconName": "Smiley Shock",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "reaction",
+      "updatedAt": "2026-07-25T17:21:14.444Z"
+    },
+    "atmosphere": {
+      "hash": "ico_mRu4pQJ4veEVeLj4pQaf75tt",
+      "iconName": "Weather Clouds",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "atmosphere",
+      "updatedAt": "2026-07-25T17:21:24.268Z"
+    },
+    "close": {
+      "hash": "ico_W3ieyvEvzmZEfKUe",
+      "iconName": "Close Edge Location",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "close",
+      "updatedAt": "2026-07-25T17:28:57.203Z"
     }
   }
 }
