@@ -482,10 +482,10 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .memory-input-wrap:focus-within .entry-count,
 .memory-input-wrap.has-content .entry-count{visibility:visible}
 .memory-error-msg{
-  position:absolute;top:calc(100% + 31 * var(--figma-unit));left:0;right:0;z-index:1;
-  display:none;width:100%;margin:0;pointer-events:none;
+  /* In-flow under the CTA so the writing-stage flex parent doesn’t clip it. */
+  display:none;width:100%;margin:calc(31 * var(--figma-unit)) 0 0;padding:0;pointer-events:none;
   color:var(--design-error);font-family:var(--font-mono);font-size:calc(14 * var(--figma-unit));
-  font-weight:400;line-height:calc(18 * var(--figma-unit));text-align:center
+  font-weight:400;line-height:calc(18 * var(--figma-unit));text-align:center;direction:rtl
 }
 .memory-error-msg:not([hidden]){display:block}
 .memory-input-wrap{position:relative;width:100%;height:calc(90 * var(--figma-unit));margin-bottom:calc(24 * var(--figma-unit))}
@@ -842,11 +842,13 @@ textarea#memory-input[aria-invalid="true"]:hover{
   padding:0;direction:ltr
 }
 .sidebar-content::-webkit-scrollbar{width:0;height:0}
-/* 7px track centered in the constant 24px right padding: inset (24-7)/2 = 8.5 */
+/* 7px track centered in the constant 24px right padding: inset (24-7)/2 = 8.5.
+   top/bottom match .sidebar-body padding so the track ends at the content edge —
+   above the footer divider, never into .sidebar-action. z-index below the footer. */
 .sidebar-scroll-indicator{
-  position:absolute;z-index:3;
+  position:absolute;z-index:1;
   top:calc(24 * var(--figma-unit));
-  bottom:calc(111 * var(--figma-unit));
+  bottom:calc(166 * var(--figma-unit));
   right:calc(8.5 * var(--figma-unit));
   width:calc(7 * var(--figma-unit));
   display:block;pointer-events:none
@@ -972,10 +974,9 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .reset-params-btn:focus-visible:not(:disabled){color:#462203}
 .reset-params-btn:disabled{cursor:default;color:#BBBBBB}
 .reset-params-tooltip{
-  /* Above icon, 8px gap. Flush-left (not centered) so it opens into the sidebar —
-     centering clips the label against .design-sidebar / .sidebar-content overflow. */
-  position:absolute;z-index:5;left:0;right:auto;bottom:calc(100% + 8 * var(--figma-unit));
-  transform:none;box-sizing:border-box;
+  /* Centered above icon, 8px gap. Ancestors lift overflow while shown (see :has below). */
+  position:absolute;z-index:5;left:50%;right:auto;bottom:calc(100% + 8 * var(--figma-unit));
+  transform:translateX(-50%);box-sizing:border-box;
   display:flex;align-items:center;justify-content:center;
   min-width:calc(124 * var(--figma-unit));width:max-content;height:calc(28 * var(--figma-unit));
   padding:calc(4 * var(--figma-unit)) calc(16 * var(--figma-unit));
@@ -987,6 +988,12 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .reset-params-btn:hover:not(:disabled) .reset-params-tooltip,
 .reset-params-btn:focus-visible:not(:disabled) .reset-params-tooltip{opacity:1;visibility:visible}
+/* Let the centered tip spill into the workspace gap without clipping. */
+.app.has-visual-result .design-sidebar:has(.reset-params-btn:is(:hover,:focus-visible):not(:disabled)),
+.app.has-visual-result .sidebar-body:has(.reset-params-btn:is(:hover,:focus-visible):not(:disabled)),
+.app.has-visual-result .sidebar-content:has(.reset-params-btn:is(:hover,:focus-visible):not(:disabled)){
+  overflow:visible
+}
 .rep-count{
   margin:0;flex:0 0 auto;font-family:var(--font-mono);font-size:calc(13 * var(--figma-unit));font-weight:400;
   line-height:calc(18 * var(--figma-unit));color:var(--design-muted);direction:ltr;white-space:nowrap;text-align:left
@@ -1482,7 +1489,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .app:not(.has-results) .input-footer{justify-content:center}
   .memory-input-wrap{height:90px;margin-bottom:24px}
   textarea#memory-input{font-size:15px;line-height:20px;padding:16px 20px 36px;border-radius:8px}
-  .memory-error-msg{top:calc(100% + 31px);font-size:14px;line-height:18px;text-align:center}
+  .memory-error-msg{margin-top:31px;font-size:14px;line-height:18px;text-align:center}
   .input-footer{height:39px}
   .analyze-btn,.generate-vrp-btn{width:237px;height:39px;padding:0 20px;font-size:18px;line-height:20px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;text-align:center}
   .memory-stage,.app.has-results.has-visual-result .memory-stage{width:100%;height:360px;min-height:360px;margin-top:0;border-radius:8px;padding:0;display:flex}
@@ -1506,7 +1513,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .sidebar-body{padding:24px;padding-bottom:166px;position:relative}
   .sidebar-content{width:100%;max-width:none;padding:0}
   .sidebar-scroll-indicator{
-    position:absolute;top:24px;bottom:111px;right:8.5px;width:7px;display:block
+    position:absolute;top:24px;bottom:166px;right:8.5px;width:7px;display:block
   }
   .sidebar-scroll-indicator span{height:40%;border-radius:5px;left:50%;transform:translateX(-50%)}
   .rep-chips{width:100%;max-width:100%;gap:12px 10px}
@@ -1517,7 +1524,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .side-heading-row{gap:16px;margin-bottom:16px}
   .side-heading{font-size:22px;line-height:28px}
   .reset-params-btn{width:18px;height:18px}
-  .reset-params-tooltip{min-width:124px;width:max-content;height:28px;padding:4px 16px;border-radius:4px;font-size:15px;line-height:20px;bottom:calc(100% + 8px);left:0;transform:none}
+  .reset-params-tooltip{min-width:124px;width:max-content;height:28px;padding:4px 16px;border-radius:4px;font-size:15px;line-height:20px;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%)}
   .rep-count{font-size:13px;line-height:18px}
   .rep-chips{gap:12px 10px}
   .rep-chip,.add-word-btn{padding:4px 8px;gap:6px;border-radius:8px;font-size:15px;line-height:20px}
@@ -1700,7 +1707,9 @@ textarea#memory-input[aria-invalid="true"]:hover{
             <span class="word-count" id="word-count"></span>
             <button class="analyze-btn" id="analyze-btn" disabled>עיבוד זיכרון</button>
           </div>
-          <p class="memory-error-msg" id="memory-error-msg" hidden>כדי להעביר את הזיכרון לרשם הזיכרונות, יש לוודא כי אורכו אינו עולה על 20 מילים.</p>
+          <p class="memory-error-msg" id="memory-error-msg" hidden
+            data-msg-word-limit="כדי להעביר את הזיכרון לרשם הזיכרונות, יש לוודא כי אורכו אינו עולה על 20 מילים."
+            data-msg-hebrew-only="רשם הזיכרונות קורא עברית">כדי להעביר את הזיכרון לרשם הזיכרונות, יש לוודא כי אורכו אינו עולה על 20 מילים.</p>
         </div>
         <button type="button" class="edit-memory-btn" id="edit-memory-btn">
           <span>עריכת הזיכרון</span>
@@ -3465,7 +3474,7 @@ function cancelEditMemory(){
 async function analyze(){
   const inputEl=document.getElementById('memory-input');
   const raw=inputEl?.value??'';
-  if(isMemoryLimitErrorActive(raw)){
+  if(isMemoryLimitErrorActive(raw)||hasEnglishLetters(raw)){
     updateWordCount();
     return;
   }
@@ -5609,12 +5618,19 @@ CAT.init();
 
 const MAX_MEMORY_WORDS=20;
 const MEMORY_WORD_LIMIT_MSG='20/20 מילים';
+const MEMORY_WORD_LIMIT_ERROR_MSG='כדי להעביר את הזיכרון לרשם הזיכרונות, יש לוודא כי אורכו אינו עולה על 20 מילים.';
+const MEMORY_HEBREW_ONLY_ERROR_MSG='רשם הזיכרונות קורא עברית';
 /** Snapshot used only to undo an insert that slipped through while the error was active. */
 let lastMemoryValue='';
 
 function countMemoryWords(text){
   const trimmed=(text||'').trim();
   return trimmed?trimmed.split(/\s+/).filter(Boolean).length:0;
+}
+
+/** True if the memory contains any Latin letter (a–z / A–Z). */
+function hasEnglishLetters(text){
+  return /[A-Za-z]/.test(text||'');
 }
 
 /**
@@ -5636,9 +5652,9 @@ function isSpaceKeyEvent(event){
   return event.key===' '||event.key==='Spacebar'||event.code==='Space';
 }
 
-/** While error is active, only insertion is blocked — deletion is always allowed. */
+/** While error is active (20-word limit or Latin letters), only insertion is blocked — deletion is always allowed. */
 function blocksMemoryInsert(current){
-  return isMemoryLimitErrorActive(current);
+  return isMemoryLimitErrorActive(current)||hasEnglishLetters(current);
 }
 
 function rememberMemoryValue(value){
@@ -5659,14 +5675,17 @@ function updateWordCount(){
   rememberMemoryValue(raw);
   const text=raw.trim();
   const n=countMemoryWords(raw);
-  const errorActive=isMemoryLimitErrorActive(raw);
-  const atLimit=n>=MAX_MEMORY_WORDS||errorActive;
+  const limitError=isMemoryLimitErrorActive(raw);
+  const englishError=hasEnglishLetters(raw);
+  // Red outline + message for either; only the 20-word case paints the counter red.
+  const errorActive=limitError||englishError;
+  const atLimit=n>=MAX_MEMORY_WORDS||limitError;
   const wcEl=document.getElementById('word-count');
   const designCount=document.getElementById('entry-count');
-  wcEl.textContent=text?(n+' word'+(n!==1?'s':'')+(errorActive?' — max 20':'')):'';
+  wcEl.textContent=text?(n+' word'+(n!==1?'s':'')+(limitError?' — max 20':'')):'';
   if(designCount){
     designCount.textContent=atLimit?MEMORY_WORD_LIMIT_MSG:`${n}/20 מילים`;
-    designCount.classList.toggle('is-at-limit',errorActive);
+    designCount.classList.toggle('is-at-limit',limitError);
     designCount.style.color='';
   }
   const heading=document.getElementById('entry-heading');
@@ -5677,9 +5696,16 @@ function updateWordCount(){
       :'איזה זיכרון היית רוצה לשמר?';
   }
   input?.setAttribute('aria-invalid',errorActive?'true':'false');
-  wcEl.style.color=errorActive?'#ba1a1a':'';
+  wcEl.style.color=limitError?'#ba1a1a':'';
   const errorMsg=document.getElementById('memory-error-msg');
-  if(errorMsg)errorMsg.hidden=!errorActive;
+  if(errorMsg){
+    errorMsg.hidden=!errorActive;
+    if(limitError){
+      errorMsg.textContent=errorMsg.dataset.msgWordLimit||MEMORY_WORD_LIMIT_ERROR_MSG;
+    }else if(englishError){
+      errorMsg.textContent=errorMsg.dataset.msgHebrewOnly||MEMORY_HEBREW_ONLY_ERROR_MSG;
+    }
+  }
   const wrap=input?.closest('.memory-input-wrap');
   if(wrap)wrap.classList.toggle('has-content',!!text);
   const analyzeBtn=document.getElementById('analyze-btn');
