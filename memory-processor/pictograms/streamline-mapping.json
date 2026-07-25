@@ -1824,6 +1824,26 @@
       },
       "searchQuery": "train",
       "updatedAt": "2026-07-25T11:47:31.955Z"
+    },
+    "sad": {
+      "hash": "ico_mRu4pQJ4v8t3eLjM5p232lI7",
+      "iconName": "Smiley Sad 1",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "sad",
+      "updatedAt": "2026-07-25T17:08:41.592Z"
     }
   }
 }

@@ -1002,7 +1002,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   padding:calc(4 * var(--figma-unit)) calc(8 * var(--figma-unit));
   border:1px solid #d9d9d9;border-radius:calc(8 * var(--figma-unit));background:#fff;
   font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));font-weight:400;line-height:calc(20 * var(--figma-unit));
-  color:#000;cursor:grab;user-select:none;white-space:nowrap
+  color:#000;cursor:grab;user-select:none;white-space:nowrap;touch-action:none
 }
 .rep-chip:hover{border-color:#bbb}
 .rep-chip:has([data-remove-word]:hover){
@@ -1012,11 +1012,19 @@ textarea#memory-input[aria-invalid="true"]:hover{
   color:#bbb
 }
 .rep-chip.is-dragging{
-  /* Lifted out of flow — placeholder keeps the slot. Native drag image is the preview. */
+  /* Slot kept by placeholder; chip itself is hidden while the floating ghost follows the pointer. */
   position:fixed;z-index:40;margin:0;pointer-events:none;opacity:0;
   color:#bbb;border-color:#bbb;border-style:solid;transition:none!important
 }
 .rep-chip.is-dragging button{color:inherit;pointer-events:none}
+.rep-chip-ghost{
+  position:fixed;z-index:50;margin:0;pointer-events:none;box-sizing:border-box;
+  display:inline-flex;align-items:center;gap:calc(6 * var(--figma-unit));direction:ltr;
+  padding:calc(4 * var(--figma-unit)) calc(8 * var(--figma-unit));
+  border:1px solid var(--design-muted,#ababab);border-radius:calc(8 * var(--figma-unit));background:#fff;
+  font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));font-weight:400;line-height:calc(20 * var(--figma-unit));
+  color:var(--design-muted,#ababab);white-space:nowrap;cursor:grabbing
+}
 .rep-chip-placeholder{
   box-sizing:border-box;flex:0 0 auto;
   border:1px dashed #d9d9d9;border-radius:calc(8 * var(--figma-unit));
@@ -3142,6 +3150,38 @@ function waitMs(ms){
   return new Promise(resolve=>window.setTimeout(resolve,ms));
 }
 
+/** Never let the loader cycle hang the analyze/pictogram chain (throttled rAF / stuck promise). */
+function withTimeout(promise,ms,label='timeout'){
+  let timer=0;
+  const timeout=new Promise((_,reject)=>{
+    timer=window.setTimeout(()=>reject(new Error(label)),ms);
+  });
+  return Promise.race([promise,timeout]).finally(()=>{
+    if(timer)window.clearTimeout(timer);
+  });
+}
+
+function forceClearMemoryLoader(){
+  const host=document.getElementById('memory-loader');
+  const frame=host?.querySelector('.memory-loader-frame');
+  const statusEl=document.getElementById('memory-loader-status');
+  const app=document.getElementById('app');
+  clearMemoryLoaderStatusTimer();
+  memoryLoaderStage=null;
+  if(statusEl){
+    statusEl.textContent='';
+    statusEl.classList.remove('is-fading');
+  }
+  if(frame)frame.src='';
+  if(host){
+    host.classList.remove('is-visible');
+    host.hidden=true;
+  }
+  app?.classList.remove('is-memory-loading','is-page-concealed');
+  setProcessingLock(false);
+  memoryLoaderCycle=Promise.resolve();
+}
+
 function renderMemoryLoaderStatus(statusEl,label){
   if(!statusEl)return;
   const text=String(label||'');
@@ -3237,17 +3277,38 @@ async function enterMemoryLoader(stage='words'){
   app.classList.remove('is-page-concealed');
   await waitMs(PAGE_TRANSITION_MS);
   app.classList.add('is-page-concealed');
-  await new Promise(resolve=>requestAnimationFrame(()=>{
-    host.classList.add('is-visible');
-    resolve();
-  }));
+  // rAF can stall in background tabs — fall back so the cycle never hangs.
+  await new Promise(resolve=>{
+    let done=false;
+    const finish=()=>{if(done)return;done=true;resolve();};
+    requestAnimationFrame(()=>{
+      host.classList.add('is-visible');
+      finish();
+    });
+    window.setTimeout(()=>{
+      host.classList.add('is-visible');
+      finish();
+    },PAGE_TRANSITION_MS+50);
+  });
   await waitMs(PAGE_TRANSITION_MS);
 }
 
 function showMemoryLoader(stage='words'){
   memoryLoaderCycle=memoryLoaderCycle
     .catch(()=>{})
-    .then(()=>enterMemoryLoader(stage));
+    .then(()=>withTimeout(enterMemoryLoader(stage),2500,'enter-loader-timeout'))
+    .catch(err=>{
+      console.warn(err?.message||err);
+      // Best-effort visible loader even if the enter animation stalled.
+      const host=document.getElementById('memory-loader');
+      const app=document.getElementById('app');
+      if(host&&app){
+        setProcessingLock(true);
+        host.hidden=false;
+        host.classList.add('is-visible');
+        app.classList.add('is-memory-loading','is-page-concealed');
+      }
+    });
   return memoryLoaderCycle;
 }
 
@@ -3285,7 +3346,11 @@ async function exitMemoryLoader(){
 function hideMemoryLoader(){
   memoryLoaderCycle=memoryLoaderCycle
     .catch(()=>{})
-    .then(()=>exitMemoryLoader());
+    .then(()=>withTimeout(exitMemoryLoader(),2500,'exit-loader-timeout'))
+    .catch(err=>{
+      console.warn(err?.message||err);
+      forceClearMemoryLoader();
+    });
   return memoryLoaderCycle;
 }
 
@@ -3499,10 +3564,14 @@ async function analyze(){
     captureProcessedInputSnapshot(typedText);
   }catch(e){
     const el=document.getElementById('error-card');
-    el.textContent=e.message;
+    el.textContent=e.message||String(e);
     el.hidden=false;
   }finally{
-    await hideMemoryLoader();
+    try{
+      await hideMemoryLoader();
+    }catch(_){
+      forceClearMemoryLoader();
+    }
     btn.disabled=false;btn.innerHTML=analyzeBtnLabel();updateWordCount();syncDesignUI();
   }
 }
@@ -4243,8 +4312,8 @@ function syncDesignUI(){
   const hasVisual=!!app?.classList.contains('has-visual-result');
   const chips=document.getElementById('rep-chips');
   if(chips){
-    // Keep chips draggable after visual so order can update the canvas row on drop.
-    chips.innerHTML=designRepresentativeWords.map((word,index)=>`<span class="rep-chip" draggable="true" data-word-index="${index}"><span>${esc(word)}</span><button type="button" draggable="false" data-remove-word="${index}" aria-label="הסרת ${esc(word)}"><img src="/memory-processor/assets/icons/remove-word-figma.svg" alt="" draggable="false"></button></span>`).join('');
+    // Pointer-drag reorder (HTML5 DnD is unreliable here); order updates canvas on drop.
+    chips.innerHTML=designRepresentativeWords.map((word,index)=>`<span class="rep-chip" data-word-index="${index}"><span>${esc(word)}</span><button type="button" data-remove-word="${index}" aria-label="הסרת ${esc(word)}"><img src="/memory-processor/assets/icons/remove-word-figma.svg" alt="" draggable="false"></button></span>`).join('');
   }
   const count=document.getElementById('rep-count');
   if(count)count.textContent=`[${designRepresentativeWords.length}/10]`;
@@ -4355,7 +4424,11 @@ async function createDesignedVisual(){
     app?.classList.add('has-visual-result');
     syncDesignUI();
   }finally{
-    await hideMemoryLoader();
+    try{
+      await hideMemoryLoader();
+    }catch(_){
+      forceClearMemoryLoader();
+    }
     btn.disabled=false;
     btn.textContent=app?.classList.contains('has-visual-result')?'הדפסת זיכרון':old;
   }
@@ -5192,46 +5265,16 @@ function bindDesignedInterface(){
   let draggedWordIndex=null;
   let dragOrderSnapshot=null;
   let dragItemsSnapshot=null;
-  let chipDidDrop=false;
   let dropHandling=false;
   let dragPlaceholder=null;
   let dragLiftedChip=null;
+  let dragGhost=null;
+  let dragPointerId=null;
+  let dragOffsetX=0;
+  let dragOffsetY=0;
+  let dragMoved=false;
   const CHIP_FLIP_MS=180;
-
-  function setRepChipDragImage(event,chip){
-    const rect=chip.getBoundingClientRect();
-    const radius=getComputedStyle(chip).borderRadius||'8px';
-    const muted=getComputedStyle(document.documentElement).getPropertyValue('--design-muted').trim()||'#ababab';
-    const clone=chip.cloneNode(true);
-    clone.classList.remove('is-dragging','is-flip-animating','is-drop-settling');
-    clone.removeAttribute('data-word-index');
-    clone.querySelectorAll('button').forEach(btn=>btn.remove());
-    clone.style.cssText=[
-      'position:absolute',
-      'top:-9999px',
-      'left:0',
-      'margin:0',
-      'pointer-events:none',
-      'direction:ltr',
-      'display:inline-flex',
-      'align-items:center',
-      'width:auto',
-      'flex:none',
-      `color:${muted}`,
-      'background:#fff',
-      `border:1px solid ${muted}`,
-      `border-radius:${radius}`,
-      'opacity:1',
-      'box-shadow:none',
-      'cursor:grabbing',
-    ].join(';');
-    document.body.appendChild(clone);
-    const previewWidth=clone.getBoundingClientRect().width;
-    const offsetX=Math.min(Math.max(0,event.clientX-rect.left),Math.max(0,previewWidth-1));
-    const offsetY=Math.min(Math.max(0,event.clientY-rect.top),Math.max(0,clone.getBoundingClientRect().height-1));
-    event.dataTransfer.setDragImage(clone,offsetX,offsetY);
-    requestAnimationFrame(()=>clone.remove());
-  }
+  const CHIP_DRAG_THRESHOLD=4;
 
   function flipChipPositions(nodes,firstRects){
     nodes.forEach(node=>{
@@ -5293,56 +5336,74 @@ function bindDesignedInterface(){
     dragPlaceholder=null;
   }
 
-  function moveDragPlaceholder(event){
+  function cleanupDragGhost(){
+    dragGhost?.remove();
+    dragGhost=null;
+  }
+
+  function positionDragGhost(clientX,clientY){
+    if(!dragGhost)return;
+    dragGhost.style.left=`${clientX-dragOffsetX}px`;
+    dragGhost.style.top=`${clientY-dragOffsetY}px`;
+  }
+
+  function moveDragPlaceholderAt(clientX,clientY){
     if(!repChips||!dragPlaceholder||!dragLiftedChip)return;
-    const x=event.clientX;
-    const y=event.clientY;
-    const others=[...repChips.querySelectorAll('.rep-chip')].filter(chip=>chip!==dragLiftedChip);
+    const others=[...repChips.querySelectorAll('.rep-chip')];
     if(!others.length){
       if(dragPlaceholder.parentElement===repChips)repChips.appendChild(dragPlaceholder);
       return;
     }
 
     const firstRects=measureChipRects(others);
-    const measured=others.map(chip=>{
-      const rect=chip.getBoundingClientRect();
-      return{chip,rect,top:rect.top,midY:rect.top+rect.height/2,midX:rect.left+rect.width/2};
+    // Visual left→right (chips container is direction:rtl).
+    const visual=[...others].sort((a,b)=>{
+      const ra=a.getBoundingClientRect();
+      const rb=b.getBoundingClientRect();
+      if(Math.abs(ra.top-rb.top)>8)return ra.top-rb.top;
+      return ra.left-rb.left;
     });
-    let rowTop=measured[0].top;
+
+    let rowTop=visual[0].getBoundingClientRect().top;
     let bestRowDist=Infinity;
-    for(const item of measured){
-      const dist=Math.abs(y-item.midY);
+    for(const chip of visual){
+      const rect=chip.getBoundingClientRect();
+      const dist=Math.abs(clientY-(rect.top+rect.height/2));
       if(dist<bestRowDist){
         bestRowDist=dist;
-        rowTop=item.top;
+        rowTop=rect.top;
       }
     }
-    const rowItems=measured.filter(item=>Math.abs(item.top-rowTop)<8);
-    const rowDom=others.filter(chip=>rowItems.some(item=>item.chip===chip));
+    const rowChips=visual.filter(chip=>{
+      const rect=chip.getBoundingClientRect();
+      return Math.abs(rect.top-rowTop)<8;
+    });
 
-    let placeBefore=null;
-    for(const chip of rowDom){
-      const item=rowItems.find(entry=>entry.chip===chip);
-      if(!item)continue;
-      if(x>=item.midX){
-        placeBefore=chip;
+    // First chip whose center is to the right of the pointer → slot is visually left of it.
+    let visualLeftOf=null;
+    for(const chip of rowChips){
+      const rect=chip.getBoundingClientRect();
+      if(clientX<rect.left+rect.width/2){
+        visualLeftOf=chip;
         break;
       }
     }
 
     const beforeMove=dragPlaceholder.nextElementSibling;
-    if(placeBefore){
-      if(dragPlaceholder.nextElementSibling!==placeBefore)repChips.insertBefore(dragPlaceholder,placeBefore);
-    }else if(rowDom.length){
-      const last=rowDom[rowDom.length-1];
-      if(dragPlaceholder.previousElementSibling!==last)repChips.insertBefore(dragPlaceholder,last.nextElementSibling);
+    // RTL flex: earlier in DOM = visually righter. Visually-left-of X ⇒ DOM after X.
+    if(visualLeftOf){
+      if(dragPlaceholder.previousElementSibling!==visualLeftOf){
+        repChips.insertBefore(dragPlaceholder,visualLeftOf.nextElementSibling);
+      }
+    }else if(rowChips.length){
+      const rightmost=rowChips[rowChips.length-1];
+      if(dragPlaceholder.nextElementSibling!==rightmost){
+        repChips.insertBefore(dragPlaceholder,rightmost);
+      }
     }else{
       repChips.appendChild(dragPlaceholder);
     }
-    if(dragPlaceholder.nextElementSibling===beforeMove&&dragPlaceholder.parentElement===repChips){
-      // No structural change — skip FLIP.
-      return;
-    }
+    if(dragPlaceholder.nextElementSibling===beforeMove&&dragPlaceholder.parentElement===repChips)return;
     flipChipPositions(others,firstRects);
   }
 
@@ -5350,12 +5411,14 @@ function bindDesignedInterface(){
     if(!chip||!dragPlaceholder||!repChips){
       clearDragLiftStyles(chip);
       cleanupDragPlaceholder();
+      cleanupDragGhost();
       return Promise.resolve();
     }
-    const from=chip.getBoundingClientRect();
     const to=dragPlaceholder.getBoundingClientRect();
-    repChips.insertBefore(chip,dragPlaceholder);
-    cleanupDragPlaceholder();
+    const from=dragGhost?dragGhost.getBoundingClientRect():chip.getBoundingClientRect();
+    dragPlaceholder.replaceWith(chip);
+    dragPlaceholder=null;
+    cleanupDragGhost();
     clearDragLiftStyles(chip);
     const dx=from.left-to.left;
     const dy=from.top-to.top;
@@ -5379,49 +5442,36 @@ function bindDesignedInterface(){
     });
   }
 
-  repChips?.addEventListener('dragstart',event=>{
-    if(event.target.closest('[data-remove-word]')){event.preventDefault();return;}
-    const chip=event.target.closest('.rep-chip');if(!chip||!repChips)return;
-    draggedWordIndex=Number(chip.dataset.wordIndex);
-    dragOrderSnapshot=[...designRepresentativeWords];
-    dragItemsSnapshot=currentResult?.representativeWords?[...currentResult.representativeWords]:null;
-    chipDidDrop=false;
-    event.dataTransfer.effectAllowed='move';
-    event.dataTransfer.setData('application/x-rep-word-index',String(draggedWordIndex));
-    event.dataTransfer.setData('text/plain',String(draggedWordIndex));
-    setRepChipDragImage(event,chip);
+  function cancelRepChipDrag(){
+    if(!dragLiftedChip)return;
+    if(dragPlaceholder){
+      dragPlaceholder.replaceWith(dragLiftedChip);
+      dragPlaceholder=null;
+    }else if(!repChips.contains(dragLiftedChip)){
+      repChips.appendChild(dragLiftedChip);
+    }
+    clearDragLiftStyles(dragLiftedChip);
+    cleanupDragGhost();
+    if(dragOrderSnapshot){
+      designRepresentativeWords.splice(0,designRepresentativeWords.length,...dragOrderSnapshot);
+      // Rebuild chip DOM order from snapshot so indices match.
+      syncDesignUI();
+    }
+    draggedWordIndex=null;
+    dragOrderSnapshot=null;
+    dragItemsSnapshot=null;
+    dragLiftedChip=null;
+    dragPointerId=null;
+    dragMoved=false;
+  }
 
-    const rect=chip.getBoundingClientRect();
-    dragPlaceholder=document.createElement('span');
-    dragPlaceholder.className='rep-chip-placeholder';
-    dragPlaceholder.setAttribute('aria-hidden','true');
-    dragPlaceholder.style.width=`${rect.width}px`;
-    dragPlaceholder.style.height=`${rect.height}px`;
-    chip.after(dragPlaceholder);
-
-    dragLiftedChip=chip;
-    chip.classList.add('is-dragging');
-    chip.style.left=`${rect.left}px`;
-    chip.style.top=`${rect.top}px`;
-    chip.style.width=`${rect.width}px`;
-    chip.style.height=`${rect.height}px`;
-  });
-  repChips?.addEventListener('dragover',event=>{
-    if(draggedWordIndex==null)return;
-    event.preventDefault();event.dataTransfer.dropEffect='move';
-    moveDragPlaceholder(event);
-  });
-  repChips?.addEventListener('drop',async event=>{
-    if(draggedWordIndex==null||dropHandling)return;
-    event.preventDefault();
-    chipDidDrop=true;
+  async function finishRepChipDrag(){
+    if(draggedWordIndex==null||dropHandling||!dragLiftedChip)return;
     dropHandling=true;
-    moveDragPlaceholder(event);
     const chip=dragLiftedChip;
     try{
       await settleChipIntoPlaceholder(chip);
       commitRepChipOrderFromDom();
-      // Canvas pictogram row updates once after drop — never mid-drag.
       if(document.getElementById('app')?.classList.contains('has-visual-result')){
         await applyRepresentativeWordOrderToCanvas();
       }else{
@@ -5432,28 +5482,79 @@ function bindDesignedInterface(){
       dragOrderSnapshot=null;
       dragItemsSnapshot=null;
       dragLiftedChip=null;
+      dragPointerId=null;
+      dragMoved=false;
       dropHandling=false;
-      chipDidDrop=false;
     }
-  });
-  repChips?.addEventListener('dragend',()=>{
-    // drop handler owns async settle/cleanup; avoid racing it.
-    if(chipDidDrop||dropHandling)return;
-    if(dragLiftedChip&&dragPlaceholder){
-      repChips.insertBefore(dragLiftedChip,dragPlaceholder);
+  }
+
+  function onRepChipPointerMove(event){
+    if(dragPointerId==null||event.pointerId!==dragPointerId||!dragLiftedChip)return;
+    if(!dragMoved){
+      if(Math.hypot(event.clientX-(dragLiftedChip.getBoundingClientRect().left+dragOffsetX),event.clientY-(dragLiftedChip.getBoundingClientRect().top+dragOffsetY))<CHIP_DRAG_THRESHOLD)return;
+      dragMoved=true;
+      const startRect=dragLiftedChip.getBoundingClientRect();
+      dragPlaceholder=document.createElement('span');
+      dragPlaceholder.className='rep-chip-placeholder';
+      dragPlaceholder.setAttribute('aria-hidden','true');
+      dragPlaceholder.style.width=`${startRect.width}px`;
+      dragPlaceholder.style.height=`${startRect.height}px`;
+      // Detach chip from the list so it can't distort RTL insert math mid-drag.
+      dragLiftedChip.replaceWith(dragPlaceholder);
+      dragGhost=document.createElement('span');
+      dragGhost.className='rep-chip-ghost';
+      dragGhost.textContent=dragLiftedChip.querySelector('span')?.textContent||'';
+      document.body.appendChild(dragGhost);
+      dragLiftedChip.classList.add('is-dragging');
+      dragLiftedChip.style.left=`${startRect.left}px`;
+      dragLiftedChip.style.top=`${startRect.top}px`;
+      dragLiftedChip.style.width=`${startRect.width}px`;
+      dragLiftedChip.style.height=`${startRect.height}px`;
+      // Keep chip in DOM (hidden) for settle animation ownership; not inside .rep-chips.
+      document.body.appendChild(dragLiftedChip);
     }
-    clearDragLiftStyles(dragLiftedChip);
-    cleanupDragPlaceholder();
-    if(dragOrderSnapshot){
-      designRepresentativeWords.splice(0,designRepresentativeWords.length,...dragOrderSnapshot);
-      const chips=[...repChips.querySelectorAll('.rep-chip')];
-      chips.forEach((chip,index)=>{chip.dataset.wordIndex=String(index);});
+    event.preventDefault();
+    positionDragGhost(event.clientX,event.clientY);
+    moveDragPlaceholderAt(event.clientX,event.clientY);
+  }
+
+  function onRepChipPointerUp(event){
+    if(dragPointerId==null||event.pointerId!==dragPointerId)return;
+    const captureEl=dragMoved?repChips:dragLiftedChip;
+    try{captureEl?.releasePointerCapture?.(event.pointerId);}catch(_){}
+    try{dragLiftedChip?.releasePointerCapture?.(event.pointerId);}catch(_){}
+    document.removeEventListener('pointermove',onRepChipPointerMove,true);
+    document.removeEventListener('pointerup',onRepChipPointerUp,true);
+    document.removeEventListener('pointercancel',onRepChipPointerUp,true);
+    if(dragMoved)finishRepChipDrag();
+    else{
+      draggedWordIndex=null;
+      dragOrderSnapshot=null;
+      dragItemsSnapshot=null;
+      dragLiftedChip=null;
+      dragPointerId=null;
+      dragMoved=false;
     }
-    draggedWordIndex=null;
-    dragOrderSnapshot=null;
-    dragItemsSnapshot=null;
-    dragLiftedChip=null;
-    chipDidDrop=false;
+  }
+
+  repChips?.addEventListener('pointerdown',event=>{
+    if(event.button!=null&&event.button!==0)return;
+    if(event.target.closest?.('[data-remove-word]'))return;
+    const chip=event.target.closest?.('.rep-chip');
+    if(!chip||!repChips||dropHandling)return;
+    const rect=chip.getBoundingClientRect();
+    draggedWordIndex=Number(chip.dataset.wordIndex);
+    dragOrderSnapshot=[...designRepresentativeWords];
+    dragItemsSnapshot=currentResult?.representativeWords?[...currentResult.representativeWords]:null;
+    dragLiftedChip=chip;
+    dragPointerId=event.pointerId;
+    dragOffsetX=event.clientX-rect.left;
+    dragOffsetY=event.clientY-rect.top;
+    dragMoved=false;
+    try{chip.setPointerCapture(event.pointerId);}catch(_){}
+    document.addEventListener('pointermove',onRepChipPointerMove,true);
+    document.addEventListener('pointerup',onRepChipPointerUp,true);
+    document.addEventListener('pointercancel',onRepChipPointerUp,true);
   });
 
   document.querySelectorAll('#design-source button').forEach(button=>{
