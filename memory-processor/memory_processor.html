@@ -882,8 +882,12 @@ textarea#memory-input[aria-invalid="true"]:hover{
   display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:calc(24 * var(--figma-unit));
   overflow:visible
 }
-/* Keep source card at mediated height so toggle doesn't jump title/buttons (Figma 1087:103160). */
+/* Figma 1244:57374 — collapsed source = title + toggle only; expand when mediated. */
 .app.has-visual-result .visual-settings:not(.pictogram-section):has(.source-toggle){
+  height:calc(128 * var(--figma-unit));
+  transition:height 200ms ease
+}
+.app.has-visual-result .visual-settings:not(.pictogram-section):has(.source-toggle):has(.mediated-relation.is-visible){
   height:calc(172 * var(--figma-unit))
 }
 .app.has-visual-result .visual-settings:not(.pictogram-section):last-child{margin-bottom:0}
@@ -1107,12 +1111,17 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .source-toggle button.active:hover{border-color:#462203;color:#462203;background:#fff}
 .mediated-relation{
-  /* Always keep layout space so toggling personal/mediated doesn't jump the card. */
-  display:flex;visibility:hidden;pointer-events:none;align-items:center;justify-content:flex-start;
-  gap:calc(16 * var(--figma-unit));margin-top:calc(10 * var(--figma-unit));min-height:calc(20 * var(--figma-unit));
-  font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit));direction:rtl
+  /* Collapsed by default; expand only for זיכרון מתווך (~200ms). */
+  display:flex;align-items:center;justify-content:flex-start;
+  gap:calc(16 * var(--figma-unit));
+  max-height:0;margin-top:0;opacity:0;overflow:hidden;pointer-events:none;
+  font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit));direction:rtl;
+  transition:max-height 200ms ease,margin-top 200ms ease,opacity 200ms ease
 }
-.mediated-relation.is-visible{visibility:visible;pointer-events:auto}
+.mediated-relation.is-visible{
+  max-height:calc(28 * var(--figma-unit));margin-top:calc(10 * var(--figma-unit));
+  opacity:1;pointer-events:auto
+}
 .mediated-relation label{
   display:flex;align-items:center;justify-content:flex-start;gap:calc(4 * var(--figma-unit));
   cursor:pointer;color:#000;direction:rtl
@@ -1139,7 +1148,9 @@ textarea#memory-input[aria-invalid="true"]:hover{
   line-height:calc(18 * var(--figma-unit));color:#000;white-space:nowrap;direction:ltr;
   opacity:0;visibility:hidden
 }
-.range-control.is-scrubbing .range-value-bubble{opacity:1;visibility:visible}
+/* Show % while dragging, and keep it after first touch until reset. */
+.range-control.is-scrubbing .range-value-bubble,
+.range-control.is-touched .range-value-bubble{opacity:1;visibility:visible}
 .range-control input[type=range]{
   appearance:none;-webkit-appearance:none;width:100%;height:calc(20 * var(--figma-unit));display:block;
   margin:0;border:0;background:transparent;direction:rtl
@@ -3853,12 +3864,38 @@ function expressiveRangeValue(key,designValue){
 const DESIGN_RANGE_IDS=['design-frequency','design-clarity','design-impact'];
 let resetParamsAnim=null;
 
-/** Displayed 100% = design value 0 (thumb at right). Any offset enables reset. */
+/** Defaults: sliders at displayed 100% (design 0) AND memory source = זיכרון אישי. */
 function areDesignParamsAtDefault(){
-  return DESIGN_RANGE_IDS.every(id=>{
+  const sourceDefault=(Number(expressiveParams?.memorySource)||0)===0;
+  const slidersDefault=DESIGN_RANGE_IDS.every(id=>{
     const input=document.getElementById(id);
     return !input||Number(input.value)===0;
   });
+  return sourceDefault&&slidersDefault;
+}
+
+function syncMemorySourceUI(){
+  const params=getExpressiveParams();
+  document.querySelectorAll('#design-source button').forEach(button=>{
+    const source=Number(button.dataset.source);
+    button.classList.toggle('active',source===0?params.memorySource===0:params.memorySource>0);
+  });
+  const relation=document.getElementById('mediated-relation');
+  const relationOpen=params.memorySource>0;
+  relation?.classList.toggle('is-visible',relationOpen);
+  if(relation)relation.setAttribute('aria-hidden',relationOpen?'false':'true');
+  const relationInput=document.querySelector(`input[name="mediated-relation"][value="${params.memorySource===2?2:1}"]`);
+  if(relationInput)relationInput.checked=true;
+}
+
+function resetMemorySourceToDefault(){
+  if(!expressiveParams)return;
+  if((Number(expressiveParams.memorySource)||0)===0){
+    syncMemorySourceUI();
+    return;
+  }
+  expressiveParams.memorySource=0;
+  syncMemorySourceUI();
 }
 
 function syncResetParamsButton(){
@@ -3898,6 +3935,12 @@ function setRangeScrubbing(active){
   });
 }
 
+function clearRangeTouched(){
+  DESIGN_RANGE_IDS.forEach(id=>{
+    document.getElementById(id)?.closest('.range-control')?.classList.remove('is-touched','is-scrubbing');
+  });
+}
+
 function animateResetParams(){
   if(areDesignParamsAtDefault())return;
   if(resetParamsAnim)cancelAnimationFrame(resetParamsAnim);
@@ -3906,7 +3949,16 @@ function animateResetParams(){
     const input=document.getElementById(id);
     start[id]=input?Number(input.value)||0:0;
   });
-  if(DESIGN_RANGE_IDS.every(id=>start[id]===0))return;
+  const slidersNeedReset=DESIGN_RANGE_IDS.some(id=>start[id]!==0);
+  // Source snaps back immediately; sliders animate when off default.
+  resetMemorySourceToDefault();
+  if(!slidersNeedReset){
+    clearRangeTouched();
+    refreshExpressiveSequenceDisplay();
+    syncVisualOutput();
+    syncResetParamsButton();
+    return;
+  }
   setRangeScrubbing(true);
   const duration=250;
   const t0=performance.now();
@@ -3914,7 +3966,8 @@ function animateResetParams(){
   const finish=()=>{
     resetParamsAnim=null;
     applyDesignRangeFrame({[DESIGN_RANGE_IDS[0]]:0,[DESIGN_RANGE_IDS[1]]:0,[DESIGN_RANGE_IDS[2]]:0});
-    setRangeScrubbing(false);
+    clearRangeTouched();
+    syncResetParamsButton();
   };
   const step=now=>{
     const t=Math.min(1,(now-t0)/duration);
@@ -4011,16 +4064,7 @@ function syncDesignUI(){
     create.textContent=hasVisual?'הדפסת זיכרון':'רישום זיכרון';
   }
   const params=getExpressiveParams();
-  document.querySelectorAll('#design-source button').forEach(button=>{
-    const source=Number(button.dataset.source);
-    button.classList.toggle('active',source===0?params.memorySource===0:params.memorySource>0);
-  });
-  const relation=document.getElementById('mediated-relation');
-  const relationOpen=params.memorySource>0;
-  relation?.classList.toggle('is-visible',relationOpen);
-  if(relation)relation.setAttribute('aria-hidden',relationOpen?'false':'true');
-  const relationInput=document.querySelector(`input[name="mediated-relation"][value="${params.memorySource===2?2:1}"]`);
-  if(relationInput)relationInput.checked=true;
+  syncMemorySourceUI();
   [['design-frequency','memoryFrequency'],['design-clarity','memoryClarity'],['design-impact','memoryImpact']].forEach(([id,key])=>{
     const input=document.getElementById(id);
     if(input){
@@ -4139,7 +4183,7 @@ const CONFIRM_DIALOG_COPY={
     confirm:'התחל מחדש'
   },
   archive:{
-    title:'לעזוב את הזיכרון לארכיון?',
+    title:'לעזוב את הזיכרון?',
     confirm:'עבור לארכיון'
   }
 };
@@ -4169,6 +4213,7 @@ function discardCurrentMemory(){
   processedInputSnapshot=null;
   cachedBaseSequenceSvg='';cachedSequenceBuild=null;lastExpressiveState=null;
   resetExpressiveParams();
+  clearRangeTouched();
   const input=document.getElementById('memory-input');
   if(input){
     input.value='';
@@ -4720,6 +4765,7 @@ function bindDesignedInterface(){
         expressiveParams.memorySource=Number(relation?.value)||1;
       }
       syncDesignUI();
+      syncResetParamsButton();
       refreshExpressiveSequenceDisplay();syncVisualOutput();
     });
   });
@@ -4728,6 +4774,7 @@ function bindDesignedInterface(){
       if(!input.checked)return;
       expressiveParams.memorySource=Number(input.value)||1;
       syncDesignUI();
+      syncResetParamsButton();
       refreshExpressiveSequenceDisplay();syncVisualOutput();
     });
   });
@@ -4737,6 +4784,7 @@ function bindDesignedInterface(){
     const control=input.closest('.range-control');
     const setScrubbing=active=>control?.classList.toggle('is-scrubbing',!!active);
     input.addEventListener('pointerdown',event=>{
+      control?.classList.add('is-touched');
       setScrubbing(true);
       try{input.setPointerCapture(event.pointerId);}catch(_){}
     });
@@ -4750,6 +4798,7 @@ function bindDesignedInterface(){
         resetParamsAnim=null;
         setRangeScrubbing(false);
       }
+      control?.classList.add('is-touched');
       expressiveParams[key]=expressiveRangeValue(key,event.target.value);
       syncRangeVisual(event.target);
       syncResetParamsButton();
