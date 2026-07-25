@@ -311,6 +311,17 @@ textarea:focus{border-color:var(--b1)}
 @font-face{font-family:"PGMR Narkiss Block Mono";src:url("/memory-processor/assets/fonts/NarkissBlockMono-Bold-TRIAL.otf") format("opentype");font-style:normal;font-weight:700;font-display:block}
 :root{
   --figma-unit:min(.0520833333vw,1px);
+  /* Archive chevrons + name brackets — one coordinate source (1920 frame) */
+  --archive-chevron-prev-x:78;
+  --archive-chevron-next-x:1395;
+  --archive-chevron-size:32;
+  /* Drawn-arrow tips inside the 32×32 chevron assets */
+  --archive-chevron-back-tip:8;       /* → left `[` at 86 */
+  --archive-chevron-forward-tip:24;   /* → right `]` edge at 1419 */
+  --archive-bracket-left-x:calc(var(--archive-chevron-prev-x) + var(--archive-chevron-back-tip));
+  --archive-bracket-right-edge:calc(var(--archive-chevron-next-x) + var(--archive-chevron-forward-tip));
+  --archive-content-left:83;
+  --archive-list-width:1342;
   /* Figma 1227:56226 — brown / beige system (was blue) */
   --design-blue:#462203;
   --design-blue-hover:#5c3619;
@@ -1313,12 +1324,29 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .archive-memory-row.is-hovered .archive-row-index{display:flex}
 .archive-row-index-bracket{width:calc(13.61 * var(--figma-unit));flex-shrink:0}
 .archive-row-title{flex:1 0 0;min-width:0}
+/* Keep original flex reserve so the title text does not shift; brackets paint absolutely */
 .archive-row-parens{
   display:flex;align-items:center;gap:calc(40 * var(--figma-unit));width:calc(74 * var(--figma-unit));flex-shrink:0
 }
-/* Figma hover keeps the open bracket in-flow at 74px width, painted transparent */
-.archive-memory-row.is-hovered .archive-row-parens .archive-paren-open{color:transparent}
-.archive-paren-open,.archive-paren-close{flex:1 0 0;min-width:0}
+/* `[` left edge = back-chevron tip (86); `]` right edge = next-chevron tip (1419) */
+.archive-paren-open,.archive-paren-close{
+  position:absolute;top:calc(4 * var(--figma-unit));z-index:2;
+  height:calc(110 * var(--figma-unit));width:calc(11.06 * var(--figma-unit));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-weight:600;
+  font-size:calc(70 * var(--figma-unit));line-height:calc(110 * var(--figma-unit));
+  pointer-events:none;user-select:none;flex:none;min-width:0;color:#000
+}
+.archive-paren-open{
+  left:calc((var(--archive-bracket-left-x) - var(--archive-content-left)) * var(--figma-unit))
+}
+.archive-paren-close{
+  /* right edge of box at viewport 1419 → offset from list right (83+1342=1425) */
+  right:calc((var(--archive-content-left) + var(--archive-list-width) - var(--archive-bracket-right-edge)) * var(--figma-unit));
+  left:auto
+}
+/* Keep left `[` visible on hover (was transparent when [001] showed) */
+.archive-memory-row.is-hovered .archive-row-parens .archive-paren-open{color:#000}
 .archive-list-view{position:relative;width:100%;height:100%;overflow:hidden}
 /* Figma 1920 frame: ארכיון right edge = 1762+75 = 1837 (= content right with 83px pad).
    Pictogram / params use the same content-right edge so hover assets stay 1:1 with nav. */
@@ -1393,9 +1421,15 @@ textarea#memory-input[aria-invalid="true"]:hover{
   width:calc(392.9998474121096 * var(--figma-unit));
   height:calc(75 * var(--figma-unit))
 }
-/* Navigation 1288:62156 — chevrons painted in detail SVG; hits transparent only */
-.archive-hit-prev{left:calc(78 * var(--figma-unit));top:calc(989 * var(--figma-unit));width:calc(32 * var(--figma-unit));height:calc(32 * var(--figma-unit))}
-.archive-hit-next{left:calc(1395 * var(--figma-unit));top:calc(989 * var(--figma-unit));width:calc(32 * var(--figma-unit));height:calc(32 * var(--figma-unit))}
+/* Navigation 1288:62156 — same chevron tokens as name brackets */
+.archive-hit-prev{
+  left:calc(var(--archive-chevron-prev-x) * var(--figma-unit));top:calc(989 * var(--figma-unit));
+  width:calc(var(--archive-chevron-size) * var(--figma-unit));height:calc(var(--archive-chevron-size) * var(--figma-unit))
+}
+.archive-hit-next{
+  left:calc(var(--archive-chevron-next-x) * var(--figma-unit));top:calc(989 * var(--figma-unit));
+  width:calc(var(--archive-chevron-size) * var(--figma-unit));height:calc(var(--archive-chevron-size) * var(--figma-unit))
+}
 .archive-hit:disabled{cursor:default;pointer-events:none}
 
 @media(max-width:760px){
