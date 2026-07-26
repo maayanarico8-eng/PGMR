@@ -1,5 +1,5 @@
 /**
- * Archive card — State 3 chrome only (fade in on open).
+ * Archive card — State 3 chrome + State 4 body-text hover.
  * Shared across hover→card (same DOM, never remounted here):
  *   number, name, brackets, icon, parameters — owned by the list row / hover layer.
  *
@@ -8,6 +8,9 @@
  * row width) is right-edge anchored with no set width.
  * Body grows with text; if it crosses the output's y, output shifts by that overflow.
  * Title row and icon are not touched here.
+ *
+ * State 4 (body hover): non-representative body segments hide in place (opacity 0,
+ * still in flow); pictogram bank + sequence reveal. Leave body → State 3.
  */
 (function (global) {
   const STYLE_ID = 'archive-card-styles';
@@ -24,9 +27,13 @@
   const BODY_Y = 377.828;
   const BODY_W = 393;
   const OUTPUT_X = 292.806;
-  const OUTPUT_Y = 545;
   const OUTPUT_W = 1089;
-  const OUTPUT_H = 150;
+  /**
+   * Output ink top — computed once from memory 001 (ink-centred between text bottom
+   * and bank label top after the bank row was raised). Hard-set for every memory;
+   * only pushed when body text grows down into this slot.
+   */
+  const OUTPUT_INK_TOP = 562.136;
   const SOURCE_X = 1061.81;
   const SOURCE_Y = 296;
   const SOURCE_W = 320;
@@ -41,9 +48,21 @@
   const PARAM_LABEL_X = 74.727;
   const PARAM_LABEL_W = 176.287;
   const CLOSE_S = 38.976;
-  /* Same right edge as source block + output ink */
+  /* Same right edge as source block + output ink + sequence ink */
   const SHARED_RIGHT = SOURCE_RIGHT; /* 1381.81 */
   const OUTPUT_RIGHT = SHARED_RIGHT;
+  /* State 4 — pictogram bank. Sequence ink right on SHARED_RIGHT; gap 8 kept.
+   * Bank row raised so seq-ink→chevron-ink gap equals chevron-ink→page-bottom (61.667). */
+  const SEQ_W = 936.83;
+  const SEQ_H = 105;
+  const SEQ_INK_RIGHT_MARGIN = 3.5; /* trailing margin inside last glyph box */
+  const SEQ_X = SHARED_RIGHT - SEQ_W + SEQ_INK_RIGHT_MARGIN; /* 448.48 */
+  const SEQ_SHIFT = SEQ_X - 439.228; /* +9.25 from Figma box origin */
+  const BANK_ROW_LIFT = 20.142; /* ink-measured: equalise gaps around nav chevrons */
+  const SEQ_Y = 848.643 - BANK_ROW_LIFT; /* 828.501 */
+  const BANK_LABEL_X = 1195.941 + SEQ_SHIFT;
+  const BANK_LABEL_Y = 795.143 - BANK_ROW_LIFT; /* 775.001 */
+  const BANK_LABEL_W = 176.287;
 
   const STYLE_TEXT = `
 .archive-card{
@@ -108,18 +127,53 @@
   overflow:visible;overflow-wrap:break-word;word-break:break-word;
   font-family:var(--font-display);font-weight:500;
   font-size:calc(22 * var(--figma-unit));line-height:calc(25 * var(--figma-unit));
-  color:#000;text-align:right;direction:rtl
+  color:#000;text-align:right;direction:rtl;cursor:default
+}
+.archive-card-body-seg{margin:0;padding:0}
+.archive-card.is-text-hover .archive-card-body-seg.is-muted{opacity:0}
+.archive-card-pictograms{
+  position:absolute;z-index:2;left:0;top:0;width:0;height:0;
+  margin:0;padding:0;overflow:visible;pointer-events:none;
+  opacity:0;visibility:hidden
+}
+.archive-card.is-text-hover .archive-card-pictograms{opacity:1;visibility:visible}
+.archive-card-sequence{
+  position:absolute;overflow:visible;margin:0;padding:0;
+  left:calc(${SEQ_X} * var(--figma-unit));
+  top:calc(${SEQ_Y} * var(--figma-unit));
+  width:calc(${SEQ_W} * var(--figma-unit));
+  height:calc(${SEQ_H} * var(--figma-unit))
+}
+.archive-card-sequence-item{
+  position:absolute;top:0;margin:0;padding:0;overflow:visible;
+  height:calc(${SEQ_H} * var(--figma-unit));line-height:0
+}
+.archive-card-sequence-item img,
+.archive-card-sequence-item svg{
+  display:block;width:100%;height:100%;max-width:none;max-height:none
+}
+.archive-card-bank-label{
+  position:absolute;margin:0;padding:0;overflow:visible;
+  left:calc(${BANK_LABEL_X} * var(--figma-unit));
+  top:calc(${BANK_LABEL_Y} * var(--figma-unit));
+  width:calc(${BANK_LABEL_W} * var(--figma-unit));
+  height:calc(19 * var(--figma-unit));
+  font-family:var(--font-mono);font-weight:400;
+  font-size:calc(18 * var(--figma-unit));line-height:calc(19 * var(--figma-unit));
+  color:#000;text-align:right;white-space:nowrap
 }
 .archive-card-output{
   position:absolute;z-index:2;
   left:calc(${OUTPUT_X} * var(--figma-unit));
-  top:calc(${OUTPUT_Y} * var(--figma-unit));
+  top:calc(${OUTPUT_INK_TOP} * var(--figma-unit));
   width:calc(${OUTPUT_W} * var(--figma-unit));
-  height:calc(${OUTPUT_H} * var(--figma-unit));
-  margin:0;padding:0;
-  line-height:0;overflow:hidden
+  height:auto;margin:0;padding:0;
+  line-height:0;overflow:visible
 }
-.archive-card-output svg{display:block;max-width:none;max-height:none}
+.archive-card-output svg{
+  display:block;max-width:none;max-height:none;overflow:visible;
+  margin:0;padding:0
+}
 /* Params — 251.014 wide; value 44.727; label 176.287 at +74.727; rows y 810/861/912 */
 .archive-card-params{
   position:absolute;
@@ -182,6 +236,7 @@
     position:static;width:auto;height:auto;left:auto;right:auto;top:auto
   }
   .archive-card-body{margin-top:16px;width:100%;max-width:100%}
+  .archive-card-pictograms,.archive-card-sequence,.archive-card-bank-label{display:none}
   .archive-card-close{position:absolute;right:16px;top:16px;left:auto}
   .archive-card-nav{display:none}
 }
@@ -262,62 +317,54 @@
     closeBtn.style.left = `calc(${left} * var(--figma-unit))`;
   }
 
-  /** Output y = OUTPUT_Y, plus body overflow past that coordinate. */
-  function syncOutputToBody(body, output) {
-    if (!body || !output) return;
-    const unit = figmaUnitPx();
-    if (unit <= 0) return;
-    const bodyBottom = BODY_Y + body.getBoundingClientRect().height / unit;
-    const overflow = Math.max(0, bodyBottom - OUTPUT_Y);
-    output.style.top = `calc(${OUTPUT_Y + overflow} * var(--figma-unit))`;
-  }
-
   /**
-   * Box right edge is 1381.81; artwork may have empty space on its right.
-   * Shift the box so the drawing's ink right edge lands on 1381.81.
+   * Size host to ink (getBBox); scale stays OUTPUT_W / viewBox.width.
+   * Vertical: hard-set OUTPUT_INK_TOP from 001; push only if body grows into that slot.
+   * Horizontal: ink right → SHARED_RIGHT.
    */
-  function alignOutputInk(output) {
+  function syncOutputInkBox(body, output) {
     const svg = output?.querySelector('svg');
-    const frame = detailFrame();
-    if (!svg || !frame) return;
+    if (!output || !svg) return;
     const unit = figmaUnitPx();
     if (unit <= 0) return;
-    let inkRight;
+
+    let vb;
+    let ink;
     try {
-      const b = svg.getBBox();
-      const ctm = svg.getScreenCTM();
-      if (!ctm) return;
-      const p = svg.createSVGPoint();
-      const xs = [];
-      for (const [x, y] of [
-        [b.x, b.y],
-        [b.x + b.width, b.y],
-        [b.x, b.y + b.height],
-        [b.x + b.width, b.y + b.height],
-      ]) {
-        p.x = x;
-        p.y = y;
-        xs.push(p.matrixTransform(ctm).x);
-      }
-      inkRight = Math.max(...xs);
+      vb = svg.viewBox.baseVal;
+      ink = svg.getBBox();
     } catch {
       return;
     }
-    const frameRect = frame.getBoundingClientRect();
-    const targetRightPx = frameRect.left + OUTPUT_RIGHT * unit;
-    const deltaPx = targetRightPx - inkRight;
-    const hostRect = output.getBoundingClientRect();
-    const newLeft = (hostRect.left - frameRect.left + deltaPx) / unit;
-    output.style.left = `calc(${newLeft} * var(--figma-unit))`;
+    if (!vb.width || !ink.width || !ink.height) return;
+
+    const scale = OUTPUT_W / vb.width;
+    const padLeft = ink.x - vb.x;
+    const padTop = ink.y - vb.y;
+    const inkW = ink.width * scale;
+    const inkH = ink.height * scale;
+
+    const bodyBottom = body
+      ? BODY_Y + body.getBoundingClientRect().height / unit
+      : BODY_Y;
+    const overflow = Math.max(0, bodyBottom - OUTPUT_INK_TOP);
+    const top = OUTPUT_INK_TOP + overflow;
+    const left = OUTPUT_RIGHT - inkW;
+
+    output.style.width = `calc(${inkW} * var(--figma-unit))`;
+    output.style.height = `calc(${inkH} * var(--figma-unit))`;
+    output.style.top = `calc(${top} * var(--figma-unit))`;
+    output.style.left = `calc(${left} * var(--figma-unit))`;
+
+    svg.style.width = `calc(${OUTPUT_W} * var(--figma-unit))`;
+    svg.style.height = `calc(${vb.height * scale} * var(--figma-unit))`;
+    svg.style.marginLeft = `calc(${-padLeft * scale} * var(--figma-unit))`;
+    svg.style.marginTop = `calc(${-padTop * scale} * var(--figma-unit))`;
   }
 
   function syncCardLayout(closeBtn, body, output) {
     syncCloseToName(closeBtn);
-    if (output) {
-      output.style.left = `calc(${OUTPUT_X} * var(--figma-unit))`;
-      syncOutputToBody(body, output);
-      alignOutputInk(output);
-    }
+    if (output) syncOutputInkBox(body, output);
   }
 
   function bindLayoutSync(closeBtn, body, output) {
@@ -331,6 +378,60 @@
     run();
     requestAnimationFrame(run);
     if (document.fonts?.ready) document.fonts.ready.then(run).catch(() => {});
+  }
+
+  function renderBody(memory) {
+    const body = document.createElement('p');
+    body.className = 'archive-card-body';
+    const segments = memory?.bodySegments;
+    if (Array.isArray(segments) && segments.length) {
+      segments.forEach((seg) => {
+        const span = document.createElement('span');
+        span.className = 'archive-card-body-seg' + (seg.rep ? '' : ' is-muted');
+        span.textContent = seg.text ?? '';
+        body.appendChild(span);
+      });
+    } else {
+      body.textContent = memory?.body || '';
+    }
+    return body;
+  }
+
+  function renderPictograms(memory) {
+    const root = document.createElement('div');
+    root.className = 'archive-card-pictograms';
+    root.setAttribute('aria-hidden', 'true');
+
+    const label = document.createElement('div');
+    label.className = 'archive-card-bank-label';
+    label.textContent = 'בנק פיקטוגרמות';
+    root.appendChild(label);
+
+    const sequence = memory?.sequence;
+    if (Array.isArray(sequence) && sequence.length) {
+      const seq = document.createElement('div');
+      seq.className = 'archive-card-sequence';
+      sequence.forEach((item) => {
+        const host = document.createElement('div');
+        host.className = 'archive-card-sequence-item';
+        host.style.left = `calc(${item.x} * var(--figma-unit))`;
+        host.style.width = `calc(${item.w} * var(--figma-unit))`;
+        const img = document.createElement('img');
+        img.src = item.src;
+        img.alt = '';
+        img.draggable = false;
+        host.appendChild(img);
+        seq.appendChild(host);
+      });
+      root.appendChild(seq);
+    }
+    return root;
+  }
+
+  function bindBodyHover(card, body) {
+    if (!card || !body) return;
+    body.addEventListener('mouseenter', () => card.classList.add('is-text-hover'));
+    body.addEventListener('mouseleave', () => card.classList.remove('is-text-hover'));
   }
 
   function renderSource(memory) {
@@ -442,14 +543,17 @@
 
     card.appendChild(renderSource(memory));
 
-    const body = document.createElement('p');
-    body.className = 'archive-card-body';
-    body.textContent = memory.body || '';
+    const body = renderBody(memory);
     card.appendChild(body);
+    bindBodyHover(card, body);
 
     const outputHost = document.createElement('div');
     outputHost.className = 'archive-card-output';
     card.appendChild(outputHost);
+
+    if (Array.isArray(memory.sequence) && memory.sequence.length) {
+      card.appendChild(renderPictograms(memory));
+    }
 
     const prevBtn = document.createElement('button');
     prevBtn.type = 'button';
@@ -486,6 +590,13 @@
     if (!loader || !memory) return;
     if (memory.icon) loader(memory.icon).catch(() => {});
     if (memory.output) loader(memory.output).catch(() => {});
+    if (Array.isArray(memory.sequence)) {
+      memory.sequence.forEach((item) => {
+        if (!item?.src) return;
+        const img = new Image();
+        img.src = item.src;
+      });
+    }
   }
 
   /** Memories with icon + output can open State 3. */
