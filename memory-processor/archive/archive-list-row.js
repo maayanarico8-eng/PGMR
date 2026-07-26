@@ -10,11 +10,7 @@
   const svgCache = new Map();
   let hoverGen = 0;
 
-  function ensureStyles() {
-    if (document.getElementById(STYLE_ID)) return;
-    const style = document.createElement('style');
-    style.id = STYLE_ID;
-    style.textContent = `
+  const STYLE_TEXT = `
 .archive-memory-list{
   display:flex;flex-direction:column;align-items:flex-end;
   width:calc(1342 * var(--figma-unit));
@@ -42,7 +38,8 @@
   line-height:calc(110 * var(--figma-unit));
   cursor:default
 }
-.archive-memory-row.is-hoverable{cursor:pointer}
+.archive-memory-row.is-hoverable,
+.archive-memory-row.is-openable{cursor:pointer}
 .archive-memory-row:first-child{
   background-image:linear-gradient(#bbb,#bbb),linear-gradient(#bbb,#bbb);
   background-size:100% 1px,100% 1px;
@@ -93,14 +90,26 @@
   background-size:100% 2px,100% 2px;
   background-position:top,bottom
 }
-/* Hover stage — 1920 frame coords (icon + parameters) */
+/* Card open — list rules off only (title geometry unchanged — list row stays put) */
+.archive-memory-row.is-open,
+.archive-memory-row.is-open.is-hover-revealed,
+.archive-memory-row.is-open:first-child{
+  background-image:none
+}
+/* Hover stage — 1920 frame coords (icon + parameters).
+   Must never capture clicks: it sits above the list (z-index 25). */
+.archive-list-hover-layer,
+.archive-list-hover-layer.is-visible,
+.archive-list-hover-layer *{
+  pointer-events:none !important
+}
 .archive-list-hover-layer{
   position:absolute;
   left:calc(-1 * var(--archive-content-left) * var(--figma-unit));
   top:calc(-119 * var(--figma-unit));
   width:calc(1920 * var(--figma-unit));
   height:calc(1080 * var(--figma-unit));
-  display:none;pointer-events:none;z-index:25;overflow:visible
+  display:none;z-index:25;overflow:visible
 }
 .archive-list-hover-layer.is-visible{display:block}
 .archive-list-hover-icon{
@@ -125,7 +134,17 @@
   .archive-list-hover-icon{position:static;width:auto;height:auto;right:auto}
 }
 `;
-    document.head.appendChild(style);
+
+  function ensureStyles() {
+    let style = document.getElementById(STYLE_ID);
+    if (!style) {
+      style = document.createElement('style');
+      style.id = STYLE_ID;
+      document.head.appendChild(style);
+    }
+    // Always refresh — otherwise a stale injected tag can keep pointer-events:auto
+    // on the hover overlay and swallow row clicks.
+    if (style.textContent !== STYLE_TEXT) style.textContent = STYLE_TEXT;
   }
 
   function escapeHtml(value) {
@@ -142,6 +161,26 @@
       && memory.frequency != null
       && memory.clarity != null
       && memory.impact != null;
+  }
+
+  /** Memories with icon + output can open State 3. Missing assets are reported, never silent. */
+  function missingOpenAssets(memory) {
+    const missing = [];
+    if (!memory?.icon) missing.push('icon');
+    if (!memory?.output) missing.push('output');
+    return missing;
+  }
+
+  function canOpen(memory) {
+    return missingOpenAssets(memory).length === 0;
+  }
+
+  function reportMissingOpenAssets(memory, missing) {
+    const id = memory?.id || '?';
+    console.error(
+      `[archive] memory ${id} cannot open — missing asset(s): ${missing.join(', ')}`,
+      { id, icon: memory?.icon ?? null, output: memory?.output ?? null }
+    );
   }
 
   /**
@@ -173,6 +212,7 @@
     const row = document.createElement('div');
     row.className = 'archive-memory-row';
     if (canHover(memory)) row.classList.add('is-hoverable');
+    if (canOpen(memory)) row.classList.add('is-openable');
     row.setAttribute('role', 'listitem');
     row.dataset.id = memory.id;
     row.innerHTML = `
@@ -194,6 +234,18 @@
         handlers.onHover?.(memory, row);
       });
     }
+    row.addEventListener('click', () => {
+      const missing = missingOpenAssets(memory);
+      if (missing.length) {
+        reportMissingOpenAssets(memory, missing);
+        return;
+      }
+      if (!handlers.onOpen) {
+        console.error(`[archive] memory ${memory.id} click: onOpen handler missing`);
+        return;
+      }
+      handlers.onOpen(memory, row);
+    });
     return row;
   }
 
@@ -324,5 +376,7 @@
     preload,
     loadInlineSvg,
     canHover,
+    canOpen,
+    missingOpenAssets,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

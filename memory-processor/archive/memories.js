@@ -74,8 +74,14 @@
     const entry = { id, name };
     // 001 keeps prior card assets when later states unlock — not used in State 1.
     if (id === '001') {
+      // Layout placeholder data — real content will replace these later.
       entry.body = 'שהייתי בגן והלכנו לבריכה והייתי רואה את סבא וסבתא שם הייתי מבקשת ללכת אליהם הביתה. סבא תמיד הסכים.';
-      entry.source = { type: 'אישי' };
+      entry.source = {
+        type: 'מתווך',
+        category: 'בן משפחה',
+        kind: 'חבר קיבוץ',
+        name: 'מרים',
+      };
       entry.frequency = 21;
       entry.clarity = 51;
       entry.impact = 57;

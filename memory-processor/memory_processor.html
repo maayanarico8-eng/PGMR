@@ -313,7 +313,7 @@ textarea:focus{border-color:var(--b1)}
   --figma-unit:min(.0520833333vw,1px);
   /* Archive chevrons + name brackets — one coordinate source (1920 frame) */
   --archive-chevron-prev-x:78;
-  --archive-chevron-next-x:1395;
+  --archive-chevron-next-x:1387; /* Figma Navigation: 78 + 1309 */
   --archive-chevron-size:32;
   /* Drawn-arrow tips inside the 32×32 chevron assets */
   --archive-chevron-back-tip:8;       /* → left `[` at 86 */
@@ -482,12 +482,18 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .memory-input-wrap:focus-within .entry-count,
 .memory-input-wrap.has-content .entry-count{visibility:visible}
 .memory-error-msg{
-  /* In-flow under the CTA so the writing-stage flex parent doesn’t clip it. */
-  display:none;width:100%;margin:calc(31 * var(--figma-unit)) 0 0;padding:0;pointer-events:none;
+  /* Always in-flow under the CTA — space reserved so show/hide never shifts layout. */
+  display:grid;width:100%;margin:calc(31 * var(--figma-unit)) 0 0;padding:0;pointer-events:none;
   color:var(--design-error);font-family:var(--font-mono);font-size:calc(14 * var(--figma-unit));
   font-weight:400;line-height:calc(18 * var(--figma-unit));text-align:center;direction:rtl
 }
-.memory-error-msg:not([hidden]){display:block}
+.memory-error-msg .memory-error-slot{
+  grid-area:1/1;visibility:hidden
+}
+.memory-error-msg.is-word-limit .memory-error-slot[data-for="word-limit"],
+.memory-error-msg.is-hebrew-only .memory-error-slot[data-for="hebrew-only"]{
+  visibility:visible
+}
 .memory-input-wrap{position:relative;width:100%;height:calc(90 * var(--figma-unit));margin-bottom:calc(24 * var(--figma-unit))}
 textarea#memory-input{
   /* Figma 1236:56629 — Default #d9d9d9 / Hover #bbb / Active #462203; bg #fcf9f6 */
@@ -1554,9 +1560,10 @@ textarea#memory-input[aria-invalid="true"]:hover{
             <span class="word-count" id="word-count"></span>
             <button class="analyze-btn" id="analyze-btn" disabled>עיבוד זיכרון</button>
           </div>
-          <p class="memory-error-msg" id="memory-error-msg" hidden
-            data-msg-word-limit="כדי להעביר את הזיכרון לרשם הזיכרונות, יש לוודא כי אורכו אינו עולה על 20 מילים."
-            data-msg-hebrew-only="רשם הזיכרונות קורא עברית">כדי להעביר את הזיכרון לרשם הזיכרונות, יש לוודא כי אורכו אינו עולה על 20 מילים.</p>
+          <p class="memory-error-msg" id="memory-error-msg" aria-live="polite" aria-hidden="true">
+            <span class="memory-error-slot" data-for="word-limit">כדי להעביר את הזיכרון לרשם הזיכרונות, יש לוודא כי אורכו אינו עולה על 20 מילים.</span>
+            <span class="memory-error-slot" data-for="hebrew-only">רשם הזיכרונות קורא עברית</span>
+          </p>
         </div>
         <button type="button" class="edit-memory-btn" id="edit-memory-btn">
           <span>עריכת הזיכרון</span>
@@ -4765,7 +4772,15 @@ function mountArchiveCard(memory){
 }
 
 function openArchiveDetail(memory,opts={}){
-  if(!memory?.output||!memory?.icon)return;
+  const missing=globalThis.ArchiveCard?.missingOpenAssets?.(memory)
+    ||[!memory?.icon&&'icon',!memory?.output&&'output'].filter(Boolean);
+  if(missing.length){
+    console.error(
+      `[archive] memory ${memory?.id||'?'} cannot open — missing asset(s): ${missing.join(', ')}`,
+      {id:memory?.id,icon:memory?.icon??null,output:memory?.output??null}
+    );
+    return;
+  }
   const app=document.getElementById('app');
   const detail=document.getElementById('archive-detail-view');
   if(!app||!detail)return;
@@ -4780,7 +4795,10 @@ function openArchiveDetail(memory,opts={}){
     return;
   }
 
-  if(archiveDetailFadeBusy)return;
+  if(archiveDetailFadeBusy){
+    console.warn(`[archive] memory ${memory.id} open ignored — detail fade busy`);
+    return;
+  }
 
   if(!opts.fromCycle){
     const list=document.getElementById('archive-memory-list');
@@ -4839,13 +4857,18 @@ function renderArchiveList(){
   const list=document.getElementById('archive-memory-list');
   if(!list||!globalThis.ArchiveListRow)return;
   list.replaceChildren();
-  // State 1 idle + State 2 hover. Card open still gated.
+  // State 1 idle + State 2 hover + State 3 click-to-open (when assets exist).
   archiveMemories().forEach((memory)=>{
     list.appendChild(globalThis.ArchiveListRow.create(memory,{
-      onHover:(m,el)=>setArchiveHover(m,el)
+      onHover:(m,el)=>setArchiveHover(m,el),
+      onOpen:(m)=>openArchiveDetail(m)
     }));
   });
-  list.onmouseleave=()=>clearArchiveHover();
+  list.onmouseleave=()=>{
+    // Keep shared hover DOM while the card is open.
+    if(isArchiveDetailMode())return;
+    clearArchiveHover();
+  };
 }
 
 /** Active tab is inert: bold only — no click, hover, or re-navigation. */
@@ -5431,8 +5454,6 @@ CAT.init();
 
 const MAX_MEMORY_WORDS=20;
 const MEMORY_WORD_LIMIT_MSG='20/20 מילים';
-const MEMORY_WORD_LIMIT_ERROR_MSG='כדי להעביר את הזיכרון לרשם הזיכרונות, יש לוודא כי אורכו אינו עולה על 20 מילים.';
-const MEMORY_HEBREW_ONLY_ERROR_MSG='רשם הזיכרונות קורא עברית';
 /** Snapshot used only to undo an insert that slipped through while the error was active. */
 let lastMemoryValue='';
 
@@ -5512,12 +5533,10 @@ function updateWordCount(){
   wcEl.style.color=limitError?'#ba1a1a':'';
   const errorMsg=document.getElementById('memory-error-msg');
   if(errorMsg){
-    errorMsg.hidden=!errorActive;
-    if(limitError){
-      errorMsg.textContent=errorMsg.dataset.msgWordLimit||MEMORY_WORD_LIMIT_ERROR_MSG;
-    }else if(englishError){
-      errorMsg.textContent=errorMsg.dataset.msgHebrewOnly||MEMORY_HEBREW_ONLY_ERROR_MSG;
-    }
+    // Visibility only — both slots stay in the grid so height never changes.
+    errorMsg.classList.toggle('is-word-limit',limitError);
+    errorMsg.classList.toggle('is-hebrew-only',!limitError&&englishError);
+    errorMsg.setAttribute('aria-hidden',errorActive?'false':'true');
   }
   const wrap=input?.closest('.memory-input-wrap');
   if(wrap)wrap.classList.toggle('has-content',!!text);
