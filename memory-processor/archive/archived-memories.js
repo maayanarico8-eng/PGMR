@@ -114,7 +114,7 @@
         clarity: 2,
         impact: 98,
         previewPictogram: '/memory-processor/assets/archive/002/preview.svg',
-        previewFigmaTop: 124.8994140625, // Group.y on Hover a Memory 1170:28360
+        previewFigmaTop: 124.899, // Group.y on Hover a Memory — icon vertical position only
         ready: true,
         frames: {
           default: '/memory-processor/assets/archive/002/detail-default.svg',

@@ -1,7 +1,7 @@
-<svg width="207.220703125" height="194.10548400878906" viewBox="0 0 207.220703125 194.10548400878906" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="207.220703125" height="194.10548400878906" fill="#FCFCFC"/>
-<g transform="translate(-1628.048828125,-124.8994140625)">
-<g id="Layer_1">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" fill="none" viewBox="0 0 207.220703125 194.10548400878906" width="207.220703125" height="194.10548400878906">
+<g transform="translate(-1628.048828125 -124.899)">
+
 <g id="Clip path group">
 <mask id="mask0_1170_28360" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="1323" y="88" width="820" height="60">
 <g id="clippath">
@@ -58,6 +58,6 @@
 </g>
 </g>
 </g>
-</g>
+
 </g>
 </svg>

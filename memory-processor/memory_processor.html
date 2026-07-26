@@ -1379,13 +1379,11 @@ textarea#memory-input[aria-invalid="true"]:hover{
 /* Keep list hover during the fade (covers the same pixels); hide only when settled */
 .app.is-archive-detail:not(.is-archive-detail-entering):not(.is-archive-detail-leaving) .archive-hover-preview{display:none!important}
 .archive-hover-pictogram{
-  /* Figma Group 48 — always extreme-right (right:0); Y set per memory via previewFigmaTop */
-  position:absolute;right:0;top:0;
-  width:calc(207.220703125 * var(--figma-unit));height:calc(194.10548400878906 * var(--figma-unit));
-  overflow:hidden
+  /* Extreme-right; Y via previewFigmaTop. Size comes from the icon SVG itself — never fixed. */
+  position:absolute;right:0;top:0;line-height:0
 }
-.archive-hover-pictogram img{
-  display:block;width:100%;height:100%;object-fit:fill;object-position:right center
+.archive-hover-pictogram svg{
+  display:block;max-width:none;max-height:none
 }
 .archive-hover-params{
   /* Figma Parameters 1164:28132 — FIXED for every memory: x:1586.99 y:810 w:251 h:121
@@ -1468,7 +1466,8 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .archive-memory-row{height:auto;font-size:28px;line-height:44px;gap:16px;margin-bottom:0}
   .archive-row-index{font-size:28px;line-height:44px}
   .archive-hover-preview.is-visible{position:static;display:flex;flex-direction:column;align-items:flex-end;gap:16px;margin-top:24px;left:auto;right:auto;top:auto;bottom:auto}
-  .archive-hover-pictogram,.archive-hover-params{position:static;width:auto;max-width:100%;height:auto;left:auto;right:auto;top:auto;bottom:auto}
+  .archive-hover-pictogram{position:static;width:auto;height:auto;left:auto;right:auto;top:auto;bottom:auto}
+  .archive-hover-params{position:static;width:auto;max-width:100%;height:auto;left:auto;right:auto;top:auto;bottom:auto}
   .archive-hover-param-value{padding-top:0}
   .archive-hover-params{bottom:auto;top:auto;position:static;height:auto}
   .app.is-archive-detail .archive-shell,
@@ -4481,6 +4480,10 @@ function preloadAllArchiveAssets(){
   });
   urls.add('/memory-processor/assets/archive/close-x.svg');
   urls.forEach(src=>{
+    if(src.endsWith('.svg')&&src.includes('/preview')){
+      loadArchivePreviewSvg(src).catch(()=>{});
+      return;
+    }
     const img=new Image();
     img.decoding='async';
     img.src=src;
@@ -4870,6 +4873,46 @@ function clearArchiveHover(){
   if(pic){pic.innerHTML='';pic.style.top='';}
 }
 
+/** Cache of preview SVG markup keyed by URL — inline vectors, never <img>. */
+const archivePreviewSvgCache=new Map();
+
+/**
+ * Fetch a preview SVG and size it from the file's own width/height or viewBox.
+ * No object-fit, no container-imposed size.
+ */
+async function loadArchivePreviewSvg(src){
+  if(archivePreviewSvgCache.has(src))return archivePreviewSvgCache.get(src);
+  const res=await fetch(src);
+  if(!res.ok)throw new Error(`preview svg ${src}: ${res.status}`);
+  const text=await res.text();
+  const doc=new DOMParser().parseFromString(text,'image/svg+xml');
+  const svg=doc.documentElement;
+  if(!svg||svg.tagName.toLowerCase()!=='svg')throw new Error(`preview svg ${src}: not an svg`);
+  const wAttr=svg.getAttribute('width');
+  const hAttr=svg.getAttribute('height');
+  const vb=svg.getAttribute('viewBox');
+  let w=wAttr&&!String(wAttr).includes('%')?parseFloat(wAttr):NaN;
+  let h=hAttr&&!String(hAttr).includes('%')?parseFloat(hAttr):NaN;
+  if(!(Number.isFinite(w)&&Number.isFinite(h))&&vb){
+    const parts=String(vb).trim().split(/[\s,]+/).map(Number);
+    if(parts.length===4&&parts.every(Number.isFinite)){
+      w=parts[2];
+      h=parts[3];
+    }
+  }
+  svg.removeAttribute('width');
+  svg.removeAttribute('height');
+  if(Number.isFinite(w)&&Number.isFinite(h)){
+    svg.style.width=`calc(${w} * var(--figma-unit))`;
+    svg.style.height=`calc(${h} * var(--figma-unit))`;
+  }
+  svg.setAttribute('data-preview-src',src);
+  svg.setAttribute('aria-hidden','true');
+  const markup=new XMLSerializer().serializeToString(svg);
+  archivePreviewSvgCache.set(src,markup);
+  return markup;
+}
+
 /**
  * Sticky right-side icon + parameters. Same DOM layer for list hover and detail —
  * only the coordinate space changes (shell vs 1920 frame). Never invent icon Y.
@@ -4901,10 +4944,21 @@ function syncArchiveStickyPreview(memory){
 
   if(hasIcon&&hasIconY){
     const src=memory.previewPictogram;
-    const existing=pic.querySelector('img');
-    // Keep the same <img> when opening from hover so the icon does not remount/jump.
-    if(!existing||existing.getAttribute('src')!==src){
-      pic.innerHTML=`<img src="${src}" alt="">`;
+    const existing=pic.querySelector('svg[data-preview-src]');
+    // Keep the same inlined SVG when opening from hover so the icon does not remount/jump.
+    if(!existing||existing.getAttribute('data-preview-src')!==src){
+      pic.setAttribute('data-preview-pending',src);
+      loadArchivePreviewSvg(src).then(markup=>{
+        if(pic.getAttribute('data-preview-pending')!==src)return;
+        pic.innerHTML=markup;
+        pic.removeAttribute('data-preview-pending');
+      }).catch(err=>{
+        console.warn('[archive] preview svg failed', src, err);
+        if(pic.getAttribute('data-preview-pending')===src){
+          pic.innerHTML='';
+          pic.removeAttribute('data-preview-pending');
+        }
+      });
     }
     const y=Number(memory.previewFigmaTop);
     const inDetail=isArchiveDetailMode();
@@ -4915,6 +4969,7 @@ function syncArchiveStickyPreview(memory){
   }else{
     pic.innerHTML='';
     pic.style.top='';
+    pic.removeAttribute('data-preview-pending');
   }
 
   preview.classList.add('is-visible');
