@@ -26,14 +26,8 @@
   const BODY_X = 658.806;
   const BODY_Y = 377.828;
   const BODY_W = 393;
-  const OUTPUT_X = 292.806;
-  const OUTPUT_W = 1089;
-  /**
-   * Output ink top — computed once from memory 001 (ink-centred between text bottom
-   * and bank label top after the bank row was raised). Hard-set for every memory;
-   * only pushed when body text grows down into this slot.
-   */
-  const OUTPUT_INK_TOP = 562.136;
+  /** Output top in frame coords — position only; size comes from the SVG file 1:1. */
+  const OUTPUT_TOP = 562.136;
   const SOURCE_X = 1061.81;
   const SOURCE_Y = 296;
   const SOURCE_W = 320;
@@ -164,10 +158,8 @@
 }
 .archive-card-output{
   position:absolute;z-index:2;
-  left:calc(${OUTPUT_X} * var(--figma-unit));
-  top:calc(${OUTPUT_INK_TOP} * var(--figma-unit));
-  width:calc(${OUTPUT_W} * var(--figma-unit));
-  height:auto;margin:0;padding:0;
+  top:calc(${OUTPUT_TOP} * var(--figma-unit));
+  left:auto;width:auto;height:auto;margin:0;padding:0;
   line-height:0;overflow:visible
 }
 .archive-card-output svg{
@@ -318,53 +310,34 @@
   }
 
   /**
-   * Size host to ink (getBBox); scale stays OUTPUT_W / viewBox.width.
-   * Vertical: hard-set OUTPUT_INK_TOP from 001; push only if body grows into that slot.
-   * Horizontal: ink right → SHARED_RIGHT.
+   * Place output.svg 1:1 from its width/height attributes. No scale, transform,
+   * ink bbox, or stroke adjustment — wrong size is fixed in Figma, not here.
+   * Right edge on SHARED_RIGHT; top on OUTPUT_TOP.
    */
-  function syncOutputInkBox(body, output) {
+  function placeOutput1x1(output) {
     const svg = output?.querySelector('svg');
     if (!output || !svg) return;
-    const unit = figmaUnitPx();
-    if (unit <= 0) return;
-
-    let vb;
-    let ink;
-    try {
-      vb = svg.viewBox.baseVal;
-      ink = svg.getBBox();
-    } catch {
+    const w = parseFloat(svg.getAttribute('width'));
+    const h = parseFloat(svg.getAttribute('height'));
+    if (!(w > 0) || !(h > 0)) {
+      console.error(
+        '[archive] output.svg missing width/height — export at final screen size from Figma'
+      );
       return;
     }
-    if (!vb.width || !ink.width || !ink.height) return;
-
-    const scale = OUTPUT_W / vb.width;
-    const padLeft = ink.x - vb.x;
-    const padTop = ink.y - vb.y;
-    const inkW = ink.width * scale;
-    const inkH = ink.height * scale;
-
-    const bodyBottom = body
-      ? BODY_Y + body.getBoundingClientRect().height / unit
-      : BODY_Y;
-    const overflow = Math.max(0, bodyBottom - OUTPUT_INK_TOP);
-    const top = OUTPUT_INK_TOP + overflow;
-    const left = OUTPUT_RIGHT - inkW;
-
-    output.style.width = `calc(${inkW} * var(--figma-unit))`;
-    output.style.height = `calc(${inkH} * var(--figma-unit))`;
-    output.style.top = `calc(${top} * var(--figma-unit))`;
-    output.style.left = `calc(${left} * var(--figma-unit))`;
-
-    svg.style.width = `calc(${OUTPUT_W} * var(--figma-unit))`;
-    svg.style.height = `calc(${vb.height * scale} * var(--figma-unit))`;
-    svg.style.marginLeft = `calc(${-padLeft * scale} * var(--figma-unit))`;
-    svg.style.marginTop = `calc(${-padTop * scale} * var(--figma-unit))`;
+    svg.style.width = `calc(${w} * var(--figma-unit))`;
+    svg.style.height = `calc(${h} * var(--figma-unit))`;
+    svg.style.marginLeft = '';
+    svg.style.marginTop = '';
+    output.style.width = `calc(${w} * var(--figma-unit))`;
+    output.style.height = `calc(${h} * var(--figma-unit))`;
+    output.style.top = `calc(${OUTPUT_TOP} * var(--figma-unit))`;
+    output.style.left = `calc(${OUTPUT_RIGHT - w} * var(--figma-unit))`;
   }
 
   function syncCardLayout(closeBtn, body, output) {
     syncCloseToName(closeBtn);
-    if (output) syncOutputInkBox(body, output);
+    if (output) placeOutput1x1(output);
   }
 
   function bindLayoutSync(closeBtn, body, output) {

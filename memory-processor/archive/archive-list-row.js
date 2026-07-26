@@ -184,8 +184,8 @@
   }
 
   /**
-   * Inline an SVG as authored. Do not set width/height/scale/transform —
-   * the file carries its final size; the host sizes to the SVG.
+   * Inline an SVG 1:1 from its width/height attributes (Figma export size).
+   * No scale, transform, ink fitting, or stroke adjustment.
    */
   async function loadInlineSvg(src) {
     if (svgCache.has(src)) return svgCache.get(src).cloneNode(true);
@@ -196,11 +196,19 @@
     const svg = doc.documentElement;
     if (!svg || svg.tagName.toLowerCase() !== 'svg') throw new Error(`svg ${src}: not an svg`);
     svg.removeAttribute('style');
-    svg.style.removeProperty('width');
-    svg.style.removeProperty('height');
     svg.style.removeProperty('max-width');
     svg.style.removeProperty('max-height');
     svg.style.removeProperty('transform');
+    const w = parseFloat(svg.getAttribute('width'));
+    const h = parseFloat(svg.getAttribute('height'));
+    if (!(w > 0) || !(h > 0)) {
+      console.error(
+        `[archive] ${src} missing width/height — export at final screen size from Figma`
+      );
+    } else {
+      svg.style.width = `calc(${w} * var(--figma-unit))`;
+      svg.style.height = `calc(${h} * var(--figma-unit))`;
+    }
     svg.setAttribute('data-archive-src', src);
     svg.setAttribute('aria-hidden', 'true');
     svgCache.set(src, svg);
