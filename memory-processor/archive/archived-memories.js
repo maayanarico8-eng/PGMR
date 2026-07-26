@@ -98,11 +98,11 @@
     const extra = ({
       /* previewFigmaTop = Group 48.y on that memory’s Hover a Memory frame (1920×1080) */
       '001': {
-        frequency: 9,
-        clarity: 36,
-        impact: 71,
+        frequency: 21,
+        clarity: 51,
+        impact: 57,
         previewPictogram: '/memory-processor/assets/archive/001/preview.svg',
-        previewFigmaTop: 354.69482421875, // Figma 1147:47021
+        previewFigmaTop: 368.81494140625, // Group.y on Hover a Memory 1326:41156
         ready: true,
         frames: {
           default: '/memory-processor/assets/archive/001/detail-default.svg',
@@ -110,11 +110,11 @@
         },
       },
       '002': {
-        frequency: 100,
-        clarity: 61,
-        impact: 10,
-        previewPictogram: '/memory-processor/assets/archive/002/preview.png',
-        previewFigmaTop: 120.5087890625, // Figma 1170:28360
+        frequency: 9,
+        clarity: 2,
+        impact: 98,
+        previewPictogram: '/memory-processor/assets/archive/002/preview.svg',
+        previewFigmaTop: 124.8994140625, // Group.y on Hover a Memory 1170:28360
         ready: true,
         frames: {
           default: '/memory-processor/assets/archive/002/detail-default.svg',
