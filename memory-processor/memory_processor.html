@@ -625,8 +625,8 @@ textarea#memory-input[aria-invalid="true"]:hover{
   line-height:calc(28 * var(--figma-unit));direction:rtl
 }
 .confirm-dialog-body{
-  margin:0;font-family:var(--font-mono);font-size:calc(17 * var(--figma-unit));font-weight:400;
-  line-height:calc(25 * var(--figma-unit));direction:rtl
+  margin:0;font-family:var(--font-mono);font-size:15px;font-weight:400;
+  line-height:26px;direction:rtl
 }
 .confirm-dialog-actions{
   display:flex;align-items:flex-start;gap:calc(40 * var(--figma-unit));direction:ltr
@@ -1583,7 +1583,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
           </div>
           <p class="memory-error-msg" id="memory-error-msg" aria-live="polite" aria-hidden="true">
             <span class="memory-error-slot" data-for="word-limit">כדי להעביר את הזיכרון לרשם הזיכרונות, יש לוודא כי אורכו אינו עולה על 20 מילים.</span>
-            <span class="memory-error-slot" data-for="hebrew-only">רשם הזיכרונות קורא עברית</span>
+            <span class="memory-error-slot" data-for="hebrew-only">רשם הזיכרונות קורא עברית.</span>
           </p>
         </div>
         <button type="button" class="edit-memory-btn" id="edit-memory-btn">
@@ -4372,7 +4372,9 @@ let confirmDialogMode=null;
 let confirmDialogLastFocus=null;
 
 function isMemoryInProgress(){
-  return !!document.getElementById('app')?.classList.contains('has-results');
+  const hasResults=!!document.getElementById('app')?.classList.contains('has-results');
+  const text=(document.getElementById('memory-input')?.value??'').trim();
+  return hasResults||!!text;
 }
 
 function discardCurrentMemory(){
