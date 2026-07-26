@@ -1410,13 +1410,20 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .create-visual-btn,.restart-memory-btn{width:237px;height:39px;padding:0 24px;border-radius:8px;font-size:19px;line-height:20px;display:inline-flex;align-items:center;justify-content:center;text-align:center}
 }
 
-/* Print: only the canvas (sequence + in-canvas sentence), page 18×12.5cm */
+/* Print: postcard canvas only — exact physical size 210×110mm */
 @media print{
-  @page{size:18cm 12.5cm;margin:0}
-  :root{--figma-unit:1px!important}
+  @page{size:210mm 110mm;margin:0}
+  /* Design canvas 1322×643 → physical postcard; separate axes fill the page with no CSS scale/zoom */
+  :root{
+    --figma-unit:1px!important;
+    --print-x:calc(210mm / 1322);
+    --print-y:calc(110mm / 643)
+  }
   html,body{
-    margin:0!important;padding:0!important;min-height:0!important;width:100%!important;height:100%!important;
-    background:#fff!important;color:#000!important;
+    margin:0!important;padding:0!important;min-height:0!important;
+    width:210mm!important;height:110mm!important;max-width:none!important;max-height:none!important;
+    overflow:hidden!important;background:#fff!important;color:#000!important;
+    zoom:normal!important;transform:none!important;
     print-color-adjust:exact;-webkit-print-color-adjust:exact
   }
   .site-header,
@@ -1436,27 +1443,33 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .app,
   .workspace,
   .memory-main,
+  .postcard-block,
   .view-viewport,
   .view-track,
   .view-panel-generator{
-    display:block!important;max-width:none!important;min-height:0!important;width:auto!important;height:auto!important;
-    margin:0!important;padding:0!important;background:#fff!important;gap:0!important;overflow:visible!important;
-    transform:none!important;transition:none!important
+    display:block!important;position:static!important;
+    max-width:none!important;max-height:none!important;min-width:0!important;min-height:0!important;
+    width:210mm!important;height:110mm!important;
+    margin:0!important;padding:0!important;background:#fff!important;gap:0!important;
+    overflow:visible!important;flex:none!important;
+    zoom:normal!important;transform:none!important;transition:none!important
   }
-  .view-track{width:100%!important}
-  .view-panel-generator{width:100%!important;flex:none!important}
   .app.has-results.has-visual-result .memory-stage,
   .memory-stage{
     position:relative!important;display:block!important;
-    width:1322px!important;max-width:none!important;height:643px!important;min-height:643px!important;
+    width:210mm!important;height:110mm!important;
+    min-width:210mm!important;min-height:110mm!important;
+    max-width:none!important;max-height:none!important;
     margin:0!important;padding:0!important;box-sizing:border-box!important;
-    border:1px solid #d9d9d9!important;border-radius:8px!important;background:#fff!important;
-    overflow:hidden!important;page-break-inside:avoid;break-inside:avoid;transform-origin:top left
+    border:1px solid #d9d9d9!important;border-radius:calc(8 * var(--print-y))!important;background:#fff!important;
+    overflow:hidden!important;page-break-inside:avoid;break-inside:avoid;
+    zoom:normal!important;transform:none!important
   }
   .app.has-visual-result .visual-output,
   .visual-output{
     position:relative!important;display:block!important;width:100%!important;height:100%!important;
-    min-height:100%!important;overflow:hidden!important
+    min-height:100%!important;max-width:none!important;overflow:hidden!important;
+    zoom:normal!important;transform:none!important
   }
   .view-viewport{
     opacity:1!important;visibility:visible!important;transition:none!important
@@ -1465,32 +1478,40 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .app.has-visual-result .visual-output>svg,
   .visual-output>svg{
     /* Match Figma 1227:55937 — right-flush with name, masters 153.6 tall */
-    position:absolute!important;left:auto!important;right:59.5px!important;top:324px!important;
-    width:500px!important;height:153.6px!important;max-width:none!important;max-height:none!important;display:block!important
+    position:absolute!important;left:auto!important;
+    right:calc(59.5 * var(--print-x))!important;top:calc(324 * var(--print-y))!important;
+    width:calc(500 * var(--print-x))!important;height:calc(153.6 * var(--print-y))!important;
+    max-width:none!important;max-height:none!important;display:block!important;
+    zoom:normal!important;transform:none!important
   }
   .canvas-meta{
     display:flex!important;position:absolute!important;z-index:1!important;box-sizing:border-box!important;
-    top:62px!important;left:63.5px!important;width:1199px!important;right:auto!important;
+    top:calc(62 * var(--print-y))!important;left:calc(63.5 * var(--print-x))!important;
+    width:calc(1199 * var(--print-x))!important;right:auto!important;
     align-items:flex-start!important;justify-content:space-between!important;gap:0!important;
     grid-template-columns:none!important
   }
   .canvas-meta-main{
     display:flex!important;box-sizing:border-box!important;flex:0 0 auto!important;
-    width:913px!important;align-items:flex-start!important;justify-content:space-between!important;direction:ltr!important
+    width:calc(913 * var(--print-x))!important;align-items:flex-start!important;justify-content:space-between!important;direction:ltr!important
   }
   .canvas-archive-id,
   .visual-memory-text,
   .canvas-keywords{
     display:block!important;margin:0!important;color:#000!important;
-    font-family:var(--font-display)!important;font-size:21px!important;font-weight:600!important;line-height:19px!important
+    font-family:var(--font-display)!important;
+    font-size:calc(21 * var(--print-y))!important;font-weight:600!important;
+    line-height:calc(19 * var(--print-y))!important
   }
   .canvas-archive-id{flex:0 0 auto!important;direction:ltr!important;text-align:left!important;white-space:nowrap!important}
   .visual-memory-text{
-    position:static!important;flex:0 0 auto!important;width:537px!important;max-width:537px!important;
+    position:static!important;flex:0 0 auto!important;
+    width:calc(537 * var(--print-x))!important;max-width:calc(537 * var(--print-x))!important;
     direction:rtl!important;text-align:right!important;white-space:normal!important
   }
   .canvas-keywords{
-    flex:0 0 auto!important;width:376px!important;max-width:376px!important;
+    flex:0 0 auto!important;
+    width:calc(376 * var(--print-x))!important;max-width:calc(376 * var(--print-x))!important;
     direction:rtl!important;text-align:right!important;white-space:nowrap!important;
     overflow:hidden!important;text-overflow:ellipsis!important
   }
@@ -4202,12 +4223,6 @@ function syncDesignUI(){
   });
 }
 
-const POSTCARD_PRINT_W=1322;
-const POSTCARD_PRINT_H=643;
-const POSTCARD_PAGE_W_CM=18;
-const POSTCARD_PAGE_H_CM=12.5;
-const POSTCARD_PX_PER_CM=96/2.54;
-
 function clearPostcardPrintFit(){
   const stage=document.getElementById('memory-stage');
   if(!stage)return;
@@ -4215,18 +4230,9 @@ function clearPostcardPrintFit(){
   stage.style.transform='';
 }
 
+/* Postcard prints at exact @page 210×110mm via CSS — no zoom/transform fit. */
 function fitPostcardForPrint(){
-  const app=document.getElementById('app');
-  const stage=document.getElementById('memory-stage');
-  if(!stage||!app?.classList.contains('has-visual-result'))return;
   clearPostcardPrintFit();
-  // Fit the on-screen canvas into the 18×12.5cm page without stretching.
-  const availW=POSTCARD_PAGE_W_CM*POSTCARD_PX_PER_CM;
-  const availH=POSTCARD_PAGE_H_CM*POSTCARD_PX_PER_CM;
-  const scale=Math.min(availW/POSTCARD_PRINT_W,availH/POSTCARD_PRINT_H);
-  if(scale>=0.999)return;
-  if('zoom' in stage.style)stage.style.zoom=String(scale);
-  else stage.style.transform=`scale(${scale})`;
 }
 
 async function createDesignedVisual(){

@@ -79,7 +79,7 @@
       entry.source = {
         type: 'מתווך',
         category: 'בן משפחה',
-        kind: 'חבר קיבוץ',
+        kind: 'סבתא',
         name: 'מרים',
       };
       entry.frequency = 21;
