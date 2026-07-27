@@ -203,6 +203,51 @@ console.log('expressive-render tests…');
   assert(approx(state.collapseScale, 0.02), 'collapse at clarity 0');
 }
 
+// Clarity ink right-align: rigid X translate keeps right edge on full-clarity anchor
+{
+  const base = sampleSequence(3);
+  const full = api.applyExpressiveRendering(base, {
+    memorySource: 0,
+    memoryFrequency: 100,
+    memoryClarity: 100,
+    memoryImpact: 0,
+  });
+  assert(approx(full.state.alignDx, 0), 'clarity 100 → alignDx 0');
+  // Pixel-identical: no outer align group — only the three clarity wraps (each translate 0).
+  const fullBody = full.svg.replace(/^[\s\S]*<\/defs>/, '').replace(/<\/svg>\s*$/, '');
+  assert(
+    (fullBody.match(/<g transform="translate\(0,0\)">/g) || []).length === 3,
+    'clarity 100: three clarity wraps, no align wrapper'
+  );
+
+  const mid = api.applyExpressiveRendering(base, {
+    memorySource: 0,
+    memoryFrequency: 100,
+    memoryClarity: 50,
+    memoryImpact: 0,
+  });
+  assert(mid.state.alignDx > 0, 'mid clarity → positive alignDx (shift right)');
+  assert(
+    mid.svg.includes(`<g transform="translate(${api._formatNum(mid.state.alignDx)},0)">`),
+    'align translate wraps sequence'
+  );
+
+  const low = api.applyExpressiveRendering(base, {
+    memorySource: 0,
+    memoryFrequency: 100,
+    memoryClarity: 0,
+    memoryImpact: 0,
+  });
+  assert(low.state.alignDx > mid.state.alignDx, 'lower clarity → larger alignDx');
+
+  // Single pictogram: no collapse motion, alignDx stays 0
+  const one = api.applyExpressiveRendering(sampleSequence(1), {
+    ...api.DEFAULT_PARAMS,
+    memoryClarity: 0,
+  });
+  assert(approx(one.state.alignDx, 0), 'single pictogram alignDx 0');
+}
+
 // Layout positions must come from sequence translates, not local getBBox metrics
 {
   const base = sampleSequence(3);

@@ -576,6 +576,18 @@
       return newCenterX - centerX;
     });
 
+    // Rigid X alignment: keep ink right edge on the full-clarity right anchor
+    // (same line the sequence already meets at clarity 100% / name right edge).
+    // Clarity math above is unchanged — this only translates the finished cluster.
+    let targetInkRight = -Infinity;
+    let collapsedInkRight = -Infinity;
+    for (let i = 0; i < N; i++) {
+      const right = pictograms[i].bbox.x + pictograms[i].bbox.width;
+      targetInkRight = Math.max(targetInkRight, right);
+      collapsedInkRight = Math.max(collapsedInkRight, right + (clarityDxList[i] || 0));
+    }
+    const alignDx = N > 0 ? targetInkRight - collapsedInkRight : 0;
+
     // Keep the viewBox stable across every parameter. Source changes may add
     // fragmentation, but must not resize the displayed pictogram sequence.
     const pad = Math.max(12, ...FRAG_DIST);
@@ -628,6 +640,15 @@
       );
     });
 
+    // One rigid X translate of the whole sequence — same pass, before paint.
+    // At clarity 100% alignDx is 0: omit the wrapper so output is pixel-identical.
+    const bodyHtml = bodyParts.join('');
+    const alignDxAttr = formatNum(alignDx);
+    const alignedBody =
+      alignDxAttr === '0'
+        ? bodyHtml
+        : `<g transform="translate(${alignDxAttr},0)">${bodyHtml}</g>`;
+
     const outX = viewBox.x - pad;
     const outY = viewBox.y - pad;
     const outW = viewBox.w + pad * 2;
@@ -636,7 +657,7 @@
     const svg =
       `<svg xmlns="${SVG_NS}" xmlns:xlink="${XLINK_NS}" viewBox="${formatNum(outX)} ${formatNum(outY)} ${formatNum(outW)} ${formatNum(outH)}" overflow="visible">` +
       `<defs>${defsParts.join('')}</defs>` +
-      bodyParts.join('') +
+      alignedBody +
       `</svg>`;
 
     const state = {
@@ -646,6 +667,7 @@
       dasharray: dash.solid ? 'solid' : dash.dasharray,
       strokeWidth,
       collapseScale,
+      alignDx,
       pad,
     };
 

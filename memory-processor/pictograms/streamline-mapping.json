@@ -2504,6 +2504,26 @@
       },
       "searchQuery": "thank you",
       "updatedAt": "2026-07-27T07:03:59.099Z"
+    },
+    "champion": {
+      "hash": "ico_mRu4pQJ4v9PJeLjK1iqmIXtb",
+      "iconName": "Ranking Winner Medal",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "champion",
+      "updatedAt": "2026-07-27T08:30:44.456Z"
     }
   }
 }
