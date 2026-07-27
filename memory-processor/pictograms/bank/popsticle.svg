@@ -1,1 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="23.8" height="48" viewBox="0 0 23.8 48"><g  transform="translate(0.0000,0.0000) scale(1.000000)"><g transform="translate(-12.1000,0.0000)"><g transform="translate(12.1000,0.0000) scale(1.000000)"><g transform="translate(-14.4982,-2.1762) scale(1.093092)" stroke-width="0.914836"><path d="M24.18,5.19h-.03c-4.24,0-7.68,3.44-7.68,7.68v15.28c0,.52.42.93.93.93h13.49c.52,0,.93-.42.93-.93v-15.28c0-4.24-3.44-7.68-7.68-7.68h0,.03Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round"/><line x1="21.63" y1="13.53" x2="21.63" y2="24.51" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round"/><line x1="26.73" y1="13.53" x2="26.73" y2="24.51" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round"/><line x1="24.15" y1="29.5" x2="24.15" y2="42.67" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round"/></g></g></g></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="23.756" height="48" viewBox="0 0 23.756 48" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M 11.913,3.6 l -0.033,0 C 7.253,3.6 3.5,7.353 3.5,11.98 l 0,16.676 c 0,0.569 0.46,1.017 1.017,1.017 l 14.722,0 c 0.569,0 1.017,-0.46 1.017,-1.017 L 20.256,11.98 c 0,-4.627 -3.753,-8.38 -8.38,-8.38 l 0.042,0 Z"/>
+  <path d="M 9.131,12.7 l 0,11.982"/>
+  <path d="M 14.696,12.7 l 0,11.982"/>
+  <path d="M 11.88,29.669 l 0,14.831"/>
+</svg>

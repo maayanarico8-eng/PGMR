@@ -10,8 +10,8 @@
   const FRAG_STRIPS = [1, 4, 4];
   const FRAG_DIST = [0, 18, 18];
   const DOT_CLEARANCE = 1.6;
-  /** Match bank grandfather stroke (~0.93); Impact 0% keeps the former look. */
-  const BASE_STROKE = 0.93;
+  /** Match bank grammar stroke (1px); Impact 0% keeps the bank look. */
+  const BASE_STROKE = 1;
   const MAX_STROKE = 30;
   /** Former 0–100% impact span; UI 100% maps to 180% of that span (+80% thicker max). */
   const IMPACT_SCALE = 0.45;

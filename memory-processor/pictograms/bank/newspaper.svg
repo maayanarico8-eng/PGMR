@@ -1,1 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><g  transform="translate(0.0000,0.0000) scale(1.000000)"><g transform="translate(0.0000,0.0000)"><g transform="translate(0.0000,0.0000) scale(1.000000)"><g transform="translate(-2.0172,1.6609) scale(1.081794)" stroke-width="0.924390"><defs><style>.cls-1{fill:none;stroke:#000;stroke-linecap:round;stroke-linejoin:round;}</style></defs><line class="cls-1" x1="8.99" y1="22.06" x2="15.21" y2="39.21"/><polygon class="cls-1" points="37.68 14.74 42.93 29.23 15.24 39.27 8.97 21.98 34.34 12.79 37.68 14.75 37.68 14.74"/><polygon class="cls-1" points="14.35 39.54 5.15 23.61 31.78 8.24 34.34 12.79 7.03 22.64 14.35 39.54"/><polygon class="cls-1" points="37.77 15.01 42.93 29.23 14.49 39.54 7.03 22.64 34.32 12.79 35.37 15.8 37.76 15.01 37.77 15.01"/><line class="cls-1" x1="14.21" y1="24.21" x2="33.05" y2="17.43"/><line class="cls-1" x1="15.15" y1="26.82" x2="33.99" y2="20.03"/><line class="cls-1" x1="16.1" y1="29.42" x2="34.94" y2="22.64"/><line class="cls-1" x1="17.04" y1="32.02" x2="35.88" y2="25.24"/><line class="cls-1" x1="17.99" y1="34.63" x2="36.83" y2="27.84"/></g></g></g></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="47.803" height="48" viewBox="0 0 47.803 48" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M 7.647,25.622 L 14.365,44.144"/>
+  <path d="M 38.632,17.716 L 44.303,33.365 L 14.397,44.208 L 7.626,25.535 L 35.025,15.61 L 38.632,17.727 L 38.632,17.716 Z"/>
+  <path d="M 13.436,44.5 L 3.5,27.295 L 32.26,10.696 L 35.025,15.61 L 5.53,26.248 L 13.436,44.5 Z"/>
+  <path d="M 38.729,18.008 L 44.303,33.365 L 13.587,44.5 L 5.53,26.248 L 35.003,15.61 L 36.138,18.861 L 38.719,18.008 L 38.729,18.008 Z"/>
+  <path d="M 13.285,27.944 L 33.632,20.621"/>
+  <path d="M 14.3,30.762 L 34.647,23.429"/>
+  <path d="M 15.326,33.571 L 35.673,26.248"/>
+  <path d="M 16.341,36.378 L 36.688,29.056"/>
+  <path d="M 17.367,39.197 L 37.715,31.864"/>
+</svg>

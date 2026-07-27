@@ -1,15 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="44" height="48" viewBox="0 0 44 48"><g  transform="translate(0.0000,0.0000) scale(1.000000)"><g transform="translate(-2.0000,0.0000)"><g transform="translate(1.6884,1.1163) scale(0.953488)">
-  <!-- Generator: Adobe Illustrator 30.3.0, SVG Export Plug-In . SVG Version: 2.1.3 Build 182)  -->
-  <defs>
-    <style>
-      .st0 {
-        fill: none;
-        stroke: #000;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        stroke-width: 1.04878px;
-      }
-    </style>
-  </defs>
-  <path class="st0" d="M16.78,12.24l-11.7.18c-.81,0-1.31.91-.87,1.59l6.35,10.2s0,.15,0,.15l-6.13,10.06c-.42.7.08,1.59.9,1.58l11.35-.13,5.79,9.11c.41.65,1.37.65,1.77,0l5.85-9.22,11.61-.14c.81,0,1.31-.91.87-1.59l-6.35-10.2v-.15l6.13-10.06c.42-.7-.08-1.59-.9-1.58l-11.27.09-5.79-9.11c-.41-.65-1.37-.65-1.77,0l-5.85,9.22Z"/>
-</g></g></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="43.828" height="48" viewBox="0 0 43.828 48" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M 15.621,12.87 l -11.137,0.172 c -0.771,0 -1.247,0.866 -0.828,1.514 l 6.045,9.709 s 0,0.143 0,0.143 l -5.835,9.576 c -0.4,0.666 0.076,1.514 0.857,1.504 l 10.804,-0.124 l 5.512,8.672 c 0.39,0.619 1.304,0.619 1.685,0 l 5.568,-8.777 l 11.052,-0.133 c 0.771,0 1.247,-0.866 0.828,-1.514 l -6.045,-9.709 l 0,-0.143 l 5.835,-9.576 c 0.4,-0.666 -0.076,-1.514 -0.857,-1.504 l -10.728,0.086 l -5.512,-8.672 c -0.39,-0.619 -1.304,-0.619 -1.685,0 l -5.568,8.777 Z"/>
+</svg>

@@ -47,11 +47,11 @@ console.log('expressive-render tests…');
 
 // Impact — UI 0% = former 0%; UI 100% = former 180% (thicker max)
 {
-  assert(api.BASE_STROKE === 0.93, 'base stroke unchanged at 0.93');
+  assert(api.BASE_STROKE === 1, 'base stroke unchanged at 1');
   assert(api.IMPACT_UI_MAX === 180, 'UI maps onto former 0–180%');
-  assert(api.computeStrokeWidth(0) === 0.93, 'impact 0 → former 0% stroke');
-  assert(approx(api.computeStrokeWidth(100), 24.4767), 'impact 100 → former 180% stroke');
-  assert(approx(api.computeStrokeWidth(50), 12.70335), 'impact 50 → mid of expanded range');
+  assert(api.computeStrokeWidth(0) === 1, 'impact 0 → former 0% stroke');
+  assert(approx(api.computeStrokeWidth(100), 24.49), 'impact 100 → former 180% stroke');
+  assert(approx(api.computeStrokeWidth(50), 12.745), 'impact 50 → mid of expanded range');
 }
 
 // Frequency — slider 0–100 maps onto former 15–100% range
@@ -115,7 +115,7 @@ console.log('expressive-render tests…');
   assert(state.stripsPerPictogram === 1, 'mine → 1 strip');
   assert(state.maxOffset === 0, 'mine maxOffset 0');
   assert(state.dasharray === 'solid', 'default dash solid');
-  assert(state.strokeWidth === 0.93, 'default stroke 0.93');
+  assert(state.strokeWidth === 1, 'default stroke 1');
   assert(approx(state.collapseScale, 1), 'default collapse 1');
   assert(svg.includes('ex-master-0'), 'master in defs');
   assert(svg.includes('stroke="#000000"') || svg.includes("stroke='#000000'"), 'normalized stroke color');
@@ -135,7 +135,7 @@ console.log('expressive-render tests…');
   const vb = (svg) => (svg.match(/viewBox="([^"]+)"/) || [])[1];
   assert(vb(low.svg) === vb(high.svg), 'impact 0 and 100 share viewBox');
   assert(low.state.pad === high.state.pad, 'pad stable across impact');
-  assert(low.state.strokeWidth === 0.93 && approx(high.state.strokeWidth, 24.4767), 'stroke still scales');
+  assert(low.state.strokeWidth === 1 && approx(high.state.strokeWidth, 24.49), 'stroke still scales');
 }
 
 // Memory source must not resize the displayed sequence
@@ -189,7 +189,7 @@ console.log('expressive-render tests…');
   });
   assert(state.dasharray !== 'solid', 'dashed state');
   assert(svg.includes('stroke-dasharray='), 'dasharray in svg');
-  assert(approx(state.strokeWidth, 12.70335), 'rescaled impact mid stroke in state');
+  assert(approx(state.strokeWidth, 12.745), 'rescaled impact mid stroke in state');
 }
 
 // apply — clarity collapse factor
@@ -320,9 +320,9 @@ console.log('expressive-render tests…');
     ...api.DEFAULT_PARAMS,
     memoryImpact: 14,
   });
-  assert(approx(state.strokeWidth, 4.226538), 'impact 14 → rescaled stroke');
-  assert(/stroke-width="4\.227"/.test(svg), 'presentation stroke-width applied');
-  assert(/stroke-width:4\.227/.test(svg), 'CSS stroke-width rewritten for Impact');
+  assert(approx(state.strokeWidth, 4.2886), 'impact 14 → rescaled stroke');
+  assert(/stroke-width="4\.289"/.test(svg), 'presentation stroke-width applied');
+  assert(/stroke-width:4\.289/.test(svg), 'CSS stroke-width rewritten for Impact');
   assert(!/stroke-width:0\.5/.test(svg), 'CSS no longer locks 0.5');
 }
 
@@ -339,11 +339,11 @@ console.log('expressive-render tests…');
     `<path d="M8 32h48" fill="none" stroke="#000" stroke-width="0.25"/>` +
     `</svg>`;
   const dash = { solid: true, dasharray: null };
-  const bankOut = api._normalizeGraphicsInHtml(bankMaster, 0.93, dash);
-  const streamOut = api._normalizeGraphicsInHtml(streamlineMaster, 0.93, dash);
-  assert(/stroke-width="0\.93"/.test(bankOut), 'bank path stroke-width 0.93');
-  assert(/stroke-width="0\.93"/.test(streamOut), 'streamline path stroke-width 0.93');
-  assert(/stroke-width:0\.93/.test(bankOut), 'bank CSS stroke-width 0.93');
+  const bankOut = api._normalizeGraphicsInHtml(bankMaster, 1, dash);
+  const streamOut = api._normalizeGraphicsInHtml(streamlineMaster, 1, dash);
+  assert(/stroke-width="1"/.test(bankOut), 'bank path stroke-width 1');
+  assert(/stroke-width="1"/.test(streamOut), 'streamline path stroke-width 1');
+  assert(/stroke-width:1/.test(bankOut), 'bank CSS stroke-width 1');
   assert(/vector-effect="non-scaling-stroke"/.test(bankOut), 'bank non-scaling-stroke');
   assert(/vector-effect="non-scaling-stroke"/.test(streamOut), 'streamline non-scaling-stroke');
   assert(!/<g\b[^>]*stroke-width=/i.test(bankOut), 'bank wrapper g stroke-width stripped');
@@ -362,22 +362,22 @@ console.log('expressive-render tests…');
     `</svg>`;
   const { svg, state } = api.applyExpressiveRendering(seq, api.DEFAULT_PARAMS);
   assert(state.pictogramCount === 2, 'bank+external count as two');
-  assert(state.strokeWidth === 0.93, 'unified stroke floor 0.93');
-  assert((svg.match(/stroke-width="0\.93"/g) || []).length >= 2, 'both masters get stroke 0.93');
+  assert(state.strokeWidth === 1, 'unified stroke floor 1');
+  assert((svg.match(/stroke-width="1"/g) || []).length >= 2, 'both masters get stroke 1');
   assert((svg.match(/vector-effect="non-scaling-stroke"/g) || []).length >= 2, 'both get non-scaling-stroke');
   assert(!/<g\b[^>]*stroke-width=/i.test(svg), 'no leftover g stroke-width in output');
 }
 
-// Real bank girl.svg (xml prolog + nested svg + cls-1) must survive sequence expressive path
+// Real bank girl.svg must survive sequence expressive path
 {
   const fs = require('fs');
   const path = require('path');
   const normalizeApi = require('./catalog/normalize-pictogram-svg.js');
   globalThis.MemoryEngineNormalizePictogramSvg = normalizeApi;
   const girl = fs.readFileSync(path.join(__dirname, '../pictograms/bank/girl.svg'), 'utf8');
-  assert(girl.trim().startsWith('<?xml'), 'fixture has xml prolog');
+  assert(/^<svg\b/i.test(girl.trim()), 'fixture is bank svg');
   const normalized = normalizeApi.preparePictogramSvg(girl, { source: 'bank' });
-  assert(normalized.startsWith('<svg'), 'girl normalizes without xml prolog');
+  assert(normalized.startsWith('<svg'), 'girl prepares as svg root');
   const size = normalizeApi.readBankCanvasSize(normalized);
   const slotSvg = normalized.replace(/^<svg([^>]*)>/i, (m, attrs) => {
     let a = attrs.replace(/\s(?:width|height)="[^"]*"/gi, '');
@@ -403,7 +403,7 @@ console.log('expressive-render tests…');
   assert(master.length > 0, 'girl master exists');
   assert(/^<svg\b/i.test(master.trim()), 'master keeps nested svg for bank canvas size');
   assert(/height="48"/.test(master), 'master svg height is bank 48');
-  assert(/39\.61,38\.03/.test(svg), 'girl path retained in sequence output');
+  assert(/43\.352,38\.088/.test(svg), 'girl path retained in sequence output');
   assert(/<use\b[^>]*href="#ex-master-0"/.test(svg), 'girl referenced via use');
 }
 

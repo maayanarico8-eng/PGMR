@@ -2524,6 +2524,66 @@
       },
       "searchQuery": "champion",
       "updatedAt": "2026-07-27T08:30:44.456Z"
+    },
+    "want": {
+      "hash": "ico_mRu4pQJ4vjREeLj9ULy7quHa",
+      "iconName": "History Lamp Genie",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "want",
+      "updatedAt": "2026-07-27T14:02:34.382Z"
+    },
+    "graduate": {
+      "hash": "ico_mRu4pQJ4v29VeLjM5pWGyGBB",
+      "iconName": "People Woman Graduate",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "graduate",
+      "updatedAt": "2026-07-27T14:02:52.759Z"
+    },
+    "diploma": {
+      "hash": "ico_mRu4pQJ4vDcZeLjK1iT2FpQ8",
+      "iconName": "Certified Certificate",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "diploma",
+      "updatedAt": "2026-07-27T14:03:05.982Z"
     }
   }
 }

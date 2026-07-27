@@ -1,1 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="47.8" height="48" viewBox="0 0 47.8 48"><g  transform="translate(0.0000,0.0000) scale(1.000000)"><g transform="translate(-0.1000,0.0000)"><g transform="translate(-0.0000,0.0000) scale(1.000000)"><g transform="translate(-2.4516,-1.4597) scale(1.102151)" stroke-width="0.907317"><path d="M6.22,6.32c-.4,0-.73.33-.73.73v33.91c0,.4.33.73.73.73h35.56c.4,0,.73-.33.73-.73V7.06c0-.4-.33-.73-.73-.73h0s-35.56-.01-35.56-.01Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.03,31.96l15.94-15.92" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.04,16.03l15.92,15.94" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round"/></g></g></g></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="47.732" height="48" viewBox="0 0 47.732 48" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M 4.303,5.579 c -0.439,0 -0.803,0.364 -0.803,0.803 l 0,37.314 c 0,0.439 0.364,0.803 0.803,0.803 l 39.126,0 c 0.439,0 0.803,-0.364 0.803,-0.803 L 44.232,6.395 c 0,-0.439 -0.364,-0.803 -0.803,-0.803 l 0,0 l -39.126,-0.013 l 0,0 Z"/>
+  <path d="M 15.097,33.794 l 17.538,-17.517"/>
+  <path d="M 15.11,16.264 l 17.517,17.538"/>
+</svg>

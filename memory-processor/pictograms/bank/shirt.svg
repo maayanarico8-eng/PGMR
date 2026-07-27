@@ -1,9 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="45.2" height="48" viewBox="0 0 45.2 48"><g  transform="translate(0.0000,0.0000) scale(1.000000)"><g transform="translate(-1.4000,0.0000)"><g stroke-width="1.07805" transform="translate(2.2014,2.2014) scale(0.927602)">
-  <desc>
-    Shirt Streamline Icon: https://streamlinehq.com
-  </desc>
-  <path d="M11.75 16.15625V44.0625a1.46875 1.46875 0 0 0 1.46875 1.46875h20.5625a1.46875 1.46875 0 0 0 1.46875 -1.46875V16.15625" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.07805"></path>
-  <path d="M35.25 24.96875h7.34375a1.46875 1.46875 0 0 0 1.46875 -1.46875V13.21875a11.75 11.75 0 0 0 -11.75 -11.75H29.375a5.875 5.875 0 0 1 -11.75 0H14.6875a11.75 11.75 0 0 0 -11.75 11.75V23.5a1.46875 1.46875 0 0 0 1.46875 1.46875H11.75" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.07805"></path>
-  <path d="m23.5 7.34375 0 5.875" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.07805"></path>
-  <path d="m29.375 19.09375 -2.9375 0" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.07805"></path>
-</g></g></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="45.084" height="48" viewBox="0 0 45.084 48" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M 11.661,17.297 L 11.661,43.14 a 1.36,1.36 0 0,0 1.36,1.36 l 19.042,0 a 1.36,1.36 0 0,0 1.36,-1.36 L 33.423,17.297"/>
+  <path d="M 33.423,25.458 l 6.801,0 a 1.36,1.36 0 0,0 1.36,-1.36 L 41.584,14.577 a 10.881,10.881 0 0,0 -10.881,-10.881 L 27.983,3.695 a 5.441,5.441 0 0,1 -10.881,0 L 14.381,3.695 a 10.881,10.881 0 0,0 -10.881,10.881 L 3.5,24.097 a 1.36,1.36 0 0,0 1.36,1.36 L 11.661,25.458"/>
+  <path d="m 22.542,9.136 l 0,5.44"/>
+  <path d="m 27.983,20.017 l -2.72,0"/>
+</svg>
