@@ -1387,7 +1387,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   opacity:0
 }
 
-@media(max-width:760px){
+@media screen and (max-width:760px){
   .app{padding:0 16px 20px}
   .site-header{height:72px;padding-top:26px;gap:16px}
   .memory-loader{top:72px}
@@ -1486,25 +1486,106 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .create-visual-btn,.restart-memory-btn{width:237px;height:39px;padding:0 24px;border-radius:8px;font-size:19px;line-height:20px;display:inline-flex;align-items:center;justify-content:center;text-align:center}
 }
 
-/* Print: only the output SVG, exact physical page 210×110mm */
+/* Print: full postcard composition, uniform scale 210mm/1322 — top-anchored on 210×110mm */
 @page{size:210mm 110mm;margin:0}
 @media print{
+  :root{--print-unit:calc(210mm / 1322)}
   html,body{
     margin:0!important;padding:0!important;
     width:210mm!important;height:110mm!important;
-    overflow:hidden!important;background:#fff!important;
+    overflow:hidden!important;background:#fff!important;color:#000!important;
     print-color-adjust:exact;-webkit-print-color-adjust:exact
   }
-  /* Hide everything on the page; reveal only the print output SVG */
-  body *{visibility:hidden!important}
-  #visual-output>svg,
-  #visual-output>svg *{visibility:visible!important}
-  #visual-output>svg{
-    position:fixed!important;left:0!important;top:0!important;
-    width:210mm!important;height:110mm!important;
-    margin:0!important;padding:0!important;
+  .site-header,
+  .design-sidebar,
+  .archive-shell,
+  .view-panel-archive,
+  .memory-loader,
+  .postcard-heading,
+  .postcard-intro,
+  .memory-entry,
+  .error-card,
+  .edit-memory-btn,
+  .cancel-edit-btn,
+  .input-footer-wrap,
+  .entry-count,
+  .memory-error-msg,
+  .confirm-dialog-root{display:none!important}
+  .app,
+  .workspace,
+  .memory-main,
+  .postcard-block,
+  .view-viewport,
+  .view-track,
+  .view-panel-generator{
+    display:block!important;position:static!important;
+    max-width:none!important;max-height:none!important;min-width:0!important;min-height:0!important;
+    width:210mm!important;height:auto!important;
+    margin:0!important;padding:0!important;background:#fff!important;gap:0!important;
+    overflow:visible!important;flex:none!important;
+    zoom:normal!important;transform:none!important;transition:none!important
+  }
+  .view-viewport{opacity:1!important;visibility:visible!important;transition:none!important}
+  .app.has-results.has-visual-result .memory-stage,
+  .memory-stage{
+    position:relative!important;display:block!important;
+    width:calc(1322 * var(--print-unit))!important;
+    height:calc(643 * var(--print-unit))!important;
+    min-width:0!important;min-height:0!important;
     max-width:none!important;max-height:none!important;
-    display:block!important
+    margin:0!important;padding:0!important;box-sizing:border-box!important;
+    border:none!important;border-radius:0!important;background:transparent!important;
+    overflow:visible!important;page-break-inside:avoid;break-inside:avoid;
+    zoom:normal!important;transform:none!important
+  }
+  .app.has-visual-result .visual-output,
+  .visual-output{
+    position:relative!important;display:block!important;width:100%!important;height:100%!important;
+    min-height:100%!important;max-width:none!important;overflow:visible!important;
+    zoom:normal!important;transform:none!important
+  }
+  .app.has-visual-result .visual-output>svg,
+  .visual-output>svg{
+    position:absolute!important;left:auto!important;
+    right:calc(59.5 * var(--print-unit))!important;
+    top:calc(324 * var(--print-unit))!important;
+    width:calc(500 * var(--print-unit))!important;
+    height:calc(153.6 * var(--print-unit))!important;
+    max-width:none!important;max-height:none!important;display:block!important;
+    zoom:normal!important;transform:none!important
+  }
+  .canvas-meta{
+    display:flex!important;position:absolute!important;z-index:1!important;box-sizing:border-box!important;
+    top:calc(62 * var(--print-unit))!important;left:calc(63.5 * var(--print-unit))!important;
+    width:calc(1199 * var(--print-unit))!important;right:auto!important;
+    align-items:flex-start!important;justify-content:space-between!important;gap:0!important;
+    grid-template-columns:none!important;pointer-events:none!important;direction:ltr!important
+  }
+  .canvas-meta-main{
+    display:flex!important;box-sizing:border-box!important;flex:0 0 auto!important;
+    width:calc(913 * var(--print-unit))!important;align-items:flex-start!important;justify-content:flex-end!important;direction:ltr!important
+  }
+  .canvas-archive-id,
+  .visual-memory-text,
+  .canvas-keywords{
+    display:block!important;margin:0!important;color:#000!important;
+    font-family:var(--font-display)!important;
+    font-size:calc(21 * var(--print-unit))!important;font-weight:600!important
+  }
+  .canvas-archive-id,
+  .canvas-keywords{line-height:calc(19 * var(--print-unit))!important}
+  .canvas-archive-id{flex:0 0 auto!important;direction:ltr!important;text-align:left!important;white-space:nowrap!important}
+  .visual-memory-text{
+    position:static!important;flex:0 0 auto!important;
+    width:calc(515.484375 * var(--print-unit))!important;max-width:calc(515.484375 * var(--print-unit))!important;
+    line-height:calc(25 * var(--print-unit))!important;
+    direction:rtl!important;text-align:right!important;white-space:normal!important;overflow-wrap:break-word!important
+  }
+  .canvas-keywords{
+    flex:0 0 auto!important;
+    width:calc(376 * var(--print-unit))!important;max-width:calc(376 * var(--print-unit))!important;
+    direction:rtl!important;text-align:right!important;white-space:nowrap!important;
+    overflow:hidden!important;text-overflow:ellipsis!important
   }
 }
 
@@ -4604,18 +4685,6 @@ function syncDesignUI(){
   });
 }
 
-function clearPostcardPrintFit(){
-  const stage=document.getElementById('memory-stage');
-  if(!stage)return;
-  stage.style.zoom='';
-  stage.style.transform='';
-}
-
-/* Postcard prints at exact @page 210×110mm via CSS — no zoom/transform fit. */
-function fitPostcardForPrint(){
-  clearPostcardPrintFit();
-}
-
 /** Bubble % shown on a design slider (visitor-facing), not the engine value. */
 function readDesignBubblePercent(inputId){
   const input=document.getElementById(inputId);
@@ -5446,9 +5515,7 @@ function bindDesignedInterface(){
     if(processingInFlight)return;
     createDesignedVisual();
   });
-  window.addEventListener('beforeprint',fitPostcardForPrint);
   window.addEventListener('afterprint',()=>{
-    clearPostcardPrintFit();
     // Serial + archive commit happen on הדפסת זיכרון click (not here).
     postcardPrintPending=false;
   });
