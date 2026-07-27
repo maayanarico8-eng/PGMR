@@ -2324,6 +2324,66 @@
       },
       "searchQuery": "holiday",
       "updatedAt": "2026-07-27T05:59:14.174Z"
+    },
+    "happy": {
+      "hash": "ico_mRu4pQJ4vOyyeLjM5paf7DXx",
+      "iconName": "Smiley Happy 1",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "happy",
+      "updatedAt": "2026-07-27T06:09:41.703Z"
+    },
+    "quiet": {
+      "hash": "ico_es2Hxm9uU2KOGPlw",
+      "iconName": "Hospital Quiet 1",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "quiet",
+      "updatedAt": "2026-07-27T06:09:52.458Z"
+    },
+    "able": {
+      "hash": "ico_vlIXmlgioIlP56U5",
+      "iconName": "Table Favorite Cell Star",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "able",
+      "updatedAt": "2026-07-27T06:10:03.288Z"
     }
   }
 }
