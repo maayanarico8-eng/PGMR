@@ -4917,6 +4917,10 @@ function isMemoryInProgress(){
 function discardCurrentMemory(){
   exitEditMemory();
   clearProcessError();
+  if(resetParamsAnim){
+    cancelAnimationFrame(resetParamsAnim);
+    resetParamsAnim=null;
+  }
   const results=document.getElementById('results');
   if(results)results.innerHTML='';
   const visual=document.getElementById('visual-output');
@@ -4928,10 +4932,27 @@ function discardCurrentMemory(){
   designRepresentativeWords=[];clearHeadingPreviewCache();
   currentCatalogPromise=Promise.resolve();
   postcardPrintPending=false;postcardSerialAdvancedForCurrent=false;
+  canvasPostcardSerial=null;canvasPostcardSerialPromise=null;
   processedInputSnapshot=null;
   cachedBaseSequenceSvg='';cachedSequenceBuild=null;lastExpressiveState=null;
   resetExpressiveParams();
   clearRangeTouched();
+  // Default narrator gender (HTML initial: female checked).
+  const femaleGender=document.querySelector('input[name="narrator-gender"][value="female"]');
+  if(femaleGender)femaleGender.checked=true;
+  // Close add-word editing and clear any leftover typed word.
+  const addRow=document.getElementById('add-word-row');
+  addRow?.classList.remove('is-editing');
+  const addInput=document.getElementById('add-word-input');
+  if(addInput)addInput.value='';
+  const addConfirm=document.getElementById('add-word-confirm');
+  if(addConfirm){
+    addConfirm.disabled=true;
+    const icon=addConfirm.querySelector('img');
+    if(icon)icon.src=icon.dataset.iconDisabled||'/memory-processor/assets/icons/add-word-confirm-default-figma.svg';
+  }
+  const sidebar=document.querySelector('.sidebar-content');
+  if(sidebar)sidebar.scrollTop=0;
   const input=document.getElementById('memory-input');
   if(input){
     input.value='';
@@ -4946,6 +4967,10 @@ function discardCurrentMemory(){
   }
   updateWordCount();
   syncDesignUI();
+  // Next visitor can type immediately — no click needed to focus the box.
+  if(input&&!input.readOnly){
+    try{input.focus({preventScroll:true});}catch(_){try{input.focus();}catch(__){}}
+  }
 }
 
 function closeConfirmDialog(){
@@ -5464,7 +5489,10 @@ function bindDesignedInterface(){
   });
   window.addEventListener('afterprint',()=>{
     // Serial + archive commit happen on הדפסת זיכרון click (not here).
+    // After print (or cancel), return to a clean starting screen for the next visitor.
+    const shouldReturnToStart=postcardPrintPending;
     postcardPrintPending=false;
+    if(shouldReturnToStart)fadeGeneratorToFreshWriting();
   });
   window.addEventListener('hashchange',()=>{runArchiveExportFromHash();});
   runArchiveExportFromHash();
