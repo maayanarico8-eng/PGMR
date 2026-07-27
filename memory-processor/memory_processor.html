@@ -431,8 +431,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .app:not(.has-results) .memory-main{
   align-items:center;justify-content:center
 }
-.app:not(.has-results) .memory-stage,
-.app:not(.has-results) .error-card{display:none}
+.app:not(.has-results) .memory-stage{display:none}
+/* Process failures: console only — no unauthorized visitor error UI. */
 .app:not(.has-results) .memory-entry{
   width:calc(926 * var(--figma-unit));min-height:0;margin:0;
   align-items:center;gap:calc(24 * var(--figma-unit))
@@ -523,16 +523,18 @@ textarea#memory-input[aria-invalid="true"]:hover{
   /* Cover below the 119px header — top bar always stays; page is fully concealed */
   display:none;position:fixed;z-index:40;
   top:calc(119 * var(--figma-unit));left:0;right:0;bottom:0;
-  align-items:center;justify-content:center;
   background:#fcfcfc;opacity:0;pointer-events:none;
   transition:opacity 350ms ease
 }
-.memory-loader:not([hidden]){display:flex}
-.app.is-memory-loading .memory-loader{display:flex;pointer-events:auto}
+.memory-loader:not([hidden]){display:block}
+.app.is-memory-loading .memory-loader{display:block;pointer-events:auto}
 .memory-loader.is-visible{opacity:1}
 .memory-loader-inner{
-  /* Figma 1192:53717 / 1192:53716 — centered 183px group, 40 gap */
-  box-sizing:border-box;width:calc(183 * var(--figma-unit));
+  /* Figma 1192:53717 — anim + status; group centered on the full viewport */
+  position:absolute;left:50%;
+  top:calc(50vh - 119 * var(--figma-unit));
+  transform:translate(-50%,-50%);
+  box-sizing:border-box;width:max(192px,calc(183 * var(--figma-unit)));
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:calc(40 * var(--figma-unit))
 }
@@ -665,15 +667,17 @@ textarea#memory-input[aria-invalid="true"]:hover{
   padding-left:calc(24 * var(--figma-unit));padding-right:calc(24 * var(--figma-unit))
 }
 .app.has-results textarea#memory-input{height:100%;resize:none;color:#000}
-/* Always reserve the action-row height so entering edit doesn’t shift the centered frame */
+/* Figma 1184:50998 — 39px action row under the box; edit pinned left (x=0) */
 .app.has-results .input-footer-wrap{
   display:block;width:100%;min-height:calc(39 * var(--figma-unit));position:relative
 }
 .app.has-results:not(.is-editing-memory) .input-footer{
   visibility:hidden;pointer-events:none
 }
+/* Error slot is for writing/edit only — keep it out of the results action row */
+.app.has-results:not(.is-editing-memory) .memory-error-msg{display:none}
 .app.has-results .edit-memory-btn{
-  display:flex;position:absolute;left:0;bottom:0;
+  display:flex;position:absolute;left:0;top:0;
   height:calc(39 * var(--figma-unit));box-sizing:border-box
 }
 .app.has-results .memory-stage{display:none}
@@ -708,11 +712,12 @@ textarea#memory-input[aria-invalid="true"]:hover{
   line-height:calc(28 * var(--figma-unit));color:#000;text-align:right;direction:rtl
 }
 .postcard-intro-copy{
+  /* Figma 1227:55925 — Narkiss Block Mono 15 / 26 */
   width:100%;margin:0;
-  font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));font-weight:400;
-  line-height:calc(24 * var(--figma-unit));color:#000;text-align:right;direction:rtl
+  font-family:var(--font-mono);font-size:15px;font-weight:400;
+  line-height:26px;color:#000;text-align:right;direction:rtl
 }
-.postcard-intro-copy p{margin:0;line-height:calc(24 * var(--figma-unit))}
+.postcard-intro-copy p{margin:0;line-height:26px}
 .app.has-results:not(.is-editing-memory) textarea#memory-input{
   cursor:default;border-color:#d9d9d9
 }
@@ -836,35 +841,39 @@ textarea#memory-input[aria-invalid="true"]:hover{
   min-height:0;max-height:none;overflow:hidden;position:relative
 }
 .app.has-results .design-sidebar{display:flex;flex-direction:column}
-/* Equal 24px L/R padding always. Scrollbar overlays the right pad — never reserves gutter or shrinks padding. */
+/* Equal 24px L/R/T padding. Bottom pad = footer height so the scrollport ends at the
+   footer top (Figma 1420:47245). Extra end inset lives on .sidebar-content so the last
+   card can scroll fully clear of the footer — same ~24px gap as Figma 1420:47182. */
 .sidebar-body{
   flex:1;min-height:0;box-sizing:border-box;overflow:hidden;position:relative;
   padding:calc(24 * var(--figma-unit));
-  padding-bottom:calc(166 * var(--figma-unit))
+  padding-bottom:calc(142 * var(--figma-unit))
 }
 .sidebar-content{
   width:100%;max-width:none;min-width:0;height:100%;
   overflow-x:hidden;overflow-y:auto;scrollbar-width:none;box-sizing:border-box;
-  padding:0;direction:ltr
+  /* Same as body padding-top (24) — equal air above title / below last card */
+  padding:0;padding-bottom:calc(24 * var(--figma-unit));direction:ltr
 }
 .sidebar-content::-webkit-scrollbar{width:0;height:0}
 /* 7px track centered in the constant 24px right padding: inset (24-7)/2 = 8.5.
-   top/bottom match .sidebar-body padding so the track ends at the content edge —
-   above the footer divider, never into .sidebar-action. z-index below the footer. */
+   top/height are set in JS — track spans מילים מייצגות → last param card. */
 .sidebar-scroll-indicator{
   position:absolute;z-index:1;
   top:calc(24 * var(--figma-unit));
-  bottom:calc(166 * var(--figma-unit));
+  bottom:auto;height:auto;
   right:calc(8.5 * var(--figma-unit));
   width:calc(7 * var(--figma-unit));
-  display:block;pointer-events:none
+  display:block;pointer-events:auto;touch-action:none;cursor:default
 }
 .sidebar-scroll-indicator[hidden]{display:none!important}
 .sidebar-scroll-indicator span{
   position:absolute;top:0;left:50%;width:100%;height:40%;
   border-radius:calc(5 * var(--figma-unit));background:#eee;
-  transform:translateX(-50%);will-change:transform
+  transform:translateX(-50%);will-change:transform;
+  pointer-events:auto;cursor:grab;touch-action:none
 }
+.sidebar-scroll-indicator span.is-dragging{cursor:grabbing}
 .side-section{
   padding:0 0 calc(32 * var(--figma-unit));margin-bottom:calc(32 * var(--figma-unit));
   border-bottom:1px solid var(--design-line);direction:rtl
@@ -874,7 +883,12 @@ textarea#memory-input[aria-invalid="true"]:hover{
   padding-bottom:calc(24 * var(--figma-unit));margin-bottom:calc(24 * var(--figma-unit))
 }
 .narrator-section{
+  /* Figma 1244:56997 — 16px heading → body group */
   display:flex;flex-direction:column;align-items:stretch;gap:calc(16 * var(--figma-unit))
+}
+.narrator-body{
+  /* Figma 1404:45175 — 18px copy → gender */
+  width:100%;display:flex;flex-direction:column;align-items:stretch;gap:calc(18 * var(--figma-unit))
 }
 .app.has-results:not(.has-visual-result) .narrator-section{
   padding-bottom:0;margin-bottom:0;border-bottom:0
@@ -886,10 +900,14 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .app.has-visual-result .pictogram-section .side-heading-row{overflow:visible}
 .app.has-visual-result .rep-count,
 .app.has-visual-result .add-word-row,
+.app.has-visual-result .narrator-body,
 .app.has-visual-result .side-copy,
 .app.has-visual-result .narrator-gender-picker,
 .app.has-visual-result .pictogram-strip{display:none!important}
-/* Bracketed words reuse the same .rep-chips 320px wrap column — only the chip chrome changes. */
+/* Bracketed words — Figma 1244:57347 / 1244:57351: gap 12px V / 12px H */
+.app.has-visual-result .rep-chips{
+  gap:calc(12 * var(--figma-unit)) calc(12 * var(--figma-unit))
+}
 .app.has-visual-result .rep-chip{
   border:0;background:transparent;padding:0;border-radius:0;cursor:grab;gap:0;
   font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit))
@@ -913,9 +931,10 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .app.has-visual-result .pictogram-section .side-heading-row{margin-bottom:calc(16 * var(--figma-unit))}
 .app.has-visual-result .pictogram-section .side-heading{margin-bottom:0}
 .app.has-visual-result .visual-params-copy{
+  /* Figma 1244:57372 — Narkiss Block Mono 13 / 21 */
   display:block;width:100%;margin:0 0 calc(16 * var(--figma-unit));
-  font-family:var(--font-mono);font-size:calc(13 * var(--figma-unit));font-weight:400;
-  line-height:calc(21 * var(--figma-unit));color:#000;text-align:right
+  font-family:var(--font-mono);font-size:13px;font-weight:400;
+  line-height:21px;color:#000;text-align:right
 }
 .app.has-visual-result .visual-settings:not(.pictogram-section){
   box-sizing:border-box;width:100%;max-width:100%;height:calc(138 * var(--figma-unit));
@@ -964,23 +983,30 @@ textarea#memory-input[aria-invalid="true"]:hover{
   line-height:calc(28 * var(--figma-unit));color:#000;text-align:right
 }
 /* Figma 1244:57802 / 1244:57369 — reset next to ייצוג חזותי (left edge) */
+/* Hit target is the button box; children never capture pointer (shared icon-action pattern). */
 .reset-params-btn{
   position:relative;display:none;flex:0 0 auto;align-items:center;justify-content:center;
   width:calc(18 * var(--figma-unit));height:calc(18 * var(--figma-unit));margin:0;padding:0;
-  border:0;border-radius:0;background:transparent;cursor:pointer;color:#A87E5D
+  border:0;border-radius:0;background:transparent;cursor:pointer;color:#A87E5D;
+  -webkit-tap-highlight-color:transparent
+}
+.reset-params-btn::before{
+  /* Full-size hit fill — gaps in stroke/mask artwork are still the button */
+  content:"";position:absolute;inset:0;z-index:0
 }
 .app.has-visual-result .reset-params-btn{display:inline-flex}
 .reset-params-icon{
-  display:block;width:100%;height:100%;pointer-events:none;background:currentColor;
+  position:relative;z-index:1;display:block;width:100%;height:100%;pointer-events:none;background:currentColor;
   -webkit-mask:url('/memory-processor/assets/icons/reset-params-default-figma.svg') center/contain no-repeat;
   mask:url('/memory-processor/assets/icons/reset-params-default-figma.svg') center/contain no-repeat;
   -webkit-mask-source-type:alpha;mask-mode:alpha
 }
-.reset-params-btn:hover:not(:disabled),
-.reset-params-btn:focus-visible:not(:disabled){color:#462203}
-.reset-params-btn:disabled{cursor:default;color:#BBBBBB}
+.reset-params-btn:hover:not([aria-disabled="true"]),
+.reset-params-btn:focus-visible:not([aria-disabled="true"]),
+.reset-params-btn.is-icon-tooltip-open:not([aria-disabled="true"]){color:#462203}
+.reset-params-btn[aria-disabled="true"]{cursor:default;color:#BBBBBB}
 .reset-params-tooltip{
-  /* Centered above icon, 8px gap. Ancestors lift overflow while shown (see :has below). */
+  /* Centered above icon, 8px gap. Never steals hover from the button. */
   position:absolute;z-index:5;left:50%;right:auto;bottom:calc(100% + 8 * var(--figma-unit));
   transform:translateX(-50%);box-sizing:border-box;
   display:flex;align-items:center;justify-content:center;
@@ -992,12 +1018,12 @@ textarea#memory-input[aria-invalid="true"]:hover{
   line-height:calc(20 * var(--figma-unit));color:#000;text-align:center;white-space:nowrap;direction:rtl;
   opacity:0;visibility:hidden;pointer-events:none
 }
-.reset-params-btn:hover:not(:disabled) .reset-params-tooltip,
-.reset-params-btn:focus-visible:not(:disabled) .reset-params-tooltip{opacity:1;visibility:visible}
-/* Let the centered tip spill into the workspace gap without clipping. */
-.app.has-visual-result .design-sidebar:has(.reset-params-btn:is(:hover,:focus-visible):not(:disabled)),
-.app.has-visual-result .sidebar-body:has(.reset-params-btn:is(:hover,:focus-visible):not(:disabled)),
-.app.has-visual-result .sidebar-content:has(.reset-params-btn:is(:hover,:focus-visible):not(:disabled)){
+.reset-params-btn.is-icon-tooltip-open:not([aria-disabled="true"]) .reset-params-tooltip,
+.reset-params-btn:focus-visible:not([aria-disabled="true"]) .reset-params-tooltip{opacity:1;visibility:visible}
+/* Lift overflow while tooltip is open — class-driven (not :has/:hover) to avoid flicker. */
+.app.has-visual-result.is-icon-tooltip-open .design-sidebar,
+.app.has-visual-result.is-icon-tooltip-open .sidebar-body,
+.app.has-visual-result.is-icon-tooltip-open .sidebar-content{
   overflow:visible
 }
 .rep-count{
@@ -1005,8 +1031,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   line-height:calc(18 * var(--figma-unit));color:var(--design-muted);direction:ltr;white-space:nowrap;text-align:left
 }
 /* Shared wrap column for editable chips AND post-extraction bracketed words.
-   Width = full area between the constant 24px side paddings (not a nested 320 that
-   fights the heading row and causes early wraps). Gap: 10px H / 12px V. */
+   Figma 1244:56979 / 1244:56983 — gap 14px V / 12px H between chips. */
 .rep-chips{
   box-sizing:border-box;
   width:100%;
@@ -1014,7 +1039,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   display:flex;flex-wrap:wrap;
   justify-content:flex-start;align-content:flex-start;align-items:flex-start;
   direction:rtl;
-  gap:calc(12 * var(--figma-unit)) calc(10 * var(--figma-unit))
+  gap:calc(14 * var(--figma-unit)) calc(12 * var(--figma-unit))
 }
 .rep-chip{
   /* Figma 1236:56553 — Default #d9d9d9 / Hover #bbb / Drag+Delete text #bbb */
@@ -1055,7 +1080,8 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .rep-chip.is-flip-animating{z-index:1;pointer-events:none}
 .rep-chip.is-drop-settling{transition:transform 180ms ease-out;z-index:2}
 .rep-chip button{
-  width:calc(9.75 * var(--figma-unit));height:calc(9.75 * var(--figma-unit));
+  /* Figma close_small 11.018 */
+  width:calc(11.018 * var(--figma-unit));height:calc(11.018 * var(--figma-unit));
   border:0;background:currentColor;cursor:pointer;padding:0;color:#000;
   -webkit-mask:url("/memory-processor/assets/icons/remove-word-figma.svg") center/contain no-repeat;
   mask:url("/memory-processor/assets/icons/remove-word-figma.svg") center/contain no-repeat
@@ -1067,14 +1093,16 @@ textarea#memory-input[aria-invalid="true"]:hover{
   gap:calc(12 * var(--figma-unit));margin-top:0;direction:rtl;width:100%
 }
 .side-words-block{
-  width:100%;display:flex;flex-direction:column;align-items:stretch;gap:calc(12 * var(--figma-unit));
+  /* Figma 1244:56983 — 14px between chip rows and הוספת מילה */
+  width:100%;display:flex;flex-direction:column;align-items:stretch;gap:calc(14 * var(--figma-unit));
   direction:rtl
 }
 .add-word-btn{
-  /* Figma 1236:56501 — Default / Hover / Disabled */
+  /* Figma 1244:56995 — 146×30, padding 5×10, gap 8 */
+  box-sizing:border-box;height:calc(30 * var(--figma-unit));
   display:flex;align-items:center;gap:calc(8 * var(--figma-unit));direction:ltr;
   border:1px solid #b09988;background:#f6eee7;color:#a87e5d;
-  border-radius:calc(8 * var(--figma-unit));padding:calc(8 * var(--figma-unit)) calc(16 * var(--figma-unit));
+  border-radius:calc(8 * var(--figma-unit));padding:calc(5 * var(--figma-unit)) calc(10 * var(--figma-unit));
   font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit));cursor:pointer
 }
 .add-word-btn:hover:not(:disabled){background:#ede1d9;border-color:#b09988;color:#a87e5d}
@@ -1128,8 +1156,8 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .add-word-limit-hint[hidden]{display:none!important}
 .side-copy{
-  width:100%;font-family:var(--font-mono);font-size:calc(13 * var(--figma-unit));font-weight:400;
-  line-height:calc(17 * var(--figma-unit));color:#000;margin:0;text-align:right
+  width:100%;font-family:var(--font-mono);font-size:13px;font-weight:400;
+  line-height:21px;color:#000;margin:0;text-align:right
 }
 .narrator-section > .side-heading{
   flex:none;width:100%;line-height:calc(21 * var(--figma-unit))
@@ -1320,6 +1348,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .app{padding:0 16px 20px}
   .site-header{height:72px;padding-top:26px;gap:16px}
   .memory-loader{top:72px}
+  .memory-loader-inner{top:calc(50vh - 72px)}
   .site-tagline{font-size:14px;line-height:16px;white-space:normal}
   .site-nav{gap:20px}
   .site-nav-link{font-size:16px;line-height:18px}
@@ -1351,8 +1380,8 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .app.has-results.has-visual-result .postcard-block{gap:27px;justify-content:flex-start}
   .postcard-intro{width:100%;height:auto;gap:20px;justify-content:flex-start}
   .postcard-heading{font-size:24px;line-height:28px}
-  .postcard-intro-copy{font-size:14px;line-height:22px}
-  .postcard-intro-copy p{line-height:22px}
+  .postcard-intro-copy{font-size:15px;line-height:26px}
+  .postcard-intro-copy p{line-height:26px}
   .app.has-visual-result .visual-output>svg{left:auto;right:4%;top:42%;width:58%;height:auto;max-height:120px;max-width:none}
   .canvas-meta{top:24px;left:16px;right:16px;width:auto;gap:8px;flex-wrap:wrap}
   .canvas-meta-main{width:100%;max-width:100%;flex:1 1 auto;gap:8px}
@@ -1360,16 +1389,16 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .visual-memory-text,.canvas-keywords{width:auto;max-width:100%;flex:1 1 auto}
   .design-sidebar,.app.has-results .design-sidebar{width:100%;height:auto;min-height:620px;max-height:none;border-radius:8px}
   .app.has-results .design-sidebar{display:flex}
-  .app.has-results .edit-memory-btn{position:absolute;left:0;bottom:0;height:39px;margin-top:0;font-size:18px;line-height:20px;padding:6px 8px;gap:6px}
+  .app.has-results .edit-memory-btn{position:absolute;left:0;top:0;height:39px;margin-top:0;font-size:18px;line-height:20px;padding:6px 8px;gap:6px}
   .app.has-results .edit-memory-btn svg{width:18px;height:18px}
   .app.has-results .input-footer-wrap{min-height:39px}
-  .sidebar-body{padding:24px;padding-bottom:166px;position:relative}
-  .sidebar-content{width:100%;max-width:none;padding:0}
+  .sidebar-body{padding:24px;padding-bottom:142px;position:relative}
+  .sidebar-content{width:100%;max-width:none;padding:0;padding-bottom:24px}
   .sidebar-scroll-indicator{
-    position:absolute;top:24px;bottom:166px;right:8.5px;width:7px;display:block
+    position:absolute;top:24px;bottom:auto;height:auto;right:8.5px;width:7px;display:block
   }
   .sidebar-scroll-indicator span{height:40%;border-radius:5px;left:50%;transform:translateX(-50%)}
-  .rep-chips{width:100%;max-width:100%;gap:12px 10px}
+  .rep-chips{width:100%;max-width:100%;gap:14px 12px}
   .rep-chip{flex:0 0 auto;white-space:nowrap}
   .app.has-visual-result .visual-settings:not(.pictogram-section){width:100%;max-width:100%}
   .side-section{padding-bottom:32px;margin-bottom:32px}
@@ -1379,16 +1408,18 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .reset-params-btn{width:18px;height:18px}
   .reset-params-tooltip{min-width:124px;width:max-content;height:28px;padding:4px 16px;border-radius:4px;font-size:15px;line-height:20px;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%)}
   .rep-count{font-size:13px;line-height:18px}
-  .rep-chips{gap:12px 10px}
+  .rep-chips{gap:14px 12px}
   .rep-chip,.add-word-btn{padding:4px 8px;gap:6px;border-radius:8px;font-size:15px;line-height:20px}
-  .add-word-btn{padding:8px 16px;gap:8px}
-  .rep-chip button{width:9.75px;height:9.75px}
+  .add-word-btn{box-sizing:border-box;height:30px;padding:5px 10px;gap:8px}
+  .rep-chip button{width:11.018px;height:11.018px}
   .add-word-btn img,.add-word-confirm img{width:13px;height:13px}
   .add-word-row{gap:12px;margin-top:0}
+  .side-words-block{gap:14px}
   .side-words-block{gap:12px}
   .add-word-input{width:170px;padding:8px 16px;border-radius:8px;font-size:15px;line-height:20px}
-  .side-copy{font-size:13px;line-height:17px;margin:0}
+  .side-copy{font-size:13px;line-height:21px;margin:0}
   .narrator-section{gap:16px}
+  .narrator-body{gap:18px}
   .narrator-gender-picker{gap:16px;padding:0;border:0;align-self:flex-start}
   .narrator-gender-picker label{min-width:74px;height:36px;padding:8px 16px;border-radius:8px;font-size:15px;line-height:20px}
   .pictogram-strip{gap:0.875px}
@@ -1581,24 +1612,25 @@ textarea#memory-input[aria-invalid="true"]:hover{
             <span class="word-count" id="word-count"></span>
             <button class="analyze-btn" id="analyze-btn" disabled>עיבוד זיכרון</button>
           </div>
+          <button type="button" class="edit-memory-btn" id="edit-memory-btn">
+            <span>עריכת הזיכרון</span>
+            <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true" focusable="false">
+              <path d="M2.24068 15.6467H3.60886L12.9941 6.26145L11.6259 4.89327L2.24068 14.2785V15.6467ZM0.320435 17.5669V13.4864L12.9941 0.83674C13.1861 0.660717 13.3981 0.524699 13.6302 0.428687C13.8622 0.332674 14.1062 0.284668 14.3623 0.284668C14.6183 0.284668 14.8663 0.332674 15.1064 0.428687C15.3464 0.524699 15.5544 0.668718 15.7304 0.860743L17.0506 2.20492C17.2426 2.38094 17.3827 2.58897 17.4707 2.829C17.5587 3.06903 17.6027 3.30906 17.6027 3.54909C17.6027 3.80513 17.5587 4.04916 17.4707 4.28119C17.3827 4.51322 17.2426 4.72525 17.0506 4.91727L4.40097 17.5669H0.320435ZM12.298 5.58936L11.6259 4.89327L12.9941 6.26145L12.298 5.58936Z"/>
+            </svg>
+          </button>
           <p class="memory-error-msg" id="memory-error-msg" aria-live="polite" aria-hidden="true">
             <span class="memory-error-slot" data-for="word-limit">כדי להעביר את הזיכרון לרשם הזיכרונות, יש לוודא כי אורכו אינו עולה על 20 מילים.</span>
             <span class="memory-error-slot" data-for="hebrew-only">רשם הזיכרונות קורא עברית.</span>
+            <!-- ORIGIN UNCLEAR — not one of the two authored visitor states; kept in DOM unused until you decide. Was shown on process failure. -->
+            <span class="memory-error-slot" data-for="process-failed" hidden>לא הצלחנו לעבד את הזיכרון. אפשר לנסות שוב.</span>
           </p>
         </div>
-        <button type="button" class="edit-memory-btn" id="edit-memory-btn">
-          <span>עריכת הזיכרון</span>
-          <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true" focusable="false">
-            <path d="M2.24068 15.6467H3.60886L12.9941 6.26145L11.6259 4.89327L2.24068 14.2785V15.6467ZM0.320435 17.5669V13.4864L12.9941 0.83674C13.1861 0.660717 13.3981 0.524699 13.6302 0.428687C13.8622 0.332674 14.1062 0.284668 14.3623 0.284668C14.6183 0.284668 14.8663 0.332674 15.1064 0.428687C15.3464 0.524699 15.5544 0.668718 15.7304 0.860743L17.0506 2.20492C17.2426 2.38094 17.3827 2.58897 17.4707 2.829C17.5587 3.06903 17.6027 3.30906 17.6027 3.54909C17.6027 3.80513 17.5587 4.04916 17.4707 4.28119C17.3827 4.51322 17.2426 4.72525 17.0506 4.91727L4.40097 17.5669H0.320435ZM12.298 5.58936L11.6259 4.89327L12.9941 6.26145L12.298 5.58936Z"/>
-          </svg>
-        </button>
       </div>
-      <div class="error-card" id="error-card" hidden></div>
       <div class="postcard-block">
         <div class="postcard-intro">
           <h2 class="postcard-heading" id="postcard-heading">לכל זיכרון יש ייצוג חזותי</h2>
           <div class="postcard-intro-copy">
-            <p>זיכרון אינו נשמר בדיוק כפי שהיה - בכל פעם שחוזרים אליו, הוא מקבל צורה מעט אחרת.</p>
+            <p>זיכרון אינו נשמר בדיוק כפי שהיה - בכל מפגש איתו הוא קורה מחדש.</p>
             <p>הרישום שלפניך הוא נקודת ההתחלה, אני מזמינה אותך להשתמש בפרמטרים עד שייצוג הזיכרון ירגיש מדויק עבורך.</p>
           </div>
         </div>
@@ -1630,17 +1662,19 @@ textarea#memory-input[aria-invalid="true"]:hover{
         <section class="side-section narrator-section">
           <h2 class="side-heading">ייצוג המספר.ת</h2>
           <p class="narrator-gender-value" id="narrator-gender-value">נקבה</p>
-          <p class="side-copy">כדי שהמערכת תוכל לייצג את המספר.ת בצורה נאמנה בעזרת פיקטוגרמות, יש לבחור את אופן הייצוג.</p>
-          <div class="narrator-gender-picker" dir="rtl" id="narrator-gender-picker">
-            <label><input type="radio" name="narrator-gender" value="female" checked> נקבה</label>
-            <label><input type="radio" name="narrator-gender" value="male"> זכר</label>
+          <div class="narrator-body">
+            <p class="side-copy">כדי שהמערכת תוכל לייצג את המספר.ת בצורה נאמנה בעזרת פיקטוגרמות, יש לבחור את אופן הייצוג.</p>
+            <div class="narrator-gender-picker" dir="rtl" id="narrator-gender-picker">
+              <label><input type="radio" name="narrator-gender" value="female" checked> נקבה</label>
+              <label><input type="radio" name="narrator-gender" value="male"> זכר</label>
+            </div>
           </div>
         </section>
 
         <section class="side-section visual-settings pictogram-section">
           <div class="side-heading-row">
             <h2 class="side-heading" id="visual-settings-heading">פיקטוגרמות</h2>
-            <button type="button" class="reset-params-btn" id="reset-params-btn" disabled aria-label="איפוס פרמטרים">
+            <button type="button" class="reset-params-btn" id="reset-params-btn" aria-disabled="true" aria-label="איפוס פרמטרים">
               <span class="reset-params-tooltip" aria-hidden="true">איפוס פרמטרים</span>
               <span class="reset-params-icon" aria-hidden="true"></span>
             </button>
@@ -1720,6 +1754,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   </div>
 </div>
 <script src="/memory-processor/archive/memories.js"></script>
+<script src="/memory-processor/archive/archive-store.js"></script>
 <script src="/memory-processor/archive/archive-list-row.js"></script>
 <script src="/memory-processor/archive/archive-card.js"></script>
 <script src="/memory-processor/engine/logger.js"></script>
@@ -2152,15 +2187,28 @@ function extractJSON(raw){
   return JSON.parse(s.slice(first,last+1));
 }
 
-/* ─── Global error display ─── */
+/* ─── Process errors (console only — no unauthorized visitor states) ─── */
+/** True while עיבוד זיכרון is in flight — blocks overlapping runs. */
+let analyzeInFlight=false;
+
+function clearProcessError(){
+  // Reserved for future authored failure UX; currently a no-op (errors are console-only).
+}
+
+/** Log a process failure. Never write internal/diagnostic text into the visitor UI. */
+function reportProcessError(err,context='analyze'){
+  const detail=err&&typeof err==='object'
+    ?(err.message||String(err))
+    :String(err||'Unknown error');
+  console.error(`[${context}]`,err||detail);
+}
+
 window.onerror=function(msg,src,line,col,err){
-  const el=document.getElementById('error-card');
-  if(el){el.textContent=`JS Error: ${msg} (line ${line})`;el.hidden=false;}
+  reportProcessError(err||new Error(`${msg} (line ${line})`),'window.onerror');
   return false;
 };
 window.onunhandledrejection=function(e){
-  const el=document.getElementById('error-card');
-  if(el){el.textContent=`Async error: ${e.reason?.message||e.reason||e}`;el.hidden=false;}
+  reportProcessError(e.reason||e,'unhandledrejection');
 };
 
 function usesApiMode(){return processorMode==='ai-words'||processorMode==='hybrid'||processorMode==='anthropic';}
@@ -3322,7 +3370,20 @@ function cancelEditMemory(){
 }
 
 /* ─── Analyze ─── */
+function assertRepresentativeWords(result,source='pipeline'){
+  const words=(result?.representativeWords||[]).map(rw=>rw?.word).filter(Boolean);
+  if(!words.length){
+    throw new Error(`Empty representative words from ${source}`);
+  }
+  return words;
+}
+
 async function analyze(){
+  // Hard re-entrancy guard — button disabled alone is not enough (Enter + click race).
+  if(analyzeInFlight){
+    console.warn('[analyze] ignored overlapping run');
+    return;
+  }
   const inputEl=document.getElementById('memory-input');
   const raw=inputEl?.value??'';
   if(isMemoryLimitErrorActive(raw)||hasEnglishLetters(raw)){
@@ -3339,10 +3400,11 @@ async function analyze(){
     return;
   }
 
+  analyzeInFlight=true;
+  clearProcessError();
   const btn=document.getElementById('analyze-btn');
   btn.disabled=true;btn.textContent=analyzeBtnLabel();
   showMemoryLoader('words');
-  document.getElementById('error-card').hidden=true;
   document.getElementById('results').innerHTML='';
   document.getElementById('visual-output').innerHTML='';
   document.getElementById('app')?.classList.remove('has-results','has-visual-result');
@@ -3358,13 +3420,16 @@ async function analyze(){
       if(!sentence)throw new Error('Pick one of the sample sentences above (Bank test mode).');
       lastEngineSource='bank-test';
       await renderBankTest(sentence);
+      assertRepresentativeWords({representativeWords:designRepresentativeWords.map(w=>({word:w}))},'bank-test');
     }else if(useMockData){
       await new Promise(r=>setTimeout(r,700));
       lastEngineSource='mock';
       renderResults(MOCK_R1);
+      assertRepresentativeWords(MOCK_R1,'mock');
     }else if(processorMode==='local'){
       const pipeline=runLocalPipeline(text);
       const violations=validateR1Output(pipeline.rule1);
+      assertRepresentativeWords(pipeline.rule1,'local');
       renderResults(pipeline.rule1);
       renderEngineBadge(lastEngineSource,lastEngineExtractor);
       if(violations.length){
@@ -3378,6 +3443,7 @@ async function analyze(){
       renderEngineTrace(currentPipelineTrace);
     }else if(processorMode==='ai-words'){
       const pipeline=await runAiWordsPipeline(text);
+      assertRepresentativeWords(pipeline.rule1,'ai-words');
       renderResults(pipeline.rule1);
       renderEngineBadge(lastEngineSource,lastEngineExtractor);
       renderVrp(pipeline.rule2);
@@ -3390,6 +3456,7 @@ async function analyze(){
       if(local.supported&&local.confidence!=='low'){
         const pipeline=runLocalPipeline(text);
         const violations=validateR1Output(pipeline.rule1);
+        assertRepresentativeWords(pipeline.rule1,'hybrid-local');
         renderResults(pipeline.rule1);
         renderEngineBadge(lastEngineSource,lastEngineExtractor);
         if(violations.length){
@@ -3403,6 +3470,7 @@ async function analyze(){
         renderEngineTrace(currentPipelineTrace);
       }else{
         const pipeline=await runAiWordsPipeline(text);
+        assertRepresentativeWords(pipeline.rule1,'hybrid-ai-words');
         renderResults(pipeline.rule1);
         renderEngineBadge(lastEngineSource,lastEngineExtractor);
         renderVrp(pipeline.rule2);
@@ -3416,6 +3484,7 @@ async function analyze(){
       if(processorMode==='anthropic'){
         await attachTranslationsToRule1(parsed);
       }
+      assertRepresentativeWords(parsed,processorMode||'anthropic');
       const violations=validateR1Output(parsed);
       renderResults(parsed);
       renderEngineBadge(lastEngineSource,lastEngineExtractor);
@@ -3426,16 +3495,23 @@ async function analyze(){
     }
     captureProcessedInputSnapshot(typedText);
   }catch(e){
-    const el=document.getElementById('error-card');
-    el.textContent=e.message||String(e);
-    el.hidden=false;
+    // Wipe any partial success so we never leave an empty "has-results" shell.
+    currentResult=null;
+    designRepresentativeWords=[];
+    document.getElementById('results').innerHTML='';
+    document.getElementById('app')?.classList.remove('has-results','has-visual-result');
+    reportProcessError(e,'analyze');
   }finally{
     try{
       await hideMemoryLoader();
-    }catch(_){
+    }catch(loaderErr){
+      console.warn('[analyze] loader exit failed',loaderErr);
       forceClearMemoryLoader();
     }
-    btn.disabled=false;btn.innerHTML=analyzeBtnLabel();updateWordCount();syncDesignUI();
+    analyzeInFlight=false;
+    btn.disabled=false;btn.innerHTML=analyzeBtnLabel();
+    updateWordCount();
+    syncDesignUI();
   }
 }
 
@@ -3880,14 +3956,16 @@ async function fetchPostcardSerial({force=false}={}){
   if(!force&&canvasPostcardSerialPromise)return canvasPostcardSerialPromise;
   canvasPostcardSerialPromise=(async()=>{
     try{
-      const res=await fetch('/api/postcard-serial');
-      const data=await res.json().catch(()=>({}));
-      if(!res.ok)throw new Error(data?.error?.message||'Failed to load postcard serial');
-      const serial=Number(data.serial);
-      canvasPostcardSerial=Number.isFinite(serial)&&serial>0?Math.floor(serial):128;
+      const store=globalThis.ArchiveStore;
+      if(!store?.getNextSerial)throw new Error('ArchiveStore unavailable');
+      const serial=Number(await store.getNextSerial());
+      if(!(Number.isFinite(serial)&&serial>0)){
+        throw new Error('Invalid nextSerial from ArchiveStore');
+      }
+      canvasPostcardSerial=Math.floor(serial);
     }catch(err){
       console.warn('postcard serial fetch failed:',err.message||err);
-      if(canvasPostcardSerial==null)canvasPostcardSerial=128;
+      // Do not invent a fallback serial — leave null so the canvas shows [ — ].
     }finally{
       canvasPostcardSerialPromise=null;
     }
@@ -3899,19 +3977,30 @@ async function fetchPostcardSerial({force=false}={}){
 async function completePostcardSerial(){
   if(postcardSerialAdvancedForCurrent)return null;
   try{
-    const res=await fetch('/api/postcard-serial',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'complete'}),
-    });
-    const data=await res.json().catch(()=>({}));
-    if(!res.ok)throw new Error(data?.error?.message||'Failed to advance postcard serial');
+    const store=globalThis.ArchiveStore;
+    if(!store?.advanceSerial)throw new Error('ArchiveStore unavailable');
+    const data=await store.advanceSerial();
     postcardSerialAdvancedForCurrent=true;
     // Keep the on-canvas number as the printed serial; next design will re-fetch.
     return data;
   }catch(err){
     console.warn('postcard serial advance failed:',err.message||err);
     return null;
+  }
+}
+
+/** Hidden backup: open with #export-archive (or set location.hash) to download the IDB snapshot. */
+async function runArchiveExportFromHash(){
+  if(location.hash!=='#export-archive')return;
+  try{
+    const store=globalThis.ArchiveStore;
+    if(!store?.exportAndDownload)throw new Error('ArchiveStore unavailable');
+    const{filename}=await store.exportAndDownload();
+    console.info('[archive-store] exported',filename);
+  }catch(err){
+    console.error('[archive-store] export failed:',err.message||err);
+  }finally{
+    history.replaceState(null,'',location.pathname+location.search);
   }
 }
 
@@ -4012,7 +4101,8 @@ let resetParamsAnim=null;
 
 /** Defaults: sliders at displayed 100% (design 0) AND memory source = זיכרון אישי. */
 function areDesignParamsAtDefault(){
-  const sourceDefault=(Number(expressiveParams?.memorySource)||0)===0;
+  const params=getExpressiveParams();
+  const sourceDefault=params.memorySource===0;
   const slidersDefault=DESIGN_RANGE_IDS.every(id=>{
     const input=document.getElementById(id);
     return !input||Number(input.value)===0;
@@ -4044,10 +4134,52 @@ function resetMemorySourceToDefault(){
   syncMemorySourceUI();
 }
 
+/**
+ * Shared icon-action chrome: hover/click stay on the button (full hit box).
+ * Children (icon, tooltip) must be pointer-events:none. Uses aria-disabled so the
+ * control always receives pointer events; never leaves a stale disabled attribute.
+ */
+function bindIconActionButton(btn,{isDisabled,onActivate}={}){
+  if(!btn||btn.dataset.iconActionBound==='1')return;
+  btn.dataset.iconActionBound='1';
+  const app=()=>document.getElementById('app');
+  const disabled=()=>(typeof isDisabled==='function'?!!isDisabled():btn.getAttribute('aria-disabled')==='true');
+  const setTooltipOpen=open=>{
+    const show=!!open&&!disabled();
+    btn.classList.toggle('is-icon-tooltip-open',show);
+    app()?.classList.toggle('is-icon-tooltip-open',show);
+  };
+  btn.addEventListener('pointerenter',()=>setTooltipOpen(true));
+  btn.addEventListener('pointerleave',()=>setTooltipOpen(false));
+  btn.addEventListener('focus',()=>setTooltipOpen(true));
+  btn.addEventListener('blur',()=>setTooltipOpen(false));
+  btn.addEventListener('click',event=>{
+    if(disabled()){
+      event.preventDefault();
+      event.stopPropagation();
+      setTooltipOpen(false);
+      return;
+    }
+    onActivate?.(event);
+  });
+}
+
+function setIconActionDisabled(btn,disabled){
+  if(!btn)return;
+  const on=!!disabled;
+  // Prefer aria-disabled so the full hit box still receives hover; strip native disabled.
+  btn.removeAttribute('disabled');
+  btn.setAttribute('aria-disabled',on?'true':'false');
+  if(on){
+    btn.classList.remove('is-icon-tooltip-open');
+    document.getElementById('app')?.classList.remove('is-icon-tooltip-open');
+  }
+}
+
 function syncResetParamsButton(){
   const btn=document.getElementById('reset-params-btn');
   if(!btn)return;
-  btn.disabled=areDesignParamsAtDefault();
+  setIconActionDisabled(btn,areDesignParamsAtDefault());
 }
 
 function applyDesignRangeFrame(valuesById){
@@ -4118,17 +4250,69 @@ function animateResetParams(){
   resetParamsAnim=requestAnimationFrame(step);
 }
 
+function sidebarScrollMetrics(content,indicator){
+  const viewportHeight=content.clientHeight;
+  const totalHeight=content.scrollHeight;
+  const scrollable=Math.max(0,totalHeight-viewportHeight);
+  const trackHeight=indicator?.clientHeight||0;
+  const ratio=totalHeight>0?viewportHeight/totalHeight:1;
+  const thumbHeight=trackHeight>0?Math.max(24,Math.min(trackHeight,Math.round(trackHeight*ratio))):0;
+  const travel=Math.max(0,trackHeight-thumbHeight);
+  return{viewportHeight,totalHeight,scrollable,trackHeight,thumbHeight,travel};
+}
+
+/** Scroll-invariant Y of el's top/bottom inside the scroll content. */
+function sidebarContentOffsetY(el,content){
+  const c=content.getBoundingClientRect();
+  const r=el.getBoundingClientRect();
+  return{
+    top:r.top-c.top+content.scrollTop,
+    bottom:r.bottom-c.top+content.scrollTop
+  };
+}
+
+/**
+ * Track spans content text edges (fixed in the panel):
+ * top  = top of ״מילים מייצגות״ (at scrollTop 0)
+ * bottom = bottom of the impact param card (at max scroll)
+ */
+function layoutSidebarScrollTrack(content,body,indicator){
+  const title=content.querySelector('.side-section:first-child .side-heading');
+  const impact=document.getElementById('design-impact')?.closest('.side-section');
+  const endCard=(impact&&getComputedStyle(impact).display!=='none')
+    ?impact
+    :content.querySelector('.side-section:last-child');
+  if(!title||!endCard){
+    indicator.style.top='';
+    indicator.style.height='';
+    indicator.style.bottom='';
+    return;
+  }
+  const bodyRect=body.getBoundingClientRect();
+  const contentRect=content.getBoundingClientRect();
+  const titleTop=sidebarContentOffsetY(title,content).top;
+  const endBottom=sidebarContentOffsetY(endCard,content).bottom;
+  const maxScroll=Math.max(0,content.scrollHeight-content.clientHeight);
+  // Title top at rest, in sidebar-body coordinates
+  const trackTop=contentRect.top-bodyRect.top+titleTop;
+  // End-card bottom when scrolled fully down, in sidebar-body coordinates
+  const trackBottom=contentRect.top-bodyRect.top+endBottom-maxScroll;
+  const trackHeight=Math.max(0,trackBottom-trackTop);
+  indicator.style.top=`${Math.max(0,trackTop)}px`;
+  indicator.style.height=`${trackHeight}px`;
+  indicator.style.bottom='auto';
+}
+
 function syncSidebarScrollIndicator(){
   const content=document.querySelector('.sidebar-content');
   const body=content?.closest('.sidebar-body');
   const indicator=document.getElementById('sidebar-scroll-indicator');
   const thumb=indicator?.querySelector('span');
-  if(!content||!indicator||!thumb)return;
-  const viewportHeight=content.clientHeight;
-  const totalHeight=content.scrollHeight;
-  const scrollable=Math.max(0,totalHeight-viewportHeight);
+  if(!content||!body||!indicator||!thumb)return;
+  layoutSidebarScrollTrack(content,body,indicator);
+  const{scrollable,trackHeight,thumbHeight,travel}=sidebarScrollMetrics(content,indicator);
   const needsScroll=scrollable>1;
-  body?.classList.toggle('has-scrollbar',needsScroll);
+  body.classList.toggle('has-scrollbar',needsScroll);
   indicator.hidden=!needsScroll;
   indicator.setAttribute('aria-hidden',needsScroll?'false':'true');
   if(!needsScroll){
@@ -4137,13 +4321,10 @@ function syncSidebarScrollIndicator(){
     return;
   }
   const updateThumb=()=>{
-    const trackHeight=indicator.clientHeight;
-    if(trackHeight<=0)return;
-    const ratio=totalHeight>0?viewportHeight/totalHeight:1;
-    const thumbHeight=Math.max(24,Math.min(trackHeight,Math.round(trackHeight*ratio)));
-    thumb.style.height=`${thumbHeight}px`;
-    const travel=Math.max(0,trackHeight-thumbHeight);
-    const top=scrollable?(content.scrollTop/scrollable)*travel:0;
+    if(trackHeight<=0&&indicator.clientHeight<=0)return;
+    const m=sidebarScrollMetrics(content,indicator);
+    thumb.style.height=`${m.thumbHeight}px`;
+    const top=m.scrollable?(content.scrollTop/m.scrollable)*m.travel:0;
     // Keep horizontal centering (translateX(-50%)) while moving vertically.
     thumb.style.transform=`translate(-50%,${top}px)`;
   };
@@ -4151,10 +4332,77 @@ function syncSidebarScrollIndicator(){
   else requestAnimationFrame(updateThumb);
 }
 
+/** Full-panel wheel target + custom scrollbar drag/track jump (native bar is hidden). */
+function bindSidebarPanelScrolling(){
+  const panel=document.getElementById('design-sidebar');
+  const content=document.querySelector('.sidebar-content');
+  const indicator=document.getElementById('sidebar-scroll-indicator');
+  const thumb=indicator?.querySelector('span');
+  if(!panel||!content||panel.dataset.scrollBound==='1')return;
+  panel.dataset.scrollBound='1';
+
+  // Capture phase: wheel anywhere in the right panel scrolls content; nothing inner can swallow it.
+  panel.addEventListener('wheel',event=>{
+    if(event.ctrlKey)return;
+    const{scrollable}=sidebarScrollMetrics(content,indicator);
+    if(scrollable<=1)return;
+    event.preventDefault();
+    content.scrollTop=Math.min(scrollable,Math.max(0,content.scrollTop+event.deltaY));
+  },{capture:true,passive:false});
+
+  if(!indicator||!thumb)return;
+
+  let dragging=false;
+  let dragPointerId=null;
+  let dragStartY=0;
+  let dragStartScroll=0;
+
+  thumb.addEventListener('pointerdown',event=>{
+    if(indicator.hidden)return;
+    event.preventDefault();
+    event.stopPropagation();
+    dragging=true;
+    dragPointerId=event.pointerId;
+    dragStartY=event.clientY;
+    dragStartScroll=content.scrollTop;
+    thumb.classList.add('is-dragging');
+    try{thumb.setPointerCapture(event.pointerId);}catch(_){}
+  });
+
+  thumb.addEventListener('pointermove',event=>{
+    if(!dragging||event.pointerId!==dragPointerId)return;
+    const{scrollable,travel}=sidebarScrollMetrics(content,indicator);
+    if(scrollable<=0||travel<=0)return;
+    const dy=event.clientY-dragStartY;
+    content.scrollTop=Math.min(scrollable,Math.max(0,dragStartScroll+(dy/travel)*scrollable));
+  });
+
+  const endThumbDrag=event=>{
+    if(!dragging||(event&&dragPointerId!=null&&event.pointerId!==dragPointerId))return;
+    dragging=false;
+    dragPointerId=null;
+    thumb.classList.remove('is-dragging');
+  };
+  thumb.addEventListener('pointerup',endThumbDrag);
+  thumb.addEventListener('pointercancel',endThumbDrag);
+  thumb.addEventListener('lostpointercapture',endThumbDrag);
+
+  // Click track (not thumb) → jump so the thumb centers on the click.
+  indicator.addEventListener('pointerdown',event=>{
+    if(indicator.hidden)return;
+    if(event.target===thumb||thumb.contains(event.target))return;
+    const{scrollable,thumbHeight,travel}=sidebarScrollMetrics(content,indicator);
+    if(scrollable<=0||travel<=0)return;
+    const rect=indicator.getBoundingClientRect();
+    const y=event.clientY-rect.top-thumbHeight/2;
+    const ratio=Math.min(1,Math.max(0,y/travel));
+    content.scrollTop=ratio*scrollable;
+  });
+}
+
 function syncDesignUI(){
   const results=document.getElementById('results');
-  const error=document.getElementById('error-card');
-  const hasResults=!!results?.innerHTML.trim()&&error?.hidden!==false;
+  const hasResults=!!results?.innerHTML.trim();
   const app=document.getElementById('app');
   app?.classList.toggle('has-results',hasResults);
   if(!hasResults)app?.classList.remove('has-visual-result');
@@ -4379,8 +4627,6 @@ function isMemoryInProgress(){
 
 function discardCurrentMemory(){
   exitEditMemory();
-  const error=document.getElementById('error-card');
-  if(error)error.hidden=true;
   const results=document.getElementById('results');
   if(results)results.innerHTML='';
   const visual=document.getElementById('visual-output');
@@ -4957,13 +5203,16 @@ function bindDesignedInterface(){
     clearPostcardPrintFit();
     if(!postcardPrintPending)return;
     postcardPrintPending=false;
-    // Advance the global counter only after a print flow started from הדפסת זיכרון.
+    // Advance the local serial only after a print flow started from הדפסת זיכרון.
     completePostcardSerial();
   });
+  window.addEventListener('hashchange',()=>{runArchiveExportFromHash();});
+  runArchiveExportFromHash();
   const sidebarContent=document.querySelector('.sidebar-content');
   sidebarContent?.addEventListener('scroll',syncSidebarScrollIndicator,{passive:true});
   if(sidebarContent&&window.ResizeObserver)new ResizeObserver(syncSidebarScrollIndicator).observe(sidebarContent);
   window.addEventListener('resize',syncSidebarScrollIndicator);
+  bindSidebarPanelScrolling();
   requestAnimationFrame(syncSidebarScrollIndicator);
 
   const addRow=document.getElementById('add-word-row');
@@ -5402,7 +5651,7 @@ function bindDesignedInterface(){
         const relation=document.querySelector('input[name="mediated-relation"]:checked');
         expressiveParams.memorySource=Number(relation?.value)||1;
       }
-      syncDesignUI();
+      syncMemorySourceUI();
       syncResetParamsButton();
       refreshExpressiveSequenceDisplay();syncVisualOutput();
     });
@@ -5411,7 +5660,7 @@ function bindDesignedInterface(){
     input.addEventListener('change',()=>{
       if(!input.checked)return;
       expressiveParams.memorySource=Number(input.value)||1;
-      syncDesignUI();
+      syncMemorySourceUI();
       syncResetParamsButton();
       refreshExpressiveSequenceDisplay();syncVisualOutput();
     });
@@ -5430,7 +5679,7 @@ function bindDesignedInterface(){
     input.addEventListener('pointercancel',()=>setScrubbing(false));
     input.addEventListener('lostpointercapture',()=>setScrubbing(false));
     input.addEventListener('blur',()=>setScrubbing(false));
-    input.addEventListener('input',event=>{
+    const onRangeChange=event=>{
       if(resetParamsAnim){
         cancelAnimationFrame(resetParamsAnim);
         resetParamsAnim=null;
@@ -5441,19 +5690,18 @@ function bindDesignedInterface(){
       syncRangeVisual(event.target);
       syncResetParamsButton();
       refreshExpressiveSequenceDisplay();syncVisualOutput();
-    });
+    };
+    input.addEventListener('input',onRangeChange);
+    input.addEventListener('change',onRangeChange);
   };
   bindRange('design-frequency','memoryFrequency');
   bindRange('design-clarity','memoryClarity');
   bindRange('design-impact','memoryImpact');
   DESIGN_RANGE_IDS.forEach(id=>syncRangeVisual(document.getElementById(id)));
-  const resetBtn=document.getElementById('reset-params-btn');
-  if(resetBtn){
-    resetBtn.addEventListener('click',()=>{
-      if(resetBtn.disabled)return;
-      animateResetParams();
-    });
-  }
+  bindIconActionButton(document.getElementById('reset-params-btn'),{
+    isDisabled:()=>document.getElementById('reset-params-btn')?.getAttribute('aria-disabled')==='true',
+    onActivate:()=>animateResetParams()
+  });
   syncResetParamsButton();
 }
 
@@ -5541,15 +5789,18 @@ function updateWordCount(){
   wcEl.style.color=limitError?'#ba1a1a':'';
   const errorMsg=document.getElementById('memory-error-msg');
   if(errorMsg){
-    // Visibility only — both slots stay in the grid so height never changes.
+    // Visibility only — slots stay in the grid so height never changes.
+    // Only the two authored visitor states: word-limit + hebrew-only.
     errorMsg.classList.toggle('is-word-limit',limitError);
     errorMsg.classList.toggle('is-hebrew-only',!limitError&&englishError);
+    errorMsg.classList.remove('is-process-failed');
     errorMsg.setAttribute('aria-hidden',errorActive?'false':'true');
   }
   const wrap=input?.closest('.memory-input-wrap');
   if(wrap)wrap.classList.toggle('has-content',!!text);
   const analyzeBtn=document.getElementById('analyze-btn');
-  analyzeBtn.disabled=!text||errorActive;
+  // Keep locked while a run is in flight; process errors do not block retry.
+  analyzeBtn.disabled=analyzeInFlight||!text||errorActive;
   if(analyzeBtn&&!analyzeBtn.querySelector('.spinner'))analyzeBtn.textContent=analyzeBtnLabel();
 }
 
@@ -5644,7 +5895,10 @@ memoryInputEl?.addEventListener('input',e=>{
   updateWordCount();
   input.dir='rtl';
 });
-document.getElementById('analyze-btn').addEventListener('click',analyze);
+document.getElementById('analyze-btn').addEventListener('click',()=>{
+  if(analyzeInFlight)return;
+  analyze();
+});
 memoryInputEl?.addEventListener('keydown',e=>{
   if(e.isComposing)return;
   const input=e.currentTarget;
@@ -5653,7 +5907,7 @@ memoryInputEl?.addEventListener('keydown',e=>{
   // Enter submits the memory (same as עיבוד זיכרון). Shift+Enter keeps a newline.
   if(e.key==='Enter'&&!e.shiftKey){
     e.preventDefault();
-    if(input.readOnly)return;
+    if(input.readOnly||analyzeInFlight)return;
     const btn=document.getElementById('analyze-btn');
     if(btn&&!btn.disabled)analyze();
     return;
