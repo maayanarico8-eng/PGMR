@@ -1047,27 +1047,22 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .reset-params-btn:focus-visible:not([aria-disabled="true"]),
 .reset-params-btn.is-icon-tooltip-open:not([aria-disabled="true"]){color:#462203}
 .reset-params-btn[aria-disabled="true"]{cursor:default;color:#BBBBBB}
-.reset-params-tooltip{
-  /* Centered above icon, 8px gap. Never steals hover from the button. */
-  position:absolute;z-index:5;left:50%;right:auto;bottom:calc(100% + 8 * var(--figma-unit));
+/*
+ * Shared icon-action tooltip — fixed overlay on <body>, never nested in a scroll tree.
+ * Banned: any hover/open path that mutates overflow/scroll on an ancestor.
+ */
+.icon-action-tooltip{
+  position:fixed;z-index:10000;left:0;top:0;margin:0;
   transform:translateX(-50%);box-sizing:border-box;
   display:flex;align-items:center;justify-content:center;
   min-width:calc(124 * var(--figma-unit));width:max-content;height:calc(28 * var(--figma-unit));
   padding:calc(4 * var(--figma-unit)) calc(16 * var(--figma-unit));
   border:1px solid #eee;border-radius:calc(4 * var(--figma-unit));background:#fff;
-  box-shadow:0 2px 6px rgba(0,0,0,.1);
   font-family:var(--font-body);font-size:calc(15 * var(--figma-unit));font-weight:400;
   line-height:calc(20 * var(--figma-unit));color:#000;text-align:center;white-space:nowrap;direction:rtl;
   opacity:0;visibility:hidden;pointer-events:none
 }
-.reset-params-btn.is-icon-tooltip-open:not([aria-disabled="true"]) .reset-params-tooltip,
-.reset-params-btn:focus-visible:not([aria-disabled="true"]) .reset-params-tooltip{opacity:1;visibility:visible}
-/* Lift overflow while tooltip is open — class-driven (not :has/:hover) to avoid flicker. */
-.app.has-visual-result.is-icon-tooltip-open .design-sidebar,
-.app.has-visual-result.is-icon-tooltip-open .sidebar-body,
-.app.has-visual-result.is-icon-tooltip-open .sidebar-content{
-  overflow:visible
-}
+.icon-action-tooltip.is-open{opacity:1;visibility:visible}
 .rep-count{
   margin:0;flex:0 0 auto;font-family:var(--font-mono);font-size:calc(13 * var(--figma-unit));font-weight:400;
   line-height:calc(18 * var(--figma-unit));color:var(--design-muted);direction:ltr;white-space:nowrap;text-align:left
@@ -1448,7 +1443,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .side-heading-row{gap:16px;margin-bottom:16px}
   .side-heading{font-size:22px;line-height:28px}
   .reset-params-btn{width:18px;height:18px}
-  .reset-params-tooltip{min-width:124px;width:max-content;height:28px;padding:4px 16px;border-radius:4px;font-size:15px;line-height:20px;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%)}
+  .icon-action-tooltip{min-width:124px;width:max-content;height:28px;padding:4px 16px;border-radius:4px;font-size:15px;line-height:20px;transform:translateX(-50%)}
   .rep-count{font-size:13px;line-height:18px}
   .rep-chips{gap:14px 12px}
   .rep-chip,.add-word-btn{padding:4px 8px;gap:6px;border-radius:8px;font-size:15px;line-height:20px}
@@ -1715,8 +1710,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
         <section class="side-section visual-settings pictogram-section">
           <div class="side-heading-row">
             <h2 class="side-heading" id="visual-settings-heading">פיקטוגרמות</h2>
-            <button type="button" class="reset-params-btn" id="reset-params-btn" aria-disabled="true" aria-label="איפוס פרמטרים">
-              <span class="reset-params-tooltip" aria-hidden="true">איפוס פרמטרים</span>
+            <button type="button" class="reset-params-btn" id="reset-params-btn" aria-disabled="true" aria-label="איפוס פרמטרים" data-icon-tooltip="איפוס פרמטרים">
               <span class="reset-params-icon" aria-hidden="true"></span>
             </button>
           </div>
@@ -4274,20 +4268,84 @@ function resetMemorySourceToDefault(){
   syncMemorySourceUI();
 }
 
+/** Measure N × --figma-unit in CSS pixels without mutating layout of app chrome. */
+function figmaUnitPx(n){
+  const probe=document.createElement('div');
+  probe.style.cssText='position:absolute;left:0;top:0;visibility:hidden;pointer-events:none;width:calc('+Number(n)+' * var(--figma-unit));height:0';
+  document.body.appendChild(probe);
+  const px=probe.getBoundingClientRect().width;
+  probe.remove();
+  return px||Number(n)||0;
+}
+
+/**
+ * Single body-level tooltip host for icon-action buttons.
+ * Fixed overlay — never lives inside a scroll/overflow ancestor.
+ */
+function ensureIconActionTooltip(){
+  let tip=document.getElementById('icon-action-tooltip');
+  if(tip)return tip;
+  tip=document.createElement('div');
+  tip.id='icon-action-tooltip';
+  tip.className='icon-action-tooltip';
+  tip.setAttribute('aria-hidden','true');
+  document.body.appendChild(tip);
+  return tip;
+}
+
+function positionIconActionTooltip(tip,btn){
+  if(!tip||!btn)return;
+  const gap=figmaUnitPx(8);
+  const pad=4;
+  const rect=btn.getBoundingClientRect();
+  const tipH=tip.offsetHeight||figmaUnitPx(28);
+  const tipW=tip.offsetWidth||figmaUnitPx(124);
+  const placeAbove=rect.top>=tipH+gap+pad;
+  const top=placeAbove?rect.top-gap-tipH:rect.bottom+gap;
+  const center=rect.left+rect.width/2;
+  const half=tipW/2;
+  const clamped=Math.max(half+pad,Math.min(window.innerWidth-half-pad,center));
+  tip.style.top=`${Math.round(top)}px`;
+  tip.style.left=`${Math.round(clamped)}px`;
+}
+
 /**
  * Shared icon-action chrome: hover/click stay on the button (full hit box).
- * Children (icon, tooltip) must be pointer-events:none. Uses aria-disabled so the
- * control always receives pointer events; never leaves a stale disabled attribute.
+ * Tooltip is a fixed body portal — hover must never mutate ancestor overflow/scroll.
+ * Uses aria-disabled so the control always receives pointer events.
  */
 function bindIconActionButton(btn,{isDisabled,onActivate}={}){
   if(!btn||btn.dataset.iconActionBound==='1')return;
   btn.dataset.iconActionBound='1';
-  const app=()=>document.getElementById('app');
+  const tip=ensureIconActionTooltip();
+  let openFor=null;
   const disabled=()=>(typeof isDisabled==='function'?!!isDisabled():btn.getAttribute('aria-disabled')==='true');
+  const tooltipLabel=()=>btn.getAttribute('data-icon-tooltip')||btn.getAttribute('aria-label')||'';
+  const reposition=()=>{
+    if(openFor!==btn)return;
+    positionIconActionTooltip(tip,btn);
+  };
   const setTooltipOpen=open=>{
     const show=!!open&&!disabled();
     btn.classList.toggle('is-icon-tooltip-open',show);
-    app()?.classList.toggle('is-icon-tooltip-open',show);
+    if(show){
+      const already=openFor===btn;
+      tip.textContent=tooltipLabel();
+      tip.classList.add('is-open');
+      openFor=btn;
+      positionIconActionTooltip(tip,btn);
+      // Capture-phase scroll: panel scroll moves the button; portal follows — ancestors untouched.
+      if(!already){
+        window.addEventListener('scroll',reposition,true);
+        window.addEventListener('resize',reposition);
+      }
+    }else if(openFor===btn){
+      tip.classList.remove('is-open');
+      tip.textContent='';
+      openFor=null;
+      window.removeEventListener('scroll',reposition,true);
+      window.removeEventListener('resize',reposition);
+    }
   };
   btn.addEventListener('pointerenter',()=>setTooltipOpen(true));
   btn.addEventListener('pointerleave',()=>setTooltipOpen(false));
@@ -4302,6 +4360,8 @@ function bindIconActionButton(btn,{isDisabled,onActivate}={}){
     }
     onActivate?.(event);
   });
+  // Expose closer for disable-sync (no ancestor class toggles).
+  btn._closeIconActionTooltip=()=>setTooltipOpen(false);
 }
 
 function setIconActionDisabled(btn,disabled){
@@ -4312,7 +4372,7 @@ function setIconActionDisabled(btn,disabled){
   btn.setAttribute('aria-disabled',on?'true':'false');
   if(on){
     btn.classList.remove('is-icon-tooltip-open');
-    document.getElementById('app')?.classList.remove('is-icon-tooltip-open');
+    btn._closeIconActionTooltip?.();
   }
 }
 
@@ -6015,6 +6075,28 @@ function blocksMemoryInsert(current){
   return isMemoryLimitErrorActive(current)||hasEnglishLetters(current);
 }
 
+/** Text as it would be after replacing the current selection (or caret) with `insertText`. */
+function projectMemoryValue(input, insertText){
+  const value=input?.value??'';
+  const start=input?.selectionStart??value.length;
+  const end=input?.selectionEnd??value.length;
+  return value.slice(0,start)+(insertText??'')+value.slice(end);
+}
+
+/**
+ * Gate inserts for the word-limit / Hebrew-only error states.
+ * With a selection, always evaluate the projected post-replace value so typing/pasting
+ * over a selection behaves natively (e.g. select-all at 20/20 → type → 1 word).
+ * With no selection, keep today's behavior: gate on the current value.
+ */
+function shouldBlockMemoryInsert(input, insertText){
+  if(!input)return false;
+  const start=input.selectionStart??0;
+  const end=input.selectionEnd??0;
+  if(start!==end)return blocksMemoryInsert(projectMemoryValue(input, insertText));
+  return blocksMemoryInsert(input.value);
+}
+
 function rememberMemoryValue(value){
   lastMemoryValue=value??'';
 }
@@ -6140,12 +6222,14 @@ memoryInputEl?.addEventListener('beforeinput',event=>{
   const input=event.currentTarget;
   // Paste/drop: handled in `paste`.
   if(event.inputType==='insertFromPaste'||event.inputType==='insertFromDrop')return;
-  if(blocksMemoryInsert(input.value))rejectMemoryInsert(event,input);
+  const insertText=event.data??(event.inputType==='insertLineBreak'||event.inputType==='insertParagraph'?'\n':'');
+  if(shouldBlockMemoryInsert(input, insertText))rejectMemoryInsert(event,input);
 },true);
 memoryInputEl?.addEventListener('paste',event=>{
   const input=event.currentTarget;
-  // While error is active, block all insertion — including paste.
-  if(blocksMemoryInsert(input.value)){
+  const pasteText=event.clipboardData?.getData('text')??'';
+  // While error is active, block insertion — unless a selection replace would clear it.
+  if(shouldBlockMemoryInsert(input, pasteText)){
     event.preventDefault();
     updateWordCount();
     return;
@@ -6157,8 +6241,14 @@ memoryInputEl?.addEventListener('input',e=>{
   if(e.isComposing)return;
   const input=e.target;
   if(!input.value.trim())syncMemoryInputPlaceholder(input);
-  // If an insert slipped through while error was active, undo it.
-  if(blocksMemoryInsert(lastMemoryValue)&&input.value!==lastMemoryValue&&input.value.length>lastMemoryValue.length){
+  // If an insert slipped through while error was active, undo it — but never
+  // undo a selection-replace that left the field in a legal state.
+  if(
+    blocksMemoryInsert(lastMemoryValue)
+    &&input.value!==lastMemoryValue
+    &&input.value.length>lastMemoryValue.length
+    &&blocksMemoryInsert(input.value)
+  ){
     revertMemoryInsert(input);
   }
   if(processErrorActive)clearProcessError();
@@ -6187,7 +6277,8 @@ memoryInputEl?.addEventListener('keydown',e=>{
   const isEnter=e.key==='Enter';
   const isPrintable=e.key.length===1&&!e.metaKey&&!e.ctrlKey&&!e.altKey;
   if(!(isPrintable||isSpace||isEnter))return;
-  if(blocksMemoryInsert(input.value))rejectMemoryInsert(e,input);
+  const insertText=isEnter?'\n':e.key;
+  if(shouldBlockMemoryInsert(input, insertText))rejectMemoryInsert(e,input);
 },true);
 
 /* ─── Click delegation (v5 pattern) ─── */
