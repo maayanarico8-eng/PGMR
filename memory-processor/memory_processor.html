@@ -363,33 +363,19 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
   display:block;margin:0;padding:0;border:0;background:none;cursor:default;color:#000;white-space:nowrap;
   font-family:var(--font-mono);font-weight:400;
   font-size:calc(18 * var(--figma-unit));line-height:calc(19 * var(--figma-unit));text-align:right;
-  /* Clickable only while a memory card is open (archive detail) */
-  pointer-events:none
+  /* Permanently non-interactive — label only for the whole session */
+  pointer-events:none;user-select:none
 }
-.app.is-archive-detail .site-tagline,
-.app.is-archive-detail-entering .site-tagline,
-.app.is-archive-detail-leaving .site-tagline{pointer-events:auto;cursor:pointer}
 .site-nav{
   display:flex;align-items:flex-start;justify-content:flex-end;gap:calc(46 * var(--figma-unit));
   flex:1 1 auto;min-width:0
 }
 .site-nav-link{
-  border:0;background:none;padding:0;cursor:pointer;color:#000;text-decoration:none;white-space:nowrap;
-  font-family:var(--font-mono);font-size:calc(18 * var(--figma-unit));font-weight:400;line-height:calc(19 * var(--figma-unit))
-}
-/* Active tab is inert everywhere — bold label only; no pointer, hover, or click */
-.site-nav-link.is-active{
-  font-family:var(--font-mono-bold);font-weight:700;
-  pointer-events:none;cursor:default
-}
-.site-nav-link.is-active:hover,
-.site-nav-link.is-active:focus,
-.site-nav-link.is-active:active{cursor:default}
-.app.is-view-transitioning .site-nav-link,
-.app.is-memory-loading .site-nav-link,
-.app.is-processing .site-nav-link{
-  /* Dead click only — never grey / opacity. Same as the active tab: inert, looks normal. */
-  pointer-events:none;cursor:default
+  /* Match .site-tagline exactly — same typeface, size, weight */
+  border:0;background:none;padding:0;cursor:default;color:#000;text-decoration:none;white-space:nowrap;
+  font-family:var(--font-mono);font-weight:400;
+  font-size:calc(18 * var(--figma-unit));line-height:calc(19 * var(--figma-unit));
+  pointer-events:none;user-select:none
 }
 .view-viewport{
   /* Figma 1184:50366 — starts at y 119, flush under the 119px header.
@@ -680,7 +666,6 @@ textarea#memory-input[aria-invalid="true"]:hover{
   display:flex;align-items:flex-start;gap:calc(40 * var(--figma-unit));direction:ltr
 }
 .app.is-confirm-open .view-viewport{pointer-events:none}
-.app.is-confirm-open .site-nav-link{pointer-events:none;cursor:default}
 .edit-memory-btn{
   /* Figma 1230:56281 — Default #a87e5d / Hover #462203 (text + icon via currentColor) */
   display:none;border:0;background:none;color:#a87e5d;padding:calc(6 * var(--figma-unit)) calc(8 * var(--figma-unit));
@@ -1394,7 +1379,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .memory-loader-inner{top:calc(50vh - 72px)}
   .site-tagline{font-size:14px;line-height:16px;white-space:normal}
   .site-nav{gap:20px}
-  .site-nav-link{font-size:16px;line-height:18px}
+  .site-nav-link{font-size:14px;line-height:16px}
   .view-viewport{height:auto;min-height:0}
   .app.is-archive .view-viewport{height:calc(100vh - 72px)}
   .app.is-archive .archive-shell{height:100%;min-height:100%}
@@ -1595,11 +1580,10 @@ textarea#memory-input[aria-invalid="true"]:hover{
 <div class="app" id="app">
   <header class="site-header">
     <div class="site-header-left">
-      <button type="button" class="site-tagline" id="site-tagline" aria-disabled="true" tabindex="-1">מכופתרת משבצות אוזניים ענקיות</button>
+      <span class="site-tagline" id="site-tagline" aria-disabled="true">מכופתרת משבצות אוזניים ענקיות</span>
     </div>
     <nav class="site-nav" aria-label="ניווט ראשי">
-      <button type="button" class="site-nav-link is-active" id="nav-generator" aria-current="page" aria-disabled="true" tabindex="-1">רשם זיכרונות</button>
-      <button type="button" class="site-nav-link" id="nav-archive" aria-current="false" aria-disabled="false">ארכיון</button>
+      <span class="site-nav-link is-active" id="nav-generator" aria-current="page" aria-disabled="true">רשם זיכרונות</span>
     </nav>
   </header>
 
@@ -5124,7 +5108,7 @@ function fadeOutArchiveDetail(opts={}){
   // Restore list layout UNDER the still-opaque card — no reflow flash.
   app.classList.add('is-archive','is-archive-detail-leaving');
   app.classList.remove('is-archive-detail','is-archive-detail-entering');
-  syncSiteNavActive('archive');
+  syncSiteNavActive();
   syncSiteTaglineInteractive();
 
   let finished=false;
@@ -5204,7 +5188,7 @@ function showArchiveList(opts={}){
   );
   document.getElementById('archive-detail-view')?.classList.remove('is-visible');
   globalThis.ArchiveCard?.clear?.(document.getElementById('archive-detail-view'));
-  syncSiteNavActive('archive');
+  syncSiteNavActive();
   archiveDetailState={memory:null};
   archiveCurrentId=null;
   clearArchiveHover();
@@ -5239,7 +5223,7 @@ function showGeneratorView(){
   );
   document.getElementById('archive-detail-view')?.classList.remove('is-visible');
   globalThis.ArchiveCard?.clear?.(document.getElementById('archive-detail-view'));
-  syncSiteNavActive('generator');
+  syncSiteNavActive();
   archiveDetailState={memory:null};
   archiveCurrentId=null;
   clearArchiveHover();
@@ -5378,7 +5362,7 @@ function openArchiveDetail(memory,opts={}){
   app.classList.add('is-archive','is-archive-detail-entering');
   app.classList.remove('is-archive-detail','is-archive-detail-leaving');
   detail.classList.remove('is-visible');
-  syncSiteNavActive('archive');
+  syncSiteNavActive();
   syncSiteTaglineInteractive();
 
   let settled=false;
@@ -5431,66 +5415,29 @@ function renderArchiveList(){
   };
 }
 
-/** Active tab is inert: bold only — no click, hover, or re-navigation. */
-function syncSiteNavActive(which){
-  const archive=document.getElementById('nav-archive');
+/** Top-bar labels are permanently inert — generator stays the sole active label. */
+function syncSiteNavActive(){
   const generator=document.getElementById('nav-generator');
-  const archiveOn=which==='archive';
-  if(archive){
-    archive.classList.toggle('is-active',archiveOn);
-    archive.setAttribute('aria-current',archiveOn?'page':'false');
-    archive.setAttribute('aria-disabled',archiveOn?'true':'false');
-    archive.tabIndex=archiveOn?-1:0;
-  }
   if(generator){
-    generator.classList.toggle('is-active',!archiveOn);
-    generator.setAttribute('aria-current',!archiveOn?'page':'false');
-    generator.setAttribute('aria-disabled',!archiveOn?'true':'false');
-    generator.tabIndex=!archiveOn?-1:0;
+    generator.classList.add('is-active');
+    generator.setAttribute('aria-current','page');
+    generator.setAttribute('aria-disabled','true');
   }
   syncSiteTaglineInteractive();
 }
 
-/** Project name is interactive only while a memory card is open. */
+/** Project name is permanently non-interactive. */
 function syncSiteTaglineInteractive(){
   const tag=document.getElementById('site-tagline');
   if(!tag)return;
-  const open=isArchiveDetailMode();
-  tag.setAttribute('aria-disabled',open?'false':'true');
-  tag.tabIndex=open?0:-1;
+  tag.setAttribute('aria-disabled','true');
 }
 
 function bindArchiveInterface(){
   renderArchiveList();
-  syncSiteNavActive(document.getElementById('app')?.classList.contains('is-archive')?'archive':'generator');
+  syncSiteNavActive();
   // Warm icon/output SVGs on boot so the first list hover is cache-instant.
   preloadAllArchiveAssets();
-  document.getElementById('site-tagline')?.addEventListener('click',()=>{
-    if(!isArchiveDetailMode())return;
-    goToArchiveStart();
-  });
-  document.getElementById('nav-archive')?.addEventListener('click',(e)=>{
-    e.preventDefault();
-    if(processingInFlight)return;
-    const app=document.getElementById('app');
-    if(!app)return;
-    if(app.classList.contains('is-confirm-open'))return;
-    // Already on archive (list or open card) — active tab does nothing.
-    if(app.classList.contains('is-archive'))return;
-    // Mid-creation on generator → confirm before leaving to archive.
-    if(isMemoryInProgress()){
-      openConfirmDialog('archive');
-      return;
-    }
-    showArchiveList();
-  });
-  document.getElementById('nav-generator')?.addEventListener('click',(e)=>{
-    e.preventDefault();
-    const app=document.getElementById('app');
-    // Already on generator — active tab does nothing.
-    if(app&&!app.classList.contains('is-archive'))return;
-    showGeneratorView();
-  });
 }
 
 function bindDesignedInterface(){
