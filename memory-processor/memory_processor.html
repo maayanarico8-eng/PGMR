@@ -447,7 +447,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 }
 .app:not(.has-results) .memory-input-wrap{height:calc(90 * var(--figma-unit));margin:0}
 .app:not(.has-results) textarea#memory-input{
-  font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit))
+  font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));line-height:calc(23 * var(--figma-unit))
 }
 .app:not(.has-results) .input-footer-wrap{margin:0}
 .memory-entry{
@@ -542,9 +542,13 @@ textarea#memory-input{
   width:100%;height:100%;min-height:0;max-height:none;padding:calc(16 * var(--figma-unit)) calc(20 * var(--figma-unit)) calc(36 * var(--figma-unit));
   resize:none;border:1px solid #d9d9d9;border-radius:calc(8 * var(--figma-unit));background:#fcf9f6;
   color:#000;font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));font-weight:400;
-  line-height:calc(20 * var(--figma-unit));text-align:right;direction:rtl;overflow:hidden
+  line-height:calc(23 * var(--figma-unit));text-align:right;direction:rtl;overflow:hidden
 }
-textarea#memory-input::placeholder{color:#bbb;opacity:1}
+textarea#memory-input::placeholder{
+  color:#bbb;opacity:1;
+  font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));font-weight:400;
+  line-height:calc(23 * var(--figma-unit))
+}
 textarea#memory-input:hover:not(:focus):not(:focus-visible):not([aria-invalid="true"]){border-color:#bbb}
 textarea#memory-input:focus,
 textarea#memory-input:focus-visible{
@@ -1408,7 +1412,8 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .app:not(.has-results) .memory-input-wrap{height:90px;margin:0}
   .app:not(.has-results) .input-footer{justify-content:center}
   .memory-input-wrap{height:90px;margin-bottom:24px}
-  textarea#memory-input{font-size:15px;line-height:20px;padding:16px 20px 36px;border-radius:8px}
+  textarea#memory-input{font-size:15px;line-height:23px;padding:16px 20px 36px;border-radius:8px}
+  textarea#memory-input::placeholder{font-size:15px;line-height:23px}
   .memory-error-msg{margin-top:31px;font-size:14px;line-height:18px;text-align:center}
   .input-footer{height:39px}
   .analyze-btn,.generate-vrp-btn{width:237px;height:39px;padding:0 20px;font-size:18px;line-height:20px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;text-align:center}
@@ -1642,9 +1647,9 @@ textarea#memory-input[aria-invalid="true"]:hover{
         </div>
         <div class="memory-input-wrap">
           <textarea id="memory-input" dir="rtl" rows="2" maxlength="500"
-            data-placeholder-default="כל שישי הייתי הולך עם סבא לשוק לקנות דגים."
+            data-placeholder-default="כל שישי הייתי הולכת עם סבא לשוק לקנות דגים"
             data-placeholder-focus="יש לכתוב זיכרון עד 20 מילים"
-            placeholder="כל שישי הייתי הולך עם סבא לשוק לקנות דגים."></textarea>
+            placeholder="כל שישי הייתי הולכת עם סבא לשוק לקנות דגים"></textarea>
           <span class="entry-count" id="entry-count">0/20 מילים</span>
         </div>
         <div class="input-footer-wrap">
