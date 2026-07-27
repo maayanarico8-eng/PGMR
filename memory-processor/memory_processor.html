@@ -838,12 +838,12 @@ textarea#memory-input[aria-invalid="true"]:hover{
 .app.has-visual-result .visual-output>svg{
   /* Figma 1227:55926 / 1227:55937 — pictogram row in items-end column under the name.
      Name + row share right edge 1262.5 (stage 1322 → right inset 59.5).
-     Masters are 153.6 tall (48 bank × 3.2) with ~14px top inset inside the 195 frame. */
+     Masters are 25% of canvas height: 643 × 0.25 = 160.75 (48 bank → scale ≈3.349). */
   position:absolute;left:auto;
   right:calc(59.5 * var(--figma-unit));
   top:calc(324 * var(--figma-unit));
   width:calc(500 * var(--figma-unit));
-  height:calc(153.6 * var(--figma-unit));
+  height:calc(0.25 * 643 * var(--figma-unit));
   max-width:none;max-height:none
 }
 .canvas-meta{
@@ -1550,7 +1550,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
     right:calc(59.5 * var(--print-unit))!important;
     top:calc(324 * var(--print-unit))!important;
     width:calc(500 * var(--print-unit))!important;
-    height:calc(153.6 * var(--print-unit))!important;
+    height:calc(0.25 * 643 * var(--print-unit))!important;
     max-width:none!important;max-height:none!important;display:block!important;
     zoom:normal!important;transform:none!important
   }
@@ -4038,7 +4038,7 @@ async function generateAra(){
 function cloneSequenceSvg(source){
   const clone=source.cloneNode(true);
   // Figma 1227:55937: rightmost master flush with name; xMax + tight content viewBox.
-  // Expressive pads the viewBox equally — crop it back so 48 bank units → 153.6px (×3.2).
+  // Expressive pads the viewBox equally — crop it back so 48 bank units → 160.75px (25% of 643).
   clone.setAttribute('preserveAspectRatio','xMaxYMin meet');
   clone.setAttribute('overflow','visible');
   const pad=Number(lastExpressiveState?.pad)||0;
