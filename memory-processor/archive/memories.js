@@ -72,9 +72,8 @@
   const MEMORIES = NAMES.map((name, i) => {
     const id = String(i + 1).padStart(3, '0');
     const entry = { id, name };
-    // 001 keeps prior card assets when later states unlock — not used in State 1.
+    // Card assets when later states unlock — not used in State 1.
     if (id === '001') {
-      // Layout placeholder data — real content will replace these later.
       entry.body = 'שהייתי בגן והלכנו לבריכה והייתי רואה את סבא וסבתא שם הייתי מבקשת ללכת אליהם הביתה. סבא תמיד הסכים.';
       /* Figma span split (1386:78234): hide non-rep in place; keep flow. */
       entry.bodySegments = [
@@ -122,6 +121,53 @@
       entry.output = `${BASE}/001/output.svg`;
       entry.icon = `${BASE}/001/icon.svg`;
       entry.iconTop = 368.815;
+    }
+    if (id === '002') {
+      entry.body =
+        'אני ואחותי הלכו למגדת עתידות בברין והיא אמרה לי שבעתיד אשוט למדינה רחוקה רחוקה ושם אתחתן עם מישהו מהאונייה.';
+      /* Pictograms.svg Memory text spans: hide non-rep in place; keep flow. */
+      entry.bodySegments = [
+        { text: 'אני ', rep: true },
+        { text: 'ו', rep: false },
+        { text: 'אחותי ', rep: true },
+        { text: 'הלכו ל', rep: false },
+        { text: 'מגדת עתידות ', rep: true },
+        { text: 'בברין והיא אמרה לי שבעתיד ', rep: false },
+        { text: 'אשוט ', rep: true },
+        { text: 'ל', rep: false },
+        { text: 'מדינה ', rep: true },
+        { text: 'רחוקה רחוקה ושם ', rep: false },
+        { text: 'אתחתן ', rep: true },
+        { text: 'עם ', rep: false },
+        { text: 'מישהו ', rep: true },
+        { text: 'מה', rep: false },
+        { text: 'אונייה', rep: true },
+        { text: '.', rep: false },
+      ];
+      /* Sequence LTR from Pictograms.svg, gap 8, normalized to x=0. */
+      entry.sequence = [
+        { src: `${BASE}/002/sequence/ship.svg`, w: 104.822, x: 0 },
+        { src: `${BASE}/002/sequence/figuer.svg`, w: 104.453, x: 112.821 },
+        { src: `${BASE}/002/sequence/wedding.svg`, w: 104.71, x: 225.27 },
+        { src: `${BASE}/002/sequence/grandmother.svg`, w: 96.135, x: 337.98 },
+        { src: `${BASE}/002/sequence/country.svg`, w: 73.299, x: 442.12 },
+        { src: `${BASE}/002/sequence/sail.svg`, w: 79.533, x: 523.43 },
+        { src: `${BASE}/002/sequence/fortune-teller.svg`, w: 104.67, x: 610.951 },
+        { src: `${BASE}/002/sequence/girl-9.svg`, w: 102.28, x: 723.621 },
+        { src: `${BASE}/002/sequence/girl-8.svg`, w: 102.29, x: 833.901 },
+      ];
+      entry.source = {
+        type: 'מתווך',
+        category: 'בן משפחה',
+        kind: 'סבתא',
+        name: 'מרים',
+      };
+      entry.frequency = 9;
+      entry.clarity = 2;
+      entry.impact = 98;
+      entry.output = `${BASE}/002/output.svg`;
+      entry.icon = `${BASE}/002/icon.svg`;
+      entry.iconTop = 124.899;
     }
     return entry;
   });

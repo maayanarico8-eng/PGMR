@@ -3,7 +3,7 @@
  */
 (function (root) {
   const PREFIXES = ['וה', 'של', 'ול', 'וב', 'ומ', 'וכ', 'וש', 'שה', 'לה', 'בה', 'מה', 'כש', 'ו', 'ה', 'ל', 'ב', 'מ', 'כ', 'ש'];
-  const MIN_WORDS = 2;
+  /** Soft cap for representative-word lists (truncate, never reject). */
   const MAX_WORDS = 10;
   const MAX_MEMORY_WORDS = 20;
   const JSON_SYSTEM = 'You output only valid JSON. No markdown. No code fences. No explanation.';
@@ -113,11 +113,8 @@
       }
       if (w && !memoryText.includes(w)) errors.push(`word "${w}" does not appear in the written memory`);
     });
-    if (rws.length < MIN_WORDS) errors.push(`only ${rws.length} representative words — minimum is ${MIN_WORDS}`);
-    if (rws.length > MAX_WORDS) errors.push(`${rws.length} representative words — maximum is ${MAX_WORDS}`);
-    if (parsed.validationStatus === 'fail' && parsed.validationNote) {
-      errors.push(`model validationStatus fail: ${parsed.validationNote}`);
-    }
+    // No quality / ambiguity / count-based rejection. Few representative words
+    // (including 1) is a valid outcome; validationStatus from the model is ignored.
     return errors;
   }
 
@@ -147,9 +144,18 @@
     return parsed;
   }
 
+  function truncateRepresentativeWords(parsed) {
+    if (!parsed || !Array.isArray(parsed.representativeWords)) return parsed;
+    if (parsed.representativeWords.length > MAX_WORDS) {
+      parsed.representativeWords = parsed.representativeWords.slice(0, MAX_WORDS);
+    }
+    return parsed;
+  }
+
   function finalizeRule1(parsed, memoryText) {
     enforceSingleTokenWords(parsed);
     applyNarratorParticipantPreference(parsed, memoryText);
+    truncateRepresentativeWords(parsed);
     if (isLeanSchema(parsed)) {
       const sequenced = assignSequence(parsed.representativeWords || [], memoryText);
       const build = root.MemoryEngineRule1.buildRule1FromWords;
@@ -220,16 +226,20 @@
     let parsed = enforceSingleTokenWords(await callRule1Anthropic(memoryText, promptR1));
     let errors = validateRule1Output(parsed, memoryText);
     if (errors.length) {
+      // Structural retry only — never reject the memory for remaining issues.
       const retrySuffix =
         '\n\nYOUR PREVIOUS OUTPUT FAILED VALIDATION with these errors:\n' +
         errors.map((e) => '- ' + e).join('\n') +
         '\n\nPrevious output was:\n' +
         JSON.stringify(parsed) +
-        '\n\nFix ALL the errors and return the corrected JSON. Remember the FINAL ASSEMBLY RULE and COMPOUND TEST: keep multi-token labels only when they name one lexicalized concept (בית ספר, מזג אוויר, …). Collapse grammar-linked phrases (verb phrases, אמא ואני, adj+noun, verb+destination, clock compounds).';
+        '\n\nFix ALL the errors and return the corrected JSON. Remember the FINAL ASSEMBLY RULE and COMPOUND TEST: keep multi-token labels only when they name one lexicalized concept (בית ספר, מזג אוויר, …). Collapse grammar-linked phrases (verb phrases, אמא ואני, adj+noun, verb+destination, clock compounds). Never set validationStatus to fail for word count, ambiguity, or minimal content — return the words you extracted.';
       parsed = enforceSingleTokenWords(await callRule1Anthropic(memoryText, promptR1, retrySuffix));
       errors = validateRule1Output(parsed, memoryText);
       if (errors.length) {
-        throw new Error('Rule 1 validation failed:\n' + errors.map((e) => '- ' + e).join('\n'));
+        console.warn(
+          '[Rule 1] structural validation warnings after retry — proceeding with extracted words:',
+          errors
+        );
       }
     }
     return finalizeRule1(parsed, memoryText);
@@ -245,5 +255,5 @@
   }
   root.MemoryEngineRule1.enforceSingleTokenWords = enforceSingleTokenWords;
   root.MemoryEngineRule1.inputGuard = inputGuard;
-  root.MemoryEngineRule1.RULE1_LIMITS = { MIN_WORDS, MAX_WORDS, MAX_MEMORY_WORDS };
+  root.MemoryEngineRule1.RULE1_LIMITS = { MAX_WORDS, MAX_MEMORY_WORDS };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

@@ -14,6 +14,17 @@
   /** First postcard / visitor archive card number. 001 is the static base memory. */
   const INITIAL_NEXT_SERIAL = 2;
 
+  /**
+   * Visitor-card icon vertical positions (frame units). Replace these four before exhibition.
+   * TEMP: all four are 001's iconTop until real values are supplied.
+   */
+  const ICON_TOP_OPTIONS = [138, 362, 586, 810];
+
+  function pickIconTop() {
+    const i = Math.floor(Math.random() * ICON_TOP_OPTIONS.length);
+    return ICON_TOP_OPTIONS[i];
+  }
+
   let dbPromise = null;
 
   function openDb() {
@@ -200,6 +211,8 @@
   global.ArchiveStore = {
     DB_NAME,
     INITIAL_NEXT_SERIAL,
+    ICON_TOP_OPTIONS,
+    pickIconTop,
     getNextSerial,
     advanceSerial,
     commitMemory,

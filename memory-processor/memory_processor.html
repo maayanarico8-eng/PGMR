@@ -491,8 +491,48 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
   grid-area:1/1;visibility:hidden
 }
 .memory-error-msg.is-word-limit .memory-error-slot[data-for="word-limit"],
-.memory-error-msg.is-hebrew-only .memory-error-slot[data-for="hebrew-only"]{
+.memory-error-msg.is-hebrew-only .memory-error-slot[data-for="hebrew-only"],
+.memory-error-msg.is-process-failed .memory-error-slot[data-for="process-failed"]{
   visibility:visible
+}
+/* Processing lock — every actionable control looks and acts disabled */
+.app.is-processing .analyze-btn,
+.app.is-processing .create-visual-btn,
+.app.is-processing .restart-memory-btn,
+.app.is-processing .edit-memory-btn,
+.app.is-processing .cancel-edit-btn,
+.app.is-processing .add-word-btn,
+.app.is-processing .add-word-confirm,
+.app.is-processing .reset-params-btn,
+.app.is-processing .source-toggle button,
+.app.is-processing .narrator-gender-picker label,
+.app.is-processing #nav-archive{
+  pointer-events:none!important;
+  cursor:default!important
+}
+.app.is-processing .analyze-btn,
+.app.is-processing .create-visual-btn,
+.app.is-processing .restart-memory-btn,
+.app.is-processing .add-word-btn,
+.app.is-processing .add-word-confirm{
+  opacity:.45
+}
+.app.is-processing .edit-memory-btn,
+.app.is-processing .cancel-edit-btn,
+.app.is-processing .reset-params-btn,
+.app.is-processing .source-toggle button,
+.app.is-processing .narrator-gender-picker label,
+.app.is-processing #nav-archive{
+  opacity:.45
+}
+.app.is-processing textarea#memory-input,
+.app.is-processing #add-word-input,
+.app.is-processing #design-frequency,
+.app.is-processing #design-clarity,
+.app.is-processing #design-impact,
+.app.is-processing .narrator-gender-picker input{
+  pointer-events:none!important;
+  cursor:default!important
 }
 .memory-input-wrap{position:relative;width:100%;height:calc(90 * var(--figma-unit));margin-bottom:calc(24 * var(--figma-unit))}
 textarea#memory-input{
@@ -1621,8 +1661,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
           <p class="memory-error-msg" id="memory-error-msg" aria-live="polite" aria-hidden="true">
             <span class="memory-error-slot" data-for="word-limit">כדי להעביר את הזיכרון לרשם הזיכרונות, יש לוודא כי אורכו אינו עולה על 20 מילים.</span>
             <span class="memory-error-slot" data-for="hebrew-only">רשם הזיכרונות קורא עברית.</span>
-            <!-- ORIGIN UNCLEAR — not one of the two authored visitor states; kept in DOM unused until you decide. Was shown on process failure. -->
-            <span class="memory-error-slot" data-for="process-failed" hidden>לא הצלחנו לעבד את הזיכרון. אפשר לנסות שוב.</span>
+            <span class="memory-error-slot" data-for="process-failed">רשם הזיכרונות לא הצליח לעבד את הזיכרון. אפשר לנסות שוב.</span>
           </p>
         </div>
       </div>
@@ -2187,28 +2226,118 @@ function extractJSON(raw){
   return JSON.parse(s.slice(first,last+1));
 }
 
-/* ─── Process errors (console only — no unauthorized visitor states) ─── */
-/** True while עיבוד זיכרון is in flight — blocks overlapping runs. */
-let analyzeInFlight=false;
+/* ─── One technical-failure rule: silent retry once, then authored state ─── */
+/** True while any generator run (Rule 1 or pictogram stage) is in flight. */
+let processingInFlight=false;
+/** Visitor-authored process-failed slot is active. */
+let processErrorActive=false;
 
 function clearProcessError(){
-  // Reserved for future authored failure UX; currently a no-op (errors are console-only).
+  processErrorActive=false;
+  const errorMsg=document.getElementById('memory-error-msg');
+  if(errorMsg)errorMsg.classList.remove('is-process-failed');
 }
 
-/** Log a process failure. Never write internal/diagnostic text into the visitor UI. */
-function reportProcessError(err,context='analyze'){
+/** Log only — never put internal/diagnostic text in the visitor UI. */
+function logProcessError(err,context='process'){
   const detail=err&&typeof err==='object'
     ?(err.message||String(err))
     :String(err||'Unknown error');
   console.error(`[${context}]`,err||detail);
 }
 
+/**
+ * Silent automatic retry once. Second failure propagates for the authored state.
+ * Covers network / API / parse / empty-extract malfunctions at any stage.
+ */
+async function withTechnicalRetry(run,context='process'){
+  try{
+    return await run();
+  }catch(first){
+    console.warn(`[${context}] technical failure — silent retry`,first);
+    return await run();
+  }
+}
+
+function beginGeneratorProcessing(){
+  processingInFlight=true;
+  document.getElementById('app')?.classList.add('is-processing');
+  applyGeneratorControlsDisabled(true);
+}
+
+function endGeneratorProcessing(){
+  processingInFlight=false;
+  document.getElementById('app')?.classList.remove('is-processing');
+  applyGeneratorControlsDisabled(false);
+}
+
+/** Visibly disable every actionable generator control for the duration of a run. */
+function applyGeneratorControlsDisabled(on){
+  const buttonIds=[
+    'analyze-btn','create-visual-btn','restart-memory-btn',
+    'edit-memory-btn','cancel-edit-btn','add-word-btn','add-word-confirm',
+  ];
+  buttonIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.disabled=!!on;
+  });
+  const reset=document.getElementById('reset-params-btn');
+  if(reset){
+    if(on)setIconActionDisabled(reset,true);
+    else syncResetParamsButton();
+  }
+  document.querySelectorAll('#narrator-gender-picker input').forEach(el=>{el.disabled=!!on;});
+  document.querySelectorAll('.source-toggle button').forEach(el=>{el.disabled=!!on;});
+  ['design-frequency','design-clarity','design-impact','add-word-input'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.disabled=!!on;
+  });
+  const archive=document.getElementById('nav-archive');
+  if(archive){
+    archive.setAttribute('aria-disabled',on?'true':'false');
+    archive.tabIndex=on?-1:0;
+  }
+  if(on){
+    const input=document.getElementById('memory-input');
+    if(input)input.readOnly=true;
+  }else{
+    syncMemoryInputEditable();
+  }
+}
+
+function wipeGeneratorPipelineShell(){
+  currentResult=null;currentVrpResult=null;currentAraResult=null;currentRule3Result=null;
+  currentPipelineTrace=null;currentFilter='all';
+  designRepresentativeWords=[];clearHeadingPreviewCache();
+  currentCatalogPromise=Promise.resolve();
+  postcardPrintPending=false;postcardSerialAdvancedForCurrent=false;
+  processedInputSnapshot=null;
+  cachedBaseSequenceSvg='';cachedSequenceBuild=null;lastExpressiveState=null;
+  document.getElementById('results').innerHTML='';
+  document.getElementById('visual-output').innerHTML='';
+  document.getElementById('app')?.classList.remove('has-results','has-visual-result');
+  MemoryEngineStreamlineSession?.cleanup?.();
+}
+
+/** Authored technical-failure state — same slot pattern as word-limit / hebrew-only. */
+function showAuthoredProcessFailed(err,context){
+  logProcessError(err,context);
+  processErrorActive=true;
+  wipeGeneratorPipelineShell();
+  const errorMsg=document.getElementById('memory-error-msg');
+  if(errorMsg){
+    errorMsg.classList.remove('is-word-limit','is-hebrew-only');
+    errorMsg.classList.add('is-process-failed');
+    errorMsg.setAttribute('aria-hidden','false');
+  }
+}
+
 window.onerror=function(msg,src,line,col,err){
-  reportProcessError(err||new Error(`${msg} (line ${line})`),'window.onerror');
+  logProcessError(err||new Error(`${msg} (line ${line})`),'window.onerror');
   return false;
 };
 window.onunhandledrejection=function(e){
-  reportProcessError(e.reason||e,'unhandledrejection');
+  logProcessError(e.reason||e,'unhandledrejection');
 };
 
 function usesApiMode(){return processorMode==='ai-words'||processorMode==='hybrid'||processorMode==='anthropic';}
@@ -2659,10 +2788,14 @@ async function renderBankTest(sentence){
 async function previewFullApiPictograms(){
   const container=document.getElementById('pictogram-preview-section');
   const btn=document.getElementById('preview-pictograms-btn');
-  if(!container||!currentResult)return;
+  if(!container||!currentResult){
+    throw new Error('Pictogram stage unavailable');
+  }
   resetExpressiveParams();
   const words=(currentResult.representativeWords||[]).map(rw=>rw.word).filter(Boolean);
-  if(!words.length)return;
+  if(!words.length){
+    throw new Error('Empty representative words from pictogram-stage');
+  }
   await setMemoryLoaderStage('pictograms');
   if(btn){btn.disabled=true;btn.innerHTML='<span class="vrp-dark-spinner"></span> Loading pictograms…';}
   container.innerHTML=translationLoadingHTML();
@@ -2672,7 +2805,9 @@ async function previewFullApiPictograms(){
     const rtl=currentResult.memoryLanguage==='Hebrew';
     const hits=slots.filter(s=>!s.duplicateOf&&s.status==='hit').length;
     const gaps=slots.filter(s=>!s.duplicateOf&&s.status!=='hit').length;
+    // Gaps use empty-state glyphs — that is success, not failure. Only the call itself can fail.
     const seqSvg=await buildBankSequence(slots,rtl);
+    if(!seqSvg)throw new Error('Pictogram stage produced no sequence');
     const rows=slots.map(slot=>{
       const isDup=!!slot.duplicateOf;
       const isGap=!isDup&&slot.status!=='hit';
@@ -2680,7 +2815,7 @@ async function previewFullApiPictograms(){
       const meta=isDup
         ?`<div class="cat-hit-meta" style="color:var(--t3)">same pictogram as ${esc(slot.duplicateOf)}</div>`
         :isGap
-        ?`<div class="cat-hit-meta" style="color:#D85A30">✕ Streamline fetch failed</div>`
+        ?`<div class="cat-hit-meta" style="color:var(--t3)">empty-state glyph</div>`
         :`${pictogramSourceMeta(slot.source)}${slot.assetRef?`<div style="font-size:10px;color:var(--t3)">${esc(slot.assetRef)}</div>`:''}`;
       const uploadBtn=isGap&&rule3AutoRealizationEnabled()
         ?`<div style="margin-top:8px;display:flex;align-items:center;gap:10px"><button onclick="createFileInput(${JSON.stringify(slot.hebrew)},document.getElementById(${JSON.stringify(gapId)}))" style="padding:4px 11px;font-size:11px;font-family:var(--f);border:1px solid #C0846A;border-radius:5px;background:transparent;color:#9B4D2C;cursor:pointer">↑ Upload reference SVG</button><span class="realize-status" style="font-size:10.5px;color:var(--t3)"></span></div>`
@@ -2689,7 +2824,7 @@ async function previewFullApiPictograms(){
     }).join('');
     container.innerHTML=`
       ${renderTranslationSection(translations)}
-      <div class="sec-label">Pictograms <span>${hits} hit${hits!==1?'s':''}, ${gaps} ✕</span></div>
+      <div class="sec-label">Pictograms <span>${hits} hit${hits!==1?'s':''}, ${gaps} empty-state</span></div>
       <div class="bank-word-grid">${rows}</div>
       <div class="sec-label">Sequence</div>
       ${sequenceBlockHtml(seqSvg)}
@@ -2699,10 +2834,8 @@ async function previewFullApiPictograms(){
     bindResolveDebugPanel(container);
     bindExpressivePanel();
     loadBankList();
-  }catch(e){
-    container.innerHTML=`<div class="error-card" style="margin-top:12px">${esc(e.message)}</div>`;
   }finally{
-    if(btn){btn.disabled=false;btn.innerHTML='Preview pictograms';}
+    if(btn&&!processingInFlight){btn.disabled=false;btn.innerHTML='Preview pictograms';}
   }
 }
 
@@ -3373,17 +3506,119 @@ function cancelEditMemory(){
 function assertRepresentativeWords(result,source='pipeline'){
   const words=(result?.representativeWords||[]).map(rw=>rw?.word).filter(Boolean);
   if(!words.length){
+    // Malfunction — never a legitimate empty outcome. Handled as technical failure.
     throw new Error(`Empty representative words from ${source}`);
   }
   return words;
 }
 
-async function analyze(){
-  // Hard re-entrancy guard — button disabled alone is not enough (Enter + click race).
-  if(analyzeInFlight){
-    console.warn('[analyze] ignored overlapping run');
+function prepareAnalyzeShell(){
+  document.getElementById('results').innerHTML='';
+  document.getElementById('visual-output').innerHTML='';
+  document.getElementById('app')?.classList.remove('has-results','has-visual-result');
+  MemoryEngineStreamlineSession?.cleanup?.();
+  currentResult=null;currentVrpResult=null;currentAraResult=null;currentRule3Result=null;
+  currentPipelineTrace=null;currentFilter='all';
+  designRepresentativeWords=[];clearHeadingPreviewCache();
+  currentCatalogPromise=Promise.resolve();
+  postcardPrintPending=false;postcardSerialAdvancedForCurrent=false;
+  processedInputSnapshot=null;
+  cachedBaseSequenceSvg='';cachedSequenceBuild=null;lastExpressiveState=null;
+}
+
+async function runAnalyzeAttempt(text){
+  const useMockData=processorMode==='mock'&&text===MOCK_MEMORY;
+  if(processorMode==='bank-test'){
+    const sentence=MemoryEngineTestSentencesApi.findByText(text);
+    if(!sentence)throw new Error('Pick one of the sample sentences above (Bank test mode).');
+    lastEngineSource='bank-test';
+    await renderBankTest(sentence);
+    assertRepresentativeWords({representativeWords:designRepresentativeWords.map(w=>({word:w}))},'bank-test');
     return;
   }
+  if(useMockData){
+    await new Promise(r=>setTimeout(r,700));
+    lastEngineSource='mock';
+    renderResults(MOCK_R1);
+    assertRepresentativeWords(MOCK_R1,'mock');
+    return;
+  }
+  if(processorMode==='local'){
+    const pipeline=runLocalPipeline(text);
+    const violations=validateR1Output(pipeline.rule1);
+    assertRepresentativeWords(pipeline.rule1,'local');
+    renderResults(pipeline.rule1);
+    renderEngineBadge(lastEngineSource,lastEngineExtractor);
+    if(violations.length){
+      const container=document.getElementById('results');
+      if(container) renderValidationViolations(violations,container);
+    }
+    renderVrp(pipeline.rule2);
+    const traceEl=document.createElement('div');
+    traceEl.id='engine-trace-section';
+    document.getElementById('results')?.appendChild(traceEl);
+    renderEngineTrace(currentPipelineTrace);
+    return;
+  }
+  if(processorMode==='ai-words'){
+    const pipeline=await runAiWordsPipeline(text);
+    assertRepresentativeWords(pipeline.rule1,'ai-words');
+    renderResults(pipeline.rule1);
+    renderEngineBadge(lastEngineSource,lastEngineExtractor);
+    renderVrp(pipeline.rule2);
+    const traceEl=document.createElement('div');
+    traceEl.id='engine-trace-section';
+    document.getElementById('results')?.appendChild(traceEl);
+    renderEngineTrace(currentPipelineTrace);
+    return;
+  }
+  if(processorMode==='hybrid'){
+    const local=MemoryEngine.runRule1Local(text);
+    if(local.supported&&local.confidence!=='low'){
+      const pipeline=runLocalPipeline(text);
+      const violations=validateR1Output(pipeline.rule1);
+      assertRepresentativeWords(pipeline.rule1,'hybrid-local');
+      renderResults(pipeline.rule1);
+      renderEngineBadge(lastEngineSource,lastEngineExtractor);
+      if(violations.length){
+        const container=document.getElementById('results');
+        if(container) renderValidationViolations(violations,container);
+      }
+      renderVrp(pipeline.rule2);
+      const traceEl=document.createElement('div');
+      traceEl.id='engine-trace-section';
+      document.getElementById('results')?.appendChild(traceEl);
+      renderEngineTrace(currentPipelineTrace);
+    }else{
+      const pipeline=await runAiWordsPipeline(text);
+      assertRepresentativeWords(pipeline.rule1,'hybrid-ai-words');
+      renderResults(pipeline.rule1);
+      renderEngineBadge(lastEngineSource,lastEngineExtractor);
+      renderVrp(pipeline.rule2);
+      const traceEl=document.createElement('div');
+      traceEl.id='engine-trace-section';
+      document.getElementById('results')?.appendChild(traceEl);
+      renderEngineTrace(currentPipelineTrace);
+    }
+    return;
+  }
+  const parsed=await runRule1Pipeline(text);
+  if(processorMode==='anthropic'){
+    await attachTranslationsToRule1(parsed);
+  }
+  assertRepresentativeWords(parsed,processorMode||'anthropic');
+  const violations=validateR1Output(parsed);
+  renderResults(parsed);
+  renderEngineBadge(lastEngineSource,lastEngineExtractor);
+  if(violations.length){
+    const container=document.getElementById('results');
+    if(container) renderValidationViolations(violations,container);
+  }
+}
+
+async function analyze(){
+  // Backstop — UI disables all controls; this blocks Enter/race edges.
+  if(processingInFlight)return;
   const inputEl=document.getElementById('memory-input');
   const raw=inputEl?.value??'';
   if(isMemoryLimitErrorActive(raw)||hasEnglishLetters(raw)){
@@ -3400,107 +3635,19 @@ async function analyze(){
     return;
   }
 
-  analyzeInFlight=true;
+  beginGeneratorProcessing();
   clearProcessError();
   const btn=document.getElementById('analyze-btn');
-  btn.disabled=true;btn.textContent=analyzeBtnLabel();
+  if(btn)btn.textContent=analyzeBtnLabel();
   showMemoryLoader('words');
-  document.getElementById('results').innerHTML='';
-  document.getElementById('visual-output').innerHTML='';
-  document.getElementById('app')?.classList.remove('has-results','has-visual-result');
-  MemoryEngineStreamlineSession?.cleanup?.();
-  currentResult=null;currentVrpResult=null;currentAraResult=null;currentRule3Result=null;currentPipelineTrace=null;currentFilter='all';designRepresentativeWords=[];clearHeadingPreviewCache();currentCatalogPromise=Promise.resolve();
-  postcardPrintPending=false;postcardSerialAdvancedForCurrent=false;
-  processedInputSnapshot=null;
-  // Mock scripted data only for the built-in example when explicitly in mock mode
-  const useMockData=processorMode==='mock'&&text===MOCK_MEMORY;
   try{
-    if(processorMode==='bank-test'){
-      const sentence=MemoryEngineTestSentencesApi.findByText(text);
-      if(!sentence)throw new Error('Pick one of the sample sentences above (Bank test mode).');
-      lastEngineSource='bank-test';
-      await renderBankTest(sentence);
-      assertRepresentativeWords({representativeWords:designRepresentativeWords.map(w=>({word:w}))},'bank-test');
-    }else if(useMockData){
-      await new Promise(r=>setTimeout(r,700));
-      lastEngineSource='mock';
-      renderResults(MOCK_R1);
-      assertRepresentativeWords(MOCK_R1,'mock');
-    }else if(processorMode==='local'){
-      const pipeline=runLocalPipeline(text);
-      const violations=validateR1Output(pipeline.rule1);
-      assertRepresentativeWords(pipeline.rule1,'local');
-      renderResults(pipeline.rule1);
-      renderEngineBadge(lastEngineSource,lastEngineExtractor);
-      if(violations.length){
-        const container=document.getElementById('results');
-        if(container) renderValidationViolations(violations,container);
-      }
-      renderVrp(pipeline.rule2);
-      const traceEl=document.createElement('div');
-      traceEl.id='engine-trace-section';
-      document.getElementById('results')?.appendChild(traceEl);
-      renderEngineTrace(currentPipelineTrace);
-    }else if(processorMode==='ai-words'){
-      const pipeline=await runAiWordsPipeline(text);
-      assertRepresentativeWords(pipeline.rule1,'ai-words');
-      renderResults(pipeline.rule1);
-      renderEngineBadge(lastEngineSource,lastEngineExtractor);
-      renderVrp(pipeline.rule2);
-      const traceEl=document.createElement('div');
-      traceEl.id='engine-trace-section';
-      document.getElementById('results')?.appendChild(traceEl);
-      renderEngineTrace(currentPipelineTrace);
-    }else if(processorMode==='hybrid'){
-      const local=MemoryEngine.runRule1Local(text);
-      if(local.supported&&local.confidence!=='low'){
-        const pipeline=runLocalPipeline(text);
-        const violations=validateR1Output(pipeline.rule1);
-        assertRepresentativeWords(pipeline.rule1,'hybrid-local');
-        renderResults(pipeline.rule1);
-        renderEngineBadge(lastEngineSource,lastEngineExtractor);
-        if(violations.length){
-          const container=document.getElementById('results');
-          if(container) renderValidationViolations(violations,container);
-        }
-        renderVrp(pipeline.rule2);
-        const traceEl=document.createElement('div');
-        traceEl.id='engine-trace-section';
-        document.getElementById('results')?.appendChild(traceEl);
-        renderEngineTrace(currentPipelineTrace);
-      }else{
-        const pipeline=await runAiWordsPipeline(text);
-        assertRepresentativeWords(pipeline.rule1,'hybrid-ai-words');
-        renderResults(pipeline.rule1);
-        renderEngineBadge(lastEngineSource,lastEngineExtractor);
-        renderVrp(pipeline.rule2);
-        const traceEl=document.createElement('div');
-        traceEl.id='engine-trace-section';
-        document.getElementById('results')?.appendChild(traceEl);
-        renderEngineTrace(currentPipelineTrace);
-      }
-    }else{
-      const parsed=await runRule1Pipeline(text);
-      if(processorMode==='anthropic'){
-        await attachTranslationsToRule1(parsed);
-      }
-      assertRepresentativeWords(parsed,processorMode||'anthropic');
-      const violations=validateR1Output(parsed);
-      renderResults(parsed);
-      renderEngineBadge(lastEngineSource,lastEngineExtractor);
-      if(violations.length){
-        const container=document.getElementById('results');
-        if(container) renderValidationViolations(violations,container);
-      }
-    }
+    await withTechnicalRetry(async()=>{
+      prepareAnalyzeShell();
+      await runAnalyzeAttempt(text);
+    },'analyze');
     captureProcessedInputSnapshot(typedText);
   }catch(e){
-    // Wipe any partial success so we never leave an empty "has-results" shell.
-    currentResult=null;
-    designRepresentativeWords=[];
-    document.getElementById('results').innerHTML='';
-    document.getElementById('app')?.classList.remove('has-results','has-visual-result');
-    reportProcessError(e,'analyze');
+    showAuthoredProcessFailed(e,'analyze');
   }finally{
     try{
       await hideMemoryLoader();
@@ -3508,8 +3655,8 @@ async function analyze(){
       console.warn('[analyze] loader exit failed',loaderErr);
       forceClearMemoryLoader();
     }
-    analyzeInFlight=false;
-    btn.disabled=false;btn.innerHTML=analyzeBtnLabel();
+    endGeneratorProcessing();
+    if(btn)btn.innerHTML=analyzeBtnLabel();
     updateWordCount();
     syncDesignUI();
   }
@@ -3517,28 +3664,23 @@ async function analyze(){
 
 async function generateVrp(){
   if(processorMode==='anthropic')return;
-  const vrpInner=document.getElementById('vrp-inner');if(!vrpInner)return;
+  const vrpInner=document.getElementById('vrp-inner');if(!vrpInner)throw new Error('VRP stage unavailable');
   vrpInner.innerHTML=`<div class="vrp-loading"><span class="vrp-dark-spinner"></span><span class="vrp-loading-txt">Generating Visual Representation Plan…</span></div>`;
   const useMock=processorMode==='mock'&&currentResult===MOCK_R1;
-  try{
-    if(useMock){
-      await new Promise(r=>setTimeout(r,600));
-      await renderVrp(MOCK_VRP);
-    }else if(lastEngineSource==='local'||lastEngineSource==='ai-words'){
-      if(currentVrpResult){
-        await renderVrp(currentVrpResult);
-      }else{
-        const vrp=MemoryEngine.runVRPLocal(currentResult,(w)=>CAT.lookup(w));
-        await renderVrp(vrp);
-      }
+  if(useMock){
+    await new Promise(r=>setTimeout(r,600));
+    await renderVrp(MOCK_VRP);
+  }else if(lastEngineSource==='local'||lastEngineSource==='ai-words'){
+    if(currentVrpResult){
+      await renderVrp(currentVrpResult);
     }else{
-      const ctx={memoryLanguage:currentResult.memoryLanguage,coreNarrative:currentResult.coreNarrative,semanticSummary:currentResult.semanticStructure?.summary,mustPreserve:currentResult.semanticStructure?.mustPreserve,representativeWords:currentResult.representativeWords};
-      const raw=await callAPI(VRP_PROMPT,'Input:\n\n'+JSON.stringify(ctx,null,2),8000);
-      await renderVrp(extractJSON(raw));
+      const vrp=MemoryEngine.runVRPLocal(currentResult,(w)=>CAT.lookup(w));
+      await renderVrp(vrp);
     }
-  }catch(e){
-    if(vrpInner)vrpInner.innerHTML=`<div class="error-card" style="margin-bottom:12px">${esc(e.message)}</div><button class="generate-vrp-btn" id="generate-vrp-btn">Retry</button>`;
-    document.getElementById('generate-vrp-btn')?.addEventListener('click',generateVrp);
+  }else{
+    const ctx={memoryLanguage:currentResult.memoryLanguage,coreNarrative:currentResult.coreNarrative,semanticSummary:currentResult.semanticStructure?.summary,mustPreserve:currentResult.semanticStructure?.mustPreserve,representativeWords:currentResult.representativeWords};
+    const raw=await callAPI(VRP_PROMPT,'Input:\n\n'+JSON.stringify(ctx,null,2),8000);
+    await renderVrp(extractJSON(raw));
   }
 }
 
@@ -4431,7 +4573,7 @@ function syncDesignUI(){
   const addConfirm=document.getElementById('add-word-confirm');
   const addHint=document.getElementById('add-word-limit-hint');
   if(addBtn){
-    addBtn.disabled=atWordLimit;
+    addBtn.disabled=processingInFlight||atWordLimit;
     syncAddWordIcon();
   }
   // Figma 10/10 (1027:109376): disabled add button only — no extra limit copy.
@@ -4441,17 +4583,27 @@ function syncDesignUI(){
     if(addInput)addInput.value='';
     if(addConfirm)addConfirm.disabled=true;
   }
+  if(processingInFlight&&addConfirm)addConfirm.disabled=true;
+  if(processingInFlight&&addInput)addInput.disabled=true;
   const memoryCount=document.getElementById('entry-count');
   if(memoryCount)memoryCount.style.color='';
   syncMemoryInputEditable();
+  if(processingInFlight){
+    const input=document.getElementById('memory-input');
+    if(input)input.readOnly=true;
+  }
   const create=document.getElementById('create-visual-btn');
   if(create){
-    create.disabled=!hasResults;
+    create.disabled=processingInFlight||!hasResults;
     create.textContent=hasVisual?'הדפסת זיכרון':'רישום זיכרון';
   }
   // התחל מחדש only after רישום זיכרון (has-visual-result).
   const restart=document.getElementById('restart-memory-btn');
-  if(restart)restart.disabled=!hasVisual;
+  if(restart)restart.disabled=processingInFlight||!hasVisual;
+  const editBtn=document.getElementById('edit-memory-btn');
+  if(editBtn)editBtn.disabled=!!processingInFlight;
+  const cancelBtn=document.getElementById('cancel-edit-btn');
+  if(cancelBtn)cancelBtn.disabled=!!processingInFlight;
   const params=getExpressiveParams();
   syncMemorySourceUI();
   [['design-frequency','memoryFrequency'],['design-clarity','memoryClarity'],['design-impact','memoryImpact']].forEach(([id,key])=>{
@@ -4483,43 +4635,151 @@ function fitPostcardForPrint(){
   clearPostcardPrintFit();
 }
 
+/** Bubble % shown on a design slider (visitor-facing), not the engine value. */
+function readDesignBubblePercent(inputId){
+  const input=document.getElementById(inputId);
+  if(!input)return null;
+  const min=Number(input.min)||0;
+  const max=Number(input.max)||100;
+  const value=Number(input.value)||0;
+  const progress=max===min?0:Math.max(0,Math.min(1,(value-min)/(max-min)));
+  return Math.round((1-progress)*100);
+}
+
+function buildArchiveSourceFromSession(){
+  const src=Number(expressiveParams?.memorySource)||0;
+  if(src===0)return{type:'אישי'};
+  return{
+    type:'מתווך',
+    category:src===2?'מכר':'בן משפחה',
+  };
+}
+
+/** Representative words + glyph names from the live sequence build (no body ranges). */
+function buildArchiveWordsFromSession(){
+  const slots=(cachedSequenceBuild?.slots||[]).filter(s=>!s.duplicateOf);
+  return slots.map(slot=>{
+    const word=slot.hebrew||'';
+    const hit=slot.status==='hit'&&slot.english;
+    return{word,glyph:hit?String(slot.english):null};
+  });
+}
+
+function capturePrintOutputSvg(){
+  const svg=document.querySelector('#visual-output > svg');
+  if(!svg)return null;
+  return new XMLSerializer().serializeToString(svg);
+}
+
+/**
+ * Build one exhibition archive record for commitMemory(serial).
+ * Ranges for State 4 are NOT stored — derived at render time (Phase 2B).
+ */
+function buildExhibitionArchiveRecord(serial){
+  const store=globalThis.ArchiveStore;
+  const name=getHeadingPreviewText();
+  const body=currentResult?.coreNarrative||document.getElementById('memory-input')?.value.trim()||'';
+  const outputSvg=capturePrintOutputSvg();
+  if(!outputSvg){
+    throw new Error('print output SVG missing — cannot archive');
+  }
+  const frequency=readDesignBubblePercent('design-frequency');
+  const clarity=readDesignBubblePercent('design-clarity');
+  const impact=readDesignBubblePercent('design-impact');
+  if(frequency==null||clarity==null||impact==null){
+    throw new Error('design param sliders missing — cannot archive');
+  }
+  const words=buildArchiveWordsFromSession();
+  const missingGlyphs=words.filter(w=>!w.glyph).map(w=>w.word);
+  if(missingGlyphs.length){
+    console.warn('[archive] words without matched glyph (stored as glyph:null):',missingGlyphs);
+  }
+  return{
+    serial:Math.floor(Number(serial)),
+    name,
+    body,
+    source:buildArchiveSourceFromSession(),
+    params:{frequency,clarity,impact},
+    words,
+    outputSvg,
+    iconTop:store.pickIconTop(),
+    createdAt:new Date().toISOString(),
+  };
+}
+
+let archivePrintCommitBusy=false;
+
+async function runPictogramStageAttempt(chosenParams){
+  if(processorMode==='anthropic'&&currentResult){
+    await previewFullApiPictograms();
+  }else if(document.getElementById('generate-vrp-btn')){
+    await generateVrp();
+  }else{
+    await currentCatalogPromise;
+  }
+  expressiveParams=Object.assign({},chosenParams);
+  refreshExpressiveSequenceDisplay();
+  const source=document.querySelector('#results .seq-display svg');
+  if(!source)throw new Error('Pictogram stage produced no sequence');
+  postcardSerialAdvancedForCurrent=false;
+  await fetchPostcardSerial({force:true});
+}
+
 async function createDesignedVisual(){
   const btn=document.getElementById('create-visual-btn');
   if(!btn)return;
   const app=document.getElementById('app');
   if(app?.classList.contains('has-visual-result')){
-    postcardPrintPending=true;
-    window.print();
+    if(archivePrintCommitBusy||processingInFlight)return;
+    archivePrintCommitBusy=true;
+    btn.disabled=true;
+    try{
+      // Refresh the print SVG from the live expressive sequence before capture.
+      syncVisualOutput();
+      const store=globalThis.ArchiveStore;
+      if(!store?.commitMemory)throw new Error('ArchiveStore unavailable');
+      const{memory,serial}=await store.commitMemory(buildExhibitionArchiveRecord);
+      // Postcard number must match the committed archive serial.
+      canvasPostcardSerial=serial;
+      syncVisualOutput();
+      console.info('[archive] committed memory',memory?.id,memory?.serial);
+      postcardPrintPending=true;
+      window.print();
+    }catch(err){
+      console.error('[archive] commit on print failed — print aborted:',err.message||err);
+    }finally{
+      archivePrintCommitBusy=false;
+      btn.disabled=false;
+    }
     return;
   }
+  if(processingInFlight)return;
   const old=btn.textContent;
   const chosenParams=Object.assign({},expressiveParams);
-  btn.disabled=true;btn.textContent=old;
+  beginGeneratorProcessing();
+  clearProcessError();
+  btn.textContent=old;
   showMemoryLoader('pictograms');
   try{
-    if(processorMode==='anthropic'&&currentResult){
-      await previewFullApiPictograms();
-    }else if(document.getElementById('generate-vrp-btn')){
-      await generateVrp();
-    }else{
-      await currentCatalogPromise;
-    }
-    expressiveParams=chosenParams;
-    refreshExpressiveSequenceDisplay();
-    const source=document.querySelector('#results .seq-display svg');
-    if(!source)return;
-    postcardSerialAdvancedForCurrent=false;
-    await fetchPostcardSerial({force:true});
+    await withTechnicalRetry(
+      ()=>runPictogramStageAttempt(chosenParams),
+      'pictograms'
+    );
     app?.classList.add('has-visual-result');
     syncDesignUI();
+  }catch(e){
+    // Never strand on params with no message — back to writing screen + authored state.
+    showAuthoredProcessFailed(e,'pictograms');
   }finally{
     try{
       await hideMemoryLoader();
     }catch(_){
       forceClearMemoryLoader();
     }
-    btn.disabled=false;
+    endGeneratorProcessing();
     btn.textContent=app?.classList.contains('has-visual-result')?'הדפסת זיכרון':old;
+    updateWordCount();
+    syncDesignUI();
   }
 }
 
@@ -4627,6 +4887,7 @@ function isMemoryInProgress(){
 
 function discardCurrentMemory(){
   exitEditMemory();
+  clearProcessError();
   const results=document.getElementById('results');
   if(results)results.innerHTML='';
   const visual=document.getElementById('visual-output');
@@ -5165,6 +5426,7 @@ function bindArchiveInterface(){
   });
   document.getElementById('nav-archive')?.addEventListener('click',(e)=>{
     e.preventDefault();
+    if(processingInFlight)return;
     const app=document.getElementById('app');
     if(!app)return;
     if(app.classList.contains('is-confirm-open'))return;
@@ -5191,20 +5453,28 @@ function bindDesignedInterface(){
   bindConfirmDialog();
   bindEscapeLayers();
   document.getElementById('restart-memory-btn')?.addEventListener('click',()=>{
+    if(processingInFlight)return;
     const restart=document.getElementById('restart-memory-btn');
     if(!restart||restart.disabled||!isMemoryInProgress())return;
     openConfirmDialog('restart');
   });
-  document.getElementById('edit-memory-btn')?.addEventListener('click',enterEditMemory);
-  document.getElementById('cancel-edit-btn')?.addEventListener('click',cancelEditMemory);
-  document.getElementById('create-visual-btn')?.addEventListener('click',createDesignedVisual);
+  document.getElementById('edit-memory-btn')?.addEventListener('click',()=>{
+    if(processingInFlight)return;
+    enterEditMemory();
+  });
+  document.getElementById('cancel-edit-btn')?.addEventListener('click',()=>{
+    if(processingInFlight)return;
+    cancelEditMemory();
+  });
+  document.getElementById('create-visual-btn')?.addEventListener('click',()=>{
+    if(processingInFlight)return;
+    createDesignedVisual();
+  });
   window.addEventListener('beforeprint',fitPostcardForPrint);
   window.addEventListener('afterprint',()=>{
     clearPostcardPrintFit();
-    if(!postcardPrintPending)return;
+    // Serial + archive commit happen on הדפסת זיכרון click (not here).
     postcardPrintPending=false;
-    // Advance the local serial only after a print flow started from הדפסת זיכרון.
-    completePostcardSerial();
   });
   window.addEventListener('hashchange',()=>{runArchiveExportFromHash();});
   runArchiveExportFromHash();
@@ -5790,17 +6060,18 @@ function updateWordCount(){
   const errorMsg=document.getElementById('memory-error-msg');
   if(errorMsg){
     // Visibility only — slots stay in the grid so height never changes.
-    // Only the two authored visitor states: word-limit + hebrew-only.
+    // Authored states: word-limit, hebrew-only, process-failed (after silent retry).
     errorMsg.classList.toggle('is-word-limit',limitError);
     errorMsg.classList.toggle('is-hebrew-only',!limitError&&englishError);
-    errorMsg.classList.remove('is-process-failed');
-    errorMsg.setAttribute('aria-hidden',errorActive?'false':'true');
+    errorMsg.classList.toggle('is-process-failed',!limitError&&!englishError&&processErrorActive);
+    const showMsg=errorActive||(!limitError&&!englishError&&processErrorActive);
+    errorMsg.setAttribute('aria-hidden',showMsg?'false':'true');
   }
   const wrap=input?.closest('.memory-input-wrap');
   if(wrap)wrap.classList.toggle('has-content',!!text);
   const analyzeBtn=document.getElementById('analyze-btn');
-  // Keep locked while a run is in flight; process errors do not block retry.
-  analyzeBtn.disabled=analyzeInFlight||!text||errorActive;
+  // Locked while any run is in flight; process-failed does not block retry.
+  analyzeBtn.disabled=processingInFlight||!text||errorActive;
   if(analyzeBtn&&!analyzeBtn.querySelector('.spinner'))analyzeBtn.textContent=analyzeBtnLabel();
 }
 
@@ -5892,11 +6163,12 @@ memoryInputEl?.addEventListener('input',e=>{
   if(blocksMemoryInsert(lastMemoryValue)&&input.value!==lastMemoryValue&&input.value.length>lastMemoryValue.length){
     revertMemoryInsert(input);
   }
+  if(processErrorActive)clearProcessError();
   updateWordCount();
   input.dir='rtl';
 });
 document.getElementById('analyze-btn').addEventListener('click',()=>{
-  if(analyzeInFlight)return;
+  if(processingInFlight)return;
   analyze();
 });
 memoryInputEl?.addEventListener('keydown',e=>{
@@ -5907,7 +6179,7 @@ memoryInputEl?.addEventListener('keydown',e=>{
   // Enter submits the memory (same as עיבוד זיכרון). Shift+Enter keeps a newline.
   if(e.key==='Enter'&&!e.shiftKey){
     e.preventDefault();
-    if(input.readOnly||analyzeInFlight)return;
+    if(input.readOnly||processingInFlight)return;
     const btn=document.getElementById('analyze-btn');
     if(btn&&!btn.disabled)analyze();
     return;

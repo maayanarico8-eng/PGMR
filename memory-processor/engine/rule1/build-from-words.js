@@ -142,9 +142,7 @@
       logger.log('1.2', 'AI_WORDS_RECEIVED', { count: words.length }, 'Workflow_Grammar:1.6');
     }
 
-    if (words.length < MIN_WORDS) {
-      throw new Error(`AI returned ${words.length} words; need ${MIN_WORDS}–${MAX_WORDS}.`);
-    }
+    // Any non-empty extract proceeds (1 word is valid). Soft-cap only.
     if (words.length > MAX_WORDS) {
       words.splice(MAX_WORDS);
     }

@@ -58,15 +58,24 @@ function testValidation(rule1) {
   console.log('PASS T7: 2 words passes');
 
   const oneWord = { representativeWords: [{ word: 'סבא' }], decisionPath: [] };
-  assert(rule1.validateRule1Output(oneWord, memory).some((e) => e.includes('minimum')), 'min');
-  console.log('PASS T7: 1 word fails');
+  assert(rule1.validateRule1Output(oneWord, memory).length === 0, '1 word must not be rejected');
+  console.log('PASS T7: 1 word passes (no count gate)');
 
   const tooMany = {
     representativeWords: Array.from({ length: 11 }, (_, i) => ({ word: 'סבא' })),
     decisionPath: [],
   };
-  assert(rule1.validateRule1Output(tooMany, memory).some((e) => e.includes('maximum')), 'max');
-  console.log('PASS T7: 11 words fails');
+  assert(rule1.validateRule1Output(tooMany, memory).length === 0, 'count over soft-cap must not reject');
+  console.log('PASS T7: 11 words does not fail validation (truncate in finalize)');
+
+  const modelFail = {
+    representativeWords: [{ word: 'סבא' }, { word: 'מכין' }, { word: 'לי' }],
+    decisionPath: [{ verb: 'מכין', exitStep: 'V3-enters' }],
+    validationStatus: 'fail',
+    validationNote: 'Content is minimal and ambiguous; only 3 representative words could be extracted',
+  };
+  assert(rule1.validateRule1Output(modelFail, memory).length === 0, 'validationStatus fail must be ignored');
+  console.log('PASS T7: model validationStatus fail is ignored');
 
   const multiWord = {
     representativeWords: [{ word: 'סבא' }, { word: 'מכין לי' }, { word: 'אורז' }],

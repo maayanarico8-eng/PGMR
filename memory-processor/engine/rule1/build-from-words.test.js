@@ -91,6 +91,15 @@ function main() {
     process.exit(1);
   }
   console.log('PASS: keep lexicalized compound בית ספר');
+
+  const one = rule1.buildRule1FromWords('סבא', {
+    words: [{ word: 'סבא', sourceText: 'סבא', category: 'person', canonicalReferent: 'grandfather' }],
+  });
+  if (one.representativeWords.length !== 1 || one.representativeWords[0].word !== 'סבא') {
+    console.error('FAIL: 1-word memory must build, got', one.representativeWords.map((w) => w.word).join(','));
+    process.exit(1);
+  }
+  console.log('PASS: 1-word extract builds (no min-count rejection)');
 }
 
 main();
