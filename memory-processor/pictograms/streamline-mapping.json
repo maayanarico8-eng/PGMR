@@ -2304,6 +2304,26 @@
       },
       "searchQuery": "amen",
       "updatedAt": "2026-07-27T05:48:29.422Z"
+    },
+    "holiday": {
+      "hash": "ico_mRu4pQJ4v38OeLjjHWqmI1I2",
+      "iconName": "Christmas Snow Globe",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "holiday",
+      "updatedAt": "2026-07-27T05:59:14.174Z"
     }
   }
 }
