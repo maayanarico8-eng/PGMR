@@ -2384,6 +2384,46 @@
       },
       "searchQuery": "able",
       "updatedAt": "2026-07-27T06:10:03.288Z"
+    },
+    "open": {
+      "hash": "ico_mRu4pQJ4vT7X2aEdzpJ4vPsj",
+      "iconName": "Shop Sign Open",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "open",
+      "updatedAt": "2026-07-27T06:31:56.158Z"
+    },
+    "joy": {
+      "hash": "ico_mRu4pQJ4vRcYeLjK1iK1i96m",
+      "iconName": "Smiley Thrilled",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "joy",
+      "updatedAt": "2026-07-27T06:32:07.497Z"
     }
   }
 }
