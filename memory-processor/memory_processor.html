@@ -386,7 +386,11 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .site-nav-link.is-active:focus,
 .site-nav-link.is-active:active{cursor:default}
 .app.is-view-transitioning .site-nav-link,
-.app.is-memory-loading .site-nav-link{pointer-events:none;cursor:default}
+.app.is-memory-loading .site-nav-link,
+.app.is-processing .site-nav-link{
+  /* Dead click only — never grey / opacity. Same as the active tab: inert, looks normal. */
+  pointer-events:none;cursor:default
+}
 .view-viewport{
   /* Figma 1184:50366 — starts at y 119, flush under the 119px header.
      Opacity fade is for loading only; tab changes use translateX swipe. */
@@ -495,7 +499,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .memory-error-msg.is-process-failed .memory-error-slot[data-for="process-failed"]{
   visibility:visible
 }
-/* Processing lock — every actionable control looks and acts disabled */
+/* Processing lock — actionable controls look and act disabled. Tabs: see .site-nav-link above (dead, not grey). */
 .app.is-processing .analyze-btn,
 .app.is-processing .create-visual-btn,
 .app.is-processing .restart-memory-btn,
@@ -505,8 +509,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .app.is-processing .add-word-confirm,
 .app.is-processing .reset-params-btn,
 .app.is-processing .source-toggle button,
-.app.is-processing .narrator-gender-picker label,
-.app.is-processing #nav-archive{
+.app.is-processing .narrator-gender-picker label{
   pointer-events:none!important;
   cursor:default!important
 }
@@ -521,8 +524,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .app.is-processing .cancel-edit-btn,
 .app.is-processing .reset-params-btn,
 .app.is-processing .source-toggle button,
-.app.is-processing .narrator-gender-picker label,
-.app.is-processing #nav-archive{
+.app.is-processing .narrator-gender-picker label{
   opacity:.45
 }
 .app.is-processing textarea#memory-input,
@@ -2292,11 +2294,7 @@ function applyGeneratorControlsDisabled(on){
     const el=document.getElementById(id);
     if(el)el.disabled=!!on;
   });
-  const archive=document.getElementById('nav-archive');
-  if(archive){
-    archive.setAttribute('aria-disabled',on?'true':'false');
-    archive.tabIndex=on?-1:0;
-  }
+  // Tabs: click removed via CSS pointer-events + processingInFlight guard — no attribute/visual change.
   if(on){
     const input=document.getElementById('memory-input');
     if(input)input.readOnly=true;
