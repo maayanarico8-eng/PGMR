@@ -1140,11 +1140,11 @@ textarea#memory-input[aria-invalid="true"]:hover{
   direction:rtl
 }
 .add-word-btn{
-  /* Figma 1244:56995 — 146×30, padding 5×10, gap 8 */
-  box-sizing:border-box;height:calc(30 * var(--figma-unit));
+  /* Figma 1244:56995 — 146×32, padding 6×10, gap 8 */
+  box-sizing:border-box;height:calc(32 * var(--figma-unit));
   display:flex;align-items:center;gap:calc(8 * var(--figma-unit));direction:ltr;
   border:1px solid #b09988;background:#f6eee7;color:#a87e5d;
-  border-radius:calc(8 * var(--figma-unit));padding:calc(5 * var(--figma-unit)) calc(10 * var(--figma-unit));
+  border-radius:calc(8 * var(--figma-unit));padding:calc(6 * var(--figma-unit)) calc(10 * var(--figma-unit));
   font-family:var(--font-mono);font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit));cursor:pointer
 }
 .add-word-btn:hover:not(:disabled){background:#ede1d9;border-color:#b09988;color:#a87e5d}
@@ -1156,9 +1156,10 @@ textarea#memory-input[aria-invalid="true"]:hover{
 }
 .add-word-btn:disabled img{opacity:1;filter:none}
 .add-word-input{
-  /* Figma 1236:56522 — Write word field */
-  display:none;box-sizing:border-box;width:calc(170 * var(--figma-unit));border:1px solid #462203;border-radius:calc(8 * var(--figma-unit));
-  padding:calc(8 * var(--figma-unit)) calc(16 * var(--figma-unit));font-family:var(--font-mono);background:#fff;color:#000;
+  /* Figma 1236:56522 — Write word field 170×32, padding 6×10 */
+  display:none;box-sizing:border-box;width:calc(170 * var(--figma-unit));height:calc(32 * var(--figma-unit));
+  border:1px solid #462203;border-radius:calc(8 * var(--figma-unit));
+  padding:calc(6 * var(--figma-unit)) calc(10 * var(--figma-unit));font-family:var(--font-mono);background:#fff;color:#000;
   font-size:calc(15 * var(--figma-unit));line-height:calc(20 * var(--figma-unit));
   outline:none;box-shadow:none
 }
@@ -1167,10 +1168,10 @@ textarea#memory-input[aria-invalid="true"]:hover{
   outline:none!important;box-shadow:none;border-color:#462203
 }
 .add-word-confirm{
-  /* Figma 1236:56522 mini — Default (empty) / Active+Hover (has text) */
+  /* Figma 1236:56522 mini — 33×32, padding 6×10; Default / Active / Hover */
   display:none;align-items:center;justify-content:center;
-  box-sizing:border-box;min-width:calc(36 * var(--figma-unit));height:calc(36 * var(--figma-unit));
-  padding:calc(8 * var(--figma-unit)) calc(12 * var(--figma-unit));
+  box-sizing:border-box;width:calc(33 * var(--figma-unit));height:calc(32 * var(--figma-unit));
+  padding:calc(6 * var(--figma-unit)) calc(10 * var(--figma-unit));
   border:1px solid #bbb;border-radius:calc(8 * var(--figma-unit));
   background:#f2eeea;cursor:not-allowed;outline:none;box-shadow:none
 }
@@ -1453,13 +1454,14 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .rep-count{font-size:13px;line-height:18px}
   .rep-chips{gap:14px 12px}
   .rep-chip,.add-word-btn{padding:4px 8px;gap:6px;border-radius:8px;font-size:15px;line-height:20px}
-  .add-word-btn{box-sizing:border-box;height:30px;padding:5px 10px;gap:8px}
+  .add-word-btn{box-sizing:border-box;height:32px;padding:6px 10px;gap:8px}
   .rep-chip button{width:11.018px;height:11.018px}
   .add-word-btn img,.add-word-confirm img{width:13px;height:13px}
   .add-word-row{gap:12px;margin-top:0}
   .side-words-block{gap:14px}
   .side-words-block{gap:12px}
-  .add-word-input{width:170px;padding:8px 16px;border-radius:8px;font-size:15px;line-height:20px}
+  .add-word-input{box-sizing:border-box;width:170px;height:32px;padding:6px 10px;border-radius:8px;font-size:15px;line-height:20px}
+  .add-word-confirm{box-sizing:border-box;width:33px;height:32px;padding:6px 10px}
   .side-copy{font-size:13px;line-height:21px;margin:0}
   .narrator-section{gap:16px}
   .narrator-body{gap:18px}

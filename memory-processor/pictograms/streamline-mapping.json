@@ -2484,6 +2484,26 @@
       },
       "searchQuery": "end",
       "updatedAt": "2026-07-27T06:56:19.352Z"
+    },
+    "thank you": {
+      "hash": "ico_PRtCskd2DUPuVaVo",
+      "iconName": "Sign Language Thank You",
+      "familySlug": "streamline-regular",
+      "downloadParams": {
+        "size": 64,
+        "responsive": true,
+        "strokeToFill": false,
+        "backgroundColor": "#ffffff00",
+        "colors": "#000000",
+        "strokeWidth": 0.25
+      },
+      "searchParams": {
+        "mode": "family",
+        "familySlug": "streamline-regular",
+        "limit": 10
+      },
+      "searchQuery": "thank you",
+      "updatedAt": "2026-07-27T07:03:59.099Z"
     }
   }
 }
