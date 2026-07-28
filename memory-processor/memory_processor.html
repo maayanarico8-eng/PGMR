@@ -1471,13 +1471,15 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .create-visual-btn,.restart-memory-btn{width:237px;height:39px;padding:0 24px;border-radius:8px;font-size:19px;line-height:20px;display:inline-flex;align-items:center;justify-content:center;text-align:center}
 }
 
-/* Print: full postcard composition, uniform scale 210mm/1322 — top-anchored on 210×110mm */
+/* Print: one @page 210×110mm only. Do NOT set html/body height to 110mm — that equals
+   the page box and Chrome emits a blank second sheet. Document height must stay at the
+   postcard (~102mm) via height:auto so it fits on a single page. */
 @page{size:210mm 110mm;margin:0}
 @media print{
   :root{--print-unit:calc(210mm / 1322)}
   html,body{
     margin:0!important;padding:0!important;
-    width:210mm!important;height:110mm!important;min-height:0!important;max-height:110mm!important;
+    width:210mm!important;height:auto!important;min-height:0!important;max-height:none!important;
     overflow:hidden!important;background:#fff!important;color:#000!important;
     print-color-adjust:exact;-webkit-print-color-adjust:exact
   }
@@ -1495,7 +1497,9 @@ textarea#memory-input[aria-invalid="true"]:hover{
   .input-footer-wrap,
   .entry-count,
   .memory-error-msg,
-  .confirm-dialog-root{display:none!important}
+  .confirm-dialog-root,
+  #results,
+  .icon-action-tooltip{display:none!important}
   .app,
   .workspace,
   .memory-main,
@@ -1507,7 +1511,7 @@ textarea#memory-input[aria-invalid="true"]:hover{
     max-width:none!important;max-height:none!important;min-width:0!important;min-height:0!important;
     width:210mm!important;height:auto!important;
     margin:0!important;padding:0!important;background:#fff!important;gap:0!important;
-    overflow:visible!important;flex:none!important;
+    overflow:hidden!important;flex:none!important;
     zoom:normal!important;transform:none!important;transition:none!important
   }
   .view-viewport{opacity:1!important;visibility:visible!important;transition:none!important}
@@ -1520,13 +1524,13 @@ textarea#memory-input[aria-invalid="true"]:hover{
     max-width:none!important;max-height:none!important;
     margin:0!important;padding:0!important;box-sizing:border-box!important;
     border:none!important;border-radius:0!important;background:transparent!important;
-    overflow:visible!important;page-break-inside:avoid;break-inside:avoid;
+    overflow:hidden!important;
     zoom:normal!important;transform:none!important
   }
   .app.has-visual-result .visual-output,
   .visual-output{
     position:relative!important;display:block!important;width:100%!important;height:100%!important;
-    min-height:100%!important;max-width:none!important;overflow:visible!important;
+    min-height:0!important;max-width:none!important;overflow:hidden!important;
     zoom:normal!important;transform:none!important
   }
   .app.has-visual-result .visual-output>svg,
